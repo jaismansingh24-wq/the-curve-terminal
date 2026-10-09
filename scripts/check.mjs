@@ -12,6 +12,7 @@
 //   8. Every stored key is described on the Privacy panel
 //   9. Fonts and scripts are the app's own files: nothing from a CDN
 //  10. The version agrees everywhere, and What's new covers it
+//  11. Every address the app fetches from is listed on Sources and Privacy
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, extname, dirname } from 'node:path';
@@ -179,6 +180,24 @@ check('9. Nothing loaded from outside', grepAll(UI.filter((f) => /\.(html|css)$/
   if (!read(join(root, 'CHANGELOG.md')).includes('## ' + v)) fails.push('CHANGELOG.md has no entry for ' + v);
   if (!read(join(root, 'assets/README.txt')).includes('Version ' + v)) fails.push('README.txt does not say Version ' + v);
   check('10. Version ' + v + ' agrees everywhere', fails);
+}
+
+// 11. The Backdrop's addresses: each one the native side fetches from must be
+//     on the Sources panel (host and fixed path) and named on the Privacy panel
+{
+  const fails = [];
+  const html = read(join(root, 'app/ui/index.html'));
+  const sources = (/<dialog[^>]*id="dlg-sources"[\s\S]*?<\/dialog>/.exec(html) || [''])[0];
+  const privacy = (/<dialog[^>]*id="dlg-privacy"[\s\S]*?<\/dialog>/.exec(html) || [''])[0];
+  if (!sources) fails.push('app/ui/index.html: no Sources panel');
+  const rs = rustStrings(read(join(root, 'app/src-tauri/src/backdrop.rs')));
+  for (const m of rs.matchAll(/https:\/\/([a-z0-9.-]+)(\/[^\s"{?&]*)?/gi)) {
+    if (m[1] === 'thecurve.in') continue;
+    const fixed = m[1] + (m[2] || '');
+    if (!sources.includes(fixed)) fails.push(fixed + ' is fetched but not on the Sources panel');
+    if (!privacy.includes(m[1])) fails.push(m[1] + ' is fetched but not named on the Privacy panel');
+  }
+  check('11. Every address fetched is on Sources and Privacy', [...new Set(fails)]);
 }
 
 const failed = results.filter((r) => r.fails.length);

@@ -96,6 +96,8 @@ function ticks(lo, hi, n = 4) {
   for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(Math.abs(v) < step * 1e-9 ? 0 : v);
   return out;
 }
+/* up to two decimals, without trailing zeros: 4.25, 4.2, 4 */
+const trim = (v) => String(Math.round(v * 1e4) / 1e4).replace(/(\.\d{0,2})\d*$/, '$1').replace(/\.$/, '');
 /* short axis labels: +$1.2k, −$800, +12 ticks as +12, +1.5R */
 function axisLabel(v, unit) {
   const sign = v > 0 ? '+' : v < 0 ? MINUS : '';
@@ -103,6 +105,11 @@ function axisLabel(v, unit) {
   if (unit === 'r') return sign + (a < 10 ? a.toFixed(a % 1 ? 1 : 0) : a.toFixed(0)) + 'R';
   if (unit === 'ticks' || unit === 'points') return sign + (a >= 1000 ? (a / 1000).toFixed(1) + 'k' : a % 1 ? a.toFixed(1) : a.toFixed(0));
   if (unit === 'count') return a.toFixed(0);
+  /* The Backdrop's units: per cent, percentage points, contracts, barrels, rates */
+  if (unit === 'pct') return (v < 0 ? MINUS : '') + trim(a) + '%';
+  if (unit === 'pp') return sign + trim(a);
+  if (unit === 'contracts') return sign + (a >= 1e6 ? trim(a / 1e6) + 'm' : a >= 1000 ? trim(a / 1000) + 'k' : a.toFixed(0));
+  if (unit === 'mb' || unit === 'rate' || unit === 'plain') return (v < 0 ? MINUS : '') + trim(a);
   return sign + '$' + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + 'k' : a.toFixed(0));
 }
 const DAY = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/New_York', day: 'numeric', month: 'short' });
@@ -362,6 +369,131 @@ export function month(year, mon, totals, counts, unit, { colour = false } = {}) 
     box.appendChild(cell);
   }
   return box;
+}
+
+/* ------------------------------------------------------------ The Backdrop */
+
+/* dates as "2026-10-08", placed by time; labels short or with the year */
+const DMS = (iso) => Date.parse(iso + 'T12:00:00Z');
+const DLABEL = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' });
+const MLABEL = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', month: 'short', year: 'numeric' });
+const FULL = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const fullDay = (iso) => FULL.format(new Date(DMS(iso)));
+
+/* Lines over time, in greys, with an optional flat band (a range) behind
+   them. lines: [{ name, cls, points: [{ date, v }] }]. The first line leads
+   the pointer; the card lists every line at that date. */
+export function series(lines, { unit = 'plain', zero = false, band = null, label = '', fmt: f = (v) => String(v), bandName = 'Range' } = {}) {
+  const lead = lines[0] ? lines[0].points : [];
+  return chartBox(label || (lead.length ? lines.map((l) => l.name).join(', ') + ', ' + lead.length + ' dates.' : 'Nothing to draw.'), (svg, W, H) => {
+    if (lead.length < 2) { text(svg, W / 2, H / 2, 'Not enough data to draw yet', 'chart__empty', 'middle'); return; }
+    const P = plot(W, H, { left: 52 });
+    const all = lines.flatMap((l) => l.points.map((p) => p.v)).concat(band ? band.flatMap((b) => [b.lo, b.hi]) : []).filter(Number.isFinite);
+    const lo = Math.min(...all, zero ? 0 : Infinity), hi = Math.max(...all, zero ? 0 : -Infinity);
+    const pad = (hi - lo) * 0.06 || 0.5;
+    const Y = yAxis(svg, P, lo - (zero && lo === 0 ? 0 : pad), hi + pad, unit);
+    const t0 = DMS(lead[0].date), t1 = DMS(lead[lead.length - 1].date);
+    const X = (iso) => P.l + ((DMS(iso) - t0) / (t1 - t0 || 1)) * P.w;
+    const inside = (p) => DMS(p.date) >= t0 && DMS(p.date) <= t1 && Number.isFinite(p.v);
+    if (band && band.length > 1) {
+      const b = band.filter((x) => DMS(x.date) >= t0 && DMS(x.date) <= t1);
+      svg.appendChild(s('polygon', { points: [...b.map((x) => X(x.date).toFixed(1) + ',' + Y(x.hi).toFixed(1)), ...b.slice().reverse().map((x) => X(x.date).toFixed(1) + ',' + Y(x.lo).toFixed(1))].join(' ') }, 'chart__band'));
+    }
+    for (const l of lines.slice().reverse()) {
+      const pts = l.points.filter(inside);
+      if (pts.length > 1) svg.appendChild(s('polyline', { points: pts.map((p) => X(p.date).toFixed(1) + ',' + Y(p.v).toFixed(1)).join(' ') }, l.cls || 'chart__line'));
+    }
+    const long = t1 - t0 > 200 * 864e5;
+    const lab = (iso) => (long ? MLABEL : DLABEL).format(new Date(DMS(iso)));
+    [0, Math.floor((lead.length - 1) / 2), lead.length - 1].forEach((i, k) =>
+      text(svg, X(lead[i].date), H - 6, lab(lead[i].date), 'chart__axis', k === 0 ? 'start' : k === 2 ? 'end' : 'middle'));
+    const cross = s('line', { y1: P.t, y2: P.b }, 'chart__cross'), dot = s('circle', { r: 3.5 }, 'chart__dot');
+    cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden');
+    svg.append(cross, dot);
+    const hit = s('rect', { x: P.l, y: P.t, width: P.w, height: P.h }, 'chart__hit');
+    const at = (pts, iso) => { let best = null; for (const p of pts) { if (p.date <= iso) best = p; else break; } return best; };
+    hit.addEventListener('pointermove', (e) => {
+      const r = svg.getBoundingClientRect();
+      const t = t0 + ((e.clientX - r.left - P.l) / P.w) * (t1 - t0);
+      let i = 0;
+      for (let k = 0; k < lead.length; k++) if (Math.abs(DMS(lead[k].date) - t) < Math.abs(DMS(lead[i].date) - t)) i = k;
+      const p = lead[i];
+      cross.setAttribute('x1', X(p.date)); cross.setAttribute('x2', X(p.date)); cross.setAttribute('visibility', 'visible');
+      if (Number.isFinite(p.v)) { dot.setAttribute('cx', X(p.date)); dot.setAttribute('cy', Y(p.v)); dot.setAttribute('visibility', 'visible'); }
+      const rowsOut = [fullDay(p.date)];
+      for (const l of lines) { const q = at(l.points, p.date); rowsOut.push([l.name, q && Number.isFinite(q.v) ? f(q.v) : 'no figure']); }
+      if (band) { const b = band.find((x) => x.date === p.date); if (b) rowsOut.push([bandName, f(b.lo) + ' to ' + f(b.hi)]); }
+      showTip(rowsOut, e.clientX, e.clientY);
+    });
+    hit.addEventListener('pointerleave', () => { hideTip(); cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); });
+    svg.appendChild(hit);
+  });
+}
+
+/* The yield curve: yield against term, the terms spaced by the square root
+   of their length so the short end can be read. sets: [{ name, cls, v }],
+   the first drawn with dots; terms: [{ key, years, label }]. */
+export function curve(sets, terms, { label = '', fmt: f = (v) => v.toFixed(2) + '%', diff = null } = {}) {
+  return chartBox(label || 'The Treasury curve.', (svg, W, H) => {
+    const used = terms.filter((t) => sets.some((st) => Number.isFinite(st.v[t.key])));
+    if (used.length < 2) { text(svg, W / 2, H / 2, 'No curve to draw yet', 'chart__empty', 'middle'); return; }
+    const P = plot(W, H, { left: 52, bottom: 26 });
+    const vals = sets.flatMap((st) => used.map((t) => st.v[t.key])).filter(Number.isFinite);
+    const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo) * 0.1 || 0.1;
+    const Y = yAxis(svg, P, lo - pad, hi + pad, 'pct');
+    const r0 = Math.sqrt(used[0].years), r1 = Math.sqrt(used[used.length - 1].years);
+    const X = (t) => P.l + ((Math.sqrt(t.years) - r0) / (r1 - r0 || 1)) * P.w;
+    for (const st of sets.slice().reverse()) {
+      const pts = used.filter((t) => Number.isFinite(st.v[t.key]));
+      svg.appendChild(s('polyline', { points: pts.map((t) => X(t).toFixed(1) + ',' + Y(st.v[t.key]).toFixed(1)).join(' ') }, st.cls || 'chart__line'));
+    }
+    const main = sets[0];
+    used.forEach((t) => { if (Number.isFinite(main.v[t.key])) svg.appendChild(s('circle', { cx: X(t), cy: Y(main.v[t.key]), r: 2.4 }, 'chart__pt')); });
+    /* term labels, skipping any that would crowd the one before */
+    let lastX = -1e9;
+    used.forEach((t, i) => {
+      const x = X(t);
+      if (x - lastX < 30 && i !== used.length - 1) return;
+      lastX = x;
+      text(svg, x, H - 7, t.key, 'chart__axis', i === 0 ? 'start' : i === used.length - 1 ? 'end' : 'middle');
+    });
+    const cross = s('line', { y1: P.t, y2: P.b }, 'chart__cross');
+    cross.setAttribute('visibility', 'hidden');
+    svg.appendChild(cross);
+    const hit = s('rect', { x: P.l - 6, y: P.t, width: P.w + 12, height: P.h }, 'chart__hit');
+    hit.addEventListener('pointermove', (e) => {
+      const r = svg.getBoundingClientRect(), x = e.clientX - r.left;
+      let t = used[0];
+      for (const u of used) if (Math.abs(X(u) - x) < Math.abs(X(t) - x)) t = u;
+      cross.setAttribute('x1', X(t)); cross.setAttribute('x2', X(t)); cross.setAttribute('visibility', 'visible');
+      const out = [t.label];
+      for (const st of sets) out.push([st.name, Number.isFinite(st.v[t.key]) ? f(st.v[t.key]) : 'no figure']);
+      if (diff) out.push(...diff(t));
+      showTip(out, e.clientX, e.clientY);
+    });
+    hit.addEventListener('pointerleave', () => { hideTip(); cross.setAttribute('visibility', 'hidden'); });
+    svg.appendChild(hit);
+  });
+}
+
+/* Net positions by group as grey bars above and below zero: positions are
+   not results, so they carry signs, never the bid and ask colours. */
+export function netBars(groups, { label = '', fmt: f = (v) => String(v), unit = 'contracts' } = {}) {
+  return chartBox(label || groups.map((g) => g.name + ': ' + f(g.net)).join('; ') + '.', (svg, W, H) => {
+    if (!groups.length) { text(svg, W / 2, H / 2, 'Nothing to draw yet', 'chart__empty', 'middle'); return; }
+    const P = plot(W, H, { left: 52, bottom: 30 });
+    const vals = groups.map((g) => g.net);
+    const Y = yAxis(svg, P, Math.min(0, ...vals), Math.max(0, ...vals), unit);
+    const step = P.w / groups.length, bw = Math.min(56, step * 0.52);
+    groups.forEach((g, i) => {
+      const x = P.l + i * step + (step - bw) / 2, y0 = Y(0), y1 = Y(g.net);
+      svg.appendChild(s('rect', { x, y: Math.min(y0, y1), width: bw, height: Math.max(1, Math.abs(y1 - y0)), rx: 2 }, 'bar bar--grey'));
+      text(svg, P.l + i * step + step / 2, H - 8, g.tag || g.name, 'chart__axis', 'middle');
+      const hit = s('rect', { x: P.l + i * step, y: P.t, width: step, height: P.h }, 'chart__hit');
+      hover(hit, [g.name, ['Long', f(g.long, false)], ['Short', f(g.short, false)], ['Net', f(g.net)], ...(g.extra || [])]);
+      svg.appendChild(hit);
+    });
+  });
 }
 
 export { money };

@@ -4,6 +4,30 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.4.0 · 9 October 2026
+
+- The Backdrop, a new part of the menu: the market's background from
+  official public data only. Rates (the Treasury curve against a week and
+  a month before, 2s10s and 3m10y with their history, real yields, and the
+  overnight rates with the fed funds target range), Auctions (each
+  Treasury auction's results and who bought), Positioning (the CFTC's
+  Commitments of Traders for 29 futures markets, by type of trader, back
+  to 2007), Energy (US crude, gasoline and distillate stocks against the
+  five years before), Currencies (the ECB's euro reference rates),
+  Releases (scheduled data releases in New York time and yours) and Fed
+  wire (the Federal Reserve Board's press releases).
+- Every figure names its publisher and the day it is for, and every page
+  says when its copy was fetched, or that a newer one could not be. A
+  figure's name opens what it is, how it is worked out and where it
+  misleads. There are no forecasts, no consensus figures and no verdicts.
+- The Backdrop fetches from the US Treasury, the New York Fed, the Federal
+  Reserve Board, the CFTC, the ECB and EIA while one of its pages is open,
+  at most every 12 hours (24 for the weekly reports). It is on by default;
+  Settings, under The Backdrop, switches it off and can delete the
+  downloaded copies. Sources, at the foot of every page, lists every
+  address, and the Privacy panel and Terms now cover it.
+- The menu scrolls when the window is too short to show all of it.
+
 ## 0.3.7 · 9 October 2026
 
 - Journal, in the menu, is now a title of its own: centred above its

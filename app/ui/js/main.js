@@ -22,12 +22,14 @@ import { initEntry, renderEntry } from './detail.js';
 import { initStats, renderStats } from './stats-view.js';
 import { initCalendar, renderCalendar } from './calendar-view.js';
 import { initAccounts, renderAccounts } from './accounts.js';
+import { initBackdrop, renderBackdrop, VIEWS as BACKDROP } from './backdrop-view.js';
+import { forget as forgetBackdrop } from './backdrop-data.js';
 
 const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.3.7';
+let version = '0.4.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -51,6 +53,7 @@ settings.bindPanel(document.getElementById('dlg-settings'));
 settings.onChange((s, patch) => {
   if ('discord' in patch) presence.configure(s.discord);
   if ('showSimulated' in patch) { J.setShowSimulated(s.showSimulated); refresh(); syncSimRow(); syncJournalRow(); }
+  if ('backdrop' in patch) { forgetBackdrop(); const r = router.now(); if (r && BACKDROP.includes(r.view)) renderBackdrop(r.view); }
   if (['units', 'basis', 'dayStart', 'costPerContract', 'dailyLimit', 'monthlyFees'].some((k) => k in patch)) refresh();
 });
 presence.bindUI();
@@ -61,6 +64,7 @@ initEntry({ confirm: dialogs.confirm });
 initStats();
 initCalendar();
 initAccounts({ confirm: dialogs.confirm });
+initBackdrop();
 
 document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('click', () => openLink(b.dataset.link)));
 document.querySelectorAll('[data-reveal]').forEach((b) => b.addEventListener('click', () => invoke('journal_reveal').catch(() => {})));
@@ -79,6 +83,19 @@ document.querySelector('[data-remove-sim]').addEventListener('click', () => {
   dialogs.confirm(n + ' simulated ' + (n === 1 ? 'entry' : 'entries') + ' and any simulated accounts. Your own entries stay.', async () => { await J.removeSimulated(); }, 'Remove the simulated entries?');
 });
 J.onChange(syncSimRow);
+
+/* Settings: delete The Backdrop's downloaded copies */
+document.querySelector('[data-bd-clear]').addEventListener('click', async () => {
+  const say = document.querySelector('[data-bd-copies]');
+  if (!isNative) { say.textContent = 'There are no copies in the design preview.'; return; }
+  try {
+    const n = await invoke('backdrop_clear');
+    forgetBackdrop();
+    say.textContent = n ? 'Deleted ' + n + (n === 1 ? ' copy' : ' copies') + '. Each is fetched again the next time its page opens, if fetching is on.' : 'There were no copies to delete.';
+  } catch (e) {
+    say.textContent = 'The copies could not be deleted: ' + String(e && e.message ? e.message : e);
+  }
+});
 
 /* Settings: what the journal file holds, in plain numbers */
 function syncJournalRow() {
@@ -116,6 +133,7 @@ router.on('entry', (r) => renderEntry(r.id));
 router.on('stats', () => renderStats());
 router.on('calendar', () => renderCalendar());
 router.on('accounts', () => renderAccounts());
+BACKDROP.forEach((v) => router.on(v, () => renderBackdrop(v)));
 
 /* redraw whatever is showing when the journal or a setting changes */
 function refresh() {

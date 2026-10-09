@@ -1,0 +1,123 @@
+/* The Backdrop: official public data, in the same greys and hairlines as
+   the rest of the Terminal. Second and third lines in a chart are dashed
+   and dotted rather than coloured; the bid and ask colours are not used
+   here, because nothing here is a bid, an ask or a result. */
+
+/* ---------------------------------------------------------------- layout */
+
+.bgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.bgrid--one { grid-template-columns: minmax(0, 1fr); }
+.bgrid > .bd-panel--span { grid-column: 1 / -1; }
+.bd-body { margin-top: 10px; }
+.bd-panel { min-width: 0; }
+.bd-panel .chartbox { height: 250px; }
+.bd-panel--wide .chartbox { height: 300px; }
+
+/* the source line under a page's title, with Fetch again and Sources */
+.bd-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 24px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-panel);
+  background-color: var(--ink-raised);
+}
+.bd-bar__status { flex: 1 1 420px; min-width: 0; }
+.bd-bar__act { display: flex; align-items: center; gap: 4px 16px; flex-wrap: wrap; }
+.bd-status { display: grid; gap: 4px; }
+.bd-status__line { font-size: 0.82rem; line-height: 1.5; color: var(--text-dim); }
+.bd-status__src { font-family: var(--display); font-weight: 600; color: var(--text); }
+.bd-status__line.is-stale { color: var(--text); }
+.bd-status__err { display: block; margin-top: 2px; padding-left: 10px; border-left: 2px solid var(--text-dim); color: var(--text); }
+
+/* choices above a page's panels */
+.bd-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 6px; }
+.bd-tools .kicker { margin-right: -4px; }
+.seg--sm { padding: 3px; border-radius: 10px; }
+.seg--sm .seg__opt { min-width: 0; padding: 4px 11px; font-size: 0.78rem; border-radius: 8px; }
+.bd-select { width: auto; min-width: 12em; max-width: 100%; }
+.stat__head .bd-select { margin-left: auto; min-height: 30px; }
+.bd-asof { margin: 6px 0 10px; max-width: 70em; line-height: 1.55; }
+.bd-wait { margin-top: 18px; }
+
+/* ---------------------------------------------------------------- charts */
+
+.chart__line--2 { stroke: var(--text-dim); stroke-dasharray: 5 4; }
+.chart__line--3 { stroke: var(--text-faint); stroke-dasharray: 1.5 4; stroke-width: 2; }
+.chart__pt { fill: var(--text); pointer-events: none; }
+.chart .bar--grey { fill: var(--text-dim); }
+.chart .bar--grey:hover { fill: var(--text); }
+
+/* a key for the lines: solid, dashed, dotted, and a shaded range */
+.bd-legend { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 2px 0 2px; }
+.bd-legend__k { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-dim); }
+.bd-legend__k::before { content: ''; width: 22px; height: 0; border-top: 2px solid var(--text); }
+.bd-legend__k--2::before { border-top: 2px dashed var(--text-dim); }
+.bd-legend__k--3::before { border-top: 2px dotted var(--text-faint); }
+.bd-legend__k--0::before { height: 10px; border: 0; border-radius: 2px; background-color: var(--glass-3); }
+
+/* ---------------------------------------------------------------- tables */
+
+.bd-tablewrap { overflow-x: auto; margin-top: 6px; }
+.bd-tbl { font-size: 0.86rem; }
+.bd-tbl th, .bd-tbl td { padding: 9px 12px; }
+.bd-tbl tbody th { padding: 9px 12px; border-top: 1px solid var(--hairline-soft); font-family: var(--body); font-size: 0.86rem; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text); white-space: nowrap; }
+.bd-tbl tbody tr:first-child th { border-top: 0; }
+.bd-tbl tbody tr { cursor: default; }
+.bd-tbl--compact th, .bd-tbl--compact td, .bd-tbl--compact tbody th { padding: 6px 10px; }
+.bd-panel .bd-tablewrap:has(.bd-tbl--scroll) { max-height: 560px; overflow: auto; }
+.bd-tbl--scroll thead th { position: sticky; top: 0; z-index: 1; background-color: var(--ink-raised); }
+
+/* the notice the New York Fed asks for beside its rates */
+.bd-notice { display: grid; gap: 6px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--hairline-soft); }
+.bd-notice p { font-size: 0.74rem; line-height: 1.5; color: var(--text-faint); }
+
+.bd-srclink { font-size: 0.82rem; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- releases */
+
+.bd-rel { display: grid; gap: 4px; }
+.bd-rel__day { margin: 16px 0 4px; color: var(--text-dim); }
+.bd-rel__day:first-child { margin-top: 4px; }
+.bd-rel__list { list-style: none; margin: 0; padding: 0; }
+.bd-rel__item {
+  display: grid;
+  grid-template-columns: minmax(12em, 16em) minmax(0, 1fr) 5.5em auto;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+.bd-rel__list .bd-rel__item:first-child { border-top: 0; }
+.bd-rel__time { font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.bd-rel__what { display: grid; gap: 2px; min-width: 0; }
+.bd-rel__name { font-size: 0.92rem; color: var(--text); }
+.bd-rel__note { font-size: 0.78rem; color: var(--text-faint); }
+.bd-rel__item.is-past .bd-rel__name, .bd-rel__item.is-past .bd-rel__time { color: var(--text-faint); }
+@media (max-width: 760px) {
+  .bd-rel__item { grid-template-columns: minmax(0, 1fr) auto; }
+  .bd-rel__time { grid-column: 1 / -1; }
+}
+
+/* ---------------------------------------------------------------- the Fed's press releases */
+
+.bd-wire { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
+.bd-wire__item { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--hairline-soft); }
+.bd-wire__item:first-child { border-top: 0; padding-top: 4px; }
+.bd-wire__title { font-family: var(--display); font-size: 0.98rem; font-weight: 560; line-height: 1.4; color: var(--text); max-width: 60em; }
+.bd-wire__item .bd-srclink { justify-self: start; }
+
+/* ---------------------------------------------------------------- nothing to show */
+
+.bd-error { display: grid; gap: 6px; margin-top: 18px; padding: 18px 20px; max-width: 46em; }
+.bd-error p { font-size: 0.92rem; color: var(--text-dim); line-height: 1.55; }
+.bd-error .bd-error__h { font-family: var(--display); font-weight: 600; color: var(--text); }

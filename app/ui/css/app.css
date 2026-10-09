@@ -19,6 +19,8 @@
   flex-direction: column;
   gap: 2px;
   border-right: 1px solid var(--hairline-soft);
+  overflow-y: auto;
+  scrollbar-width: thin;
   transition: opacity 420ms ease-out;
 }
 /* the group title: set apart from Home by a rule, centred over its pages */

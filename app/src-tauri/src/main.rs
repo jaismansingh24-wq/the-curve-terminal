@@ -1,9 +1,11 @@
 // The Curve Terminal: the native side. It owns the window, the Discord
-// status, the startup entry in the Windows registry and the fixed list of
-// outside links. Everything the reader sees is drawn by the interface in ui/.
+// status, the startup entry in the Windows registry, the fixed list of
+// outside links, and the fetching of The Backdrop's public data.
+// Everything the reader sees is drawn by the interface in ui/.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod backdrop;
 mod journal;
 mod links;
 mod presence;
@@ -53,6 +55,7 @@ fn main() {
         .setup(move |app| {
             let handle = app.handle().clone();
             app.manage(journal::Files { testing });
+            app.manage(backdrop::Cache { testing });
             app.manage(presence::Presence::spawn(handle.clone(), testing));
 
             let mut window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -92,6 +95,9 @@ fn main() {
             journal::journal_write,
             journal::journal_reveal,
             links::open_link,
+            links::open_source,
+            backdrop::backdrop_get,
+            backdrop::backdrop_clear,
             presence::presence_set,
             startup::startup_get,
             startup::startup_set,

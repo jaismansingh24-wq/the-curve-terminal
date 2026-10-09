@@ -1,10 +1,11 @@
 /* Pages, by the address after the #:
      #/home  #/new  #/edit/<id>  #/overview  #/entry/<id>  #/stats  #/calendar  #/accounts
+     and The Backdrop's: #/rates  #/auctions  #/positioning  #/energy  #/currencies  #/releases  #/wire
    One page shows at a time. The menu marks the current one, the page's
    heading takes focus (so screen readers announce where you are), and the
    page scrolls back to the top. */
 
-const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts'];
+const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
 const handlers = {};
 let current = null;
 

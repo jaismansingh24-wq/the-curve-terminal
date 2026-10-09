@@ -26,6 +26,8 @@ export const DEFAULTS = Object.freeze({
   monthlyFees: 0,             /* platform and data fees a month, in dollars */
   entryZone: 'America/New_York',
   showSimulated: true,        /* include simulated (generated) entries everywhere */
+  /* The Backdrop */
+  backdrop: true,             /* fetch official public data while a Backdrop page is open */
 });
 const NUMERIC = new Set(['dayStart']);
 

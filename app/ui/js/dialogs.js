@@ -9,6 +9,7 @@ const IDS = {
   whatsnew: 'dlg-whatsnew',
   privacy: 'dlg-privacy',
   terms: 'dlg-terms',
+  sources: 'dlg-sources',
   disclaimer: 'dlg-disclaimer',
 };
 
