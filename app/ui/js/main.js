@@ -25,8 +25,9 @@ import { initAccounts, renderAccounts } from './accounts.js';
 
 const S = settings.load();
 settings.apply();
+J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.3.3';
+let version = '0.3.4';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -49,6 +50,7 @@ const dialogs = initDialogs({
 settings.bindPanel(document.getElementById('dlg-settings'));
 settings.onChange((s, patch) => {
   if ('discord' in patch) presence.configure(s.discord);
+  if ('showSimulated' in patch) { J.setShowSimulated(s.showSimulated); refresh(); syncSimRow(); syncJournalRow(); }
   if (['units', 'basis', 'dayStart', 'costPerContract', 'dailyLimit', 'monthlyFees'].some((k) => k in patch)) refresh();
 });
 presence.bindUI();
@@ -68,7 +70,7 @@ if (revealRow) revealRow.hidden = !isNative;
 /* Settings: remove every simulated entry and account in one go */
 function syncSimRow() {
   const row = document.querySelector('[data-sim-row]');
-  const n = J.simCount(), a = J.allAccounts().filter(J.isSim).length;
+  const c = J.fileCounts(), n = c.simulated, a = c.simAccounts;
   row.hidden = !n && !a;
   document.querySelector('[data-sim-desc]').textContent = n + ' simulated ' + (n === 1 ? 'entry' : 'entries') + (a ? ' and ' + a + ' simulated ' + (a === 1 ? 'account' : 'accounts') : '') + ', generated for trying the app out. Your own entries are not touched.';
 }
@@ -77,6 +79,19 @@ document.querySelector('[data-remove-sim]').addEventListener('click', () => {
   dialogs.confirm(n + ' simulated ' + (n === 1 ? 'entry' : 'entries') + ' and any simulated accounts. Your own entries stay.', async () => { await J.removeSimulated(); }, 'Remove the simulated entries?');
 });
 J.onChange(syncSimRow);
+
+/* Settings: what the journal file holds, in plain numbers */
+function syncJournalRow() {
+  const c = J.fileCounts(), desc = document.querySelector('[data-journal-desc]');
+  const retry = document.querySelector('[data-retry-journal]');
+  retry.hidden = !journalError;
+  if (journalError) { desc.textContent = 'It could not be read: ' + String(journalError.message || journalError) + ' Nothing in the file was changed.'; return; }
+  if (!c.loaded) { desc.textContent = 'Not read yet.'; return; }
+  desc.textContent = c.entries + (c.entries === 1 ? ' entry' : ' entries') + (c.simulated ? ', ' + c.simulated + ' of them simulated' : '') + ', and ' + c.accounts + (c.accounts === 1 ? ' account' : ' accounts') + (c.simAccounts ? ' (' + c.simAccounts + ' simulated)' : '') + '.' +
+    (c.simulated && !settings.get().showSimulated ? ' The simulated ones are hidden; switch them on below.' : '');
+}
+J.onChange(syncJournalRow);
+document.querySelector('[data-retry-journal]').addEventListener('click', async () => { await loadJournal(); syncJournalRow(); refresh(); });
 
 /* the title bar gains a hairline once the page scrolls under it */
 const page = document.getElementById('page');
@@ -176,9 +191,13 @@ function appInfo() {
   });
 }
 
+/* read the journal file; if a read fails, try twice more before saying so */
 let journalError = null;
 async function loadJournal() {
-  try { await J.load(); } catch (e) { journalError = e; }
+  for (let i = 0; i < 3; i++) {
+    try { await J.load(); journalError = null; return; } catch (e) { journalError = e; }
+    await new Promise((r) => setTimeout(r, 700));
+  }
 }
 
 const steps = [
@@ -210,6 +229,7 @@ async function start() {
   await runIntro({ animate: S.intro !== false, reduced: settings.reducedMotion(), loader });
   ready = true;
   markNew();
+  syncJournalRow();
   if (journalError) {
     const box = document.querySelector('[data-recent-empty]');
     if (box) { box.hidden = false; box.textContent = String(journalError.message || journalError); }

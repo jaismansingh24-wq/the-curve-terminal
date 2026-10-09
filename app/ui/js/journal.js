@@ -54,9 +54,15 @@ async function persist() {
 
 export function onChange(fn) { listeners.push(fn); }
 
+/* Show simulated trades (Settings): when off, simulated entries and
+   accounts are left out of every page and figure, but stay in the file. */
+let showSim = true;
+export function setShowSimulated(on) { showSim = !!on; }
+const shown = (x) => showSim || !x.simulated;
+
 /* newest first, by when the trade closed (or opened, if no exit time) */
 export function all() {
-  return entries.slice().sort((a, b) => closedAt(b) - closedAt(a));
+  return entries.filter(shown).sort((a, b) => closedAt(b) - closedAt(a));
 }
 export const byId = (id) => entries.find((e) => e.id === id) || null;
 
@@ -78,7 +84,7 @@ export async function remove(id) {
 
 /* ------------------------------------------------------------ accounts */
 
-export const allAccounts = () => accounts.slice().sort((a, b) => a.name.localeCompare(b.name));
+export const allAccounts = () => accounts.filter(shown).sort((a, b) => a.name.localeCompare(b.name));
 export const accountById = (id) => accounts.find((a) => a.id === id) || null;
 export const accountByName = (name) => accounts.find((a) => a.name.trim().toLowerCase() === String(name || '').trim().toLowerCase()) || null;
 
@@ -101,7 +107,14 @@ export async function removeAccount(id) {
    simulated: true, and say so wherever they are shown. They can all be
    removed at once from Settings. */
 export const isSim = (x) => !!(x && x.simulated);
+/* counts across the whole file, shown or not */
 export const simCount = (list = entries) => list.filter(isSim).length;
+/* when they are switched off, every empty page says so rather than "nothing yet" */
+export const hiddenNote = () => {
+  const n = showSim ? 0 : entries.filter(isSim).length;
+  return n ? n + ' simulated ' + (n === 1 ? 'entry is' : 'entries are') + ' hidden. Show simulated trades, in Settings under Journal, brings them back.' : '';
+};
+export const fileCounts = () => ({ entries: entries.length, simulated: entries.filter(isSim).length, accounts: accounts.length, simAccounts: accounts.filter(isSim).length, loaded });
 
 export async function removeSimulated() {
   ready();
@@ -113,7 +126,7 @@ export async function removeSimulated() {
 }
 
 /* the entries on one account (matched by its name, as typed on the entry) */
-export const entriesFor = (account) => entries.filter((e) => e.account && e.account.trim().toLowerCase() === account.name.trim().toLowerCase());
+export const entriesFor = (account) => entries.filter(shown).filter((e) => e.account && e.account.trim().toLowerCase() === account.name.trim().toLowerCase());
 
 /* ------------------------------------------------------------- results */
 
@@ -158,7 +171,7 @@ export function periods(settings, now = Date.now()) {
   const today = tradingDay(now, settings.dayStart);
   const keys = { day: today, week: weekOf(today), month: monthOf(today) };
   const out = { day: blank(), week: blank(), month: blank() };
-  for (const e of entries) {
+  for (const e of entries.filter(shown)) {
     const r = result(e, settings);
     if (!r) continue;
     const hit = { day: r.day === keys.day, week: weekOf(r.day) === keys.week, month: monthOf(r.day) === keys.month };

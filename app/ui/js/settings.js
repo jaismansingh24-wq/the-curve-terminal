@@ -25,6 +25,7 @@ export const DEFAULTS = Object.freeze({
   dailyLimit: 0,              /* the trader's own daily loss limit, in dollars */
   monthlyFees: 0,             /* platform and data fees a month, in dollars */
   entryZone: 'America/New_York',
+  showSimulated: true,        /* include simulated (generated) entries everywhere */
 });
 const NUMERIC = new Set(['dayStart']);
 

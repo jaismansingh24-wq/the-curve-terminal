@@ -515,7 +515,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.3.3</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.3.4</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -606,6 +606,14 @@
           <div class="st__row">
             <div class="st__txt"><label class="st__label" for="st-fees">Monthly platform and data fees</label><span class="st__desc">In dollars a month. Counted in the cost per round turn and per day.</span></div>
             <input class="inp inp--num inp--sm st__num" id="st-fees" inputmode="decimal" data-setting-num="monthlyFees" placeholder="0.00">
+          </div>
+          <div class="st__row">
+            <div class="st__txt"><span class="st__label">Your journal</span><span class="st__desc" data-journal-desc>Not read yet.</span></div>
+            <button class="btn btn--quiet" type="button" data-retry-journal hidden>Read it again</button>
+          </div>
+          <div class="st__row">
+            <div class="st__txt"><span class="st__label" id="lbl-sim">Show simulated trades</span><span class="st__desc">Entries generated for trying the app out, marked Simulated wherever they show. Off leaves them out of every page and figure; they stay in the journal file until you remove them.</span></div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-sim" data-setting="showSimulated"><span class="switch__knob"></span></button>
           </div>
           <div class="st__row" data-sim-row hidden>
             <div class="st__txt"><span class="st__label">Simulated entries</span><span class="st__desc" data-sim-desc>Entries generated for trying the app out, not real trades.</span></div>
@@ -737,6 +745,12 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.3.4</h3><span class="kicker">9 October 2026</span></div>
+        <ul>
+          <li>Settings, under Journal, has a Show simulated trades switch. Off leaves simulated entries and accounts out of every page and figure; they stay in the journal file until you remove them, and a page left empty says how many are hidden.</li>
+          <li>Settings, under Journal, says how many entries and accounts your journal file holds, and how many are simulated.</li>
+          <li>If the journal file cannot be read when the app opens, it tries again, and Settings says so with a Read it again button, instead of showing an empty journal without a word.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.3.3</h3><span class="kicker">9 October 2026</span></div>
         <ul>
           <li>The Calendar page opens on the latest month that has trades when this month has none yet, instead of an empty month.</li>
@@ -800,7 +814,7 @@
         <h3>On this computer</h3>
         <ul>
           <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>

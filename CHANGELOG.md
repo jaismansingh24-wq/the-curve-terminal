@@ -4,6 +4,18 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.4 · 9 October 2026
+
+- Settings, under Journal, has a Show simulated trades switch. Off leaves
+  simulated entries and accounts out of every page and figure; they stay
+  in the journal file until you remove them, and a page left empty says
+  how many are hidden.
+- Settings, under Journal, says how many entries and accounts your journal
+  file holds, and how many are simulated.
+- If the journal file cannot be read when the app opens, it tries again,
+  and Settings says so with a Read it again button, instead of showing an
+  empty journal without a word.
+
 ## 0.3.3 · 9 October 2026
 
 - The Calendar page opens on the latest month that has trades when this
