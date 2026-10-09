@@ -15,9 +15,11 @@
   --text-dim: #98a0aa;
   --text-faint: #6b727c;
 
-  --glass-1: rgb(255 255 255 / 0.03);
-  --glass-2: rgb(255 255 255 / 0.05);
-  --glass-3: rgb(255 255 255 / 0.08);
+  /* plain surfaces: nothing behind shows through. Each layer is the solid
+     colour that white at 3%, 5% and 8% made over INK-RAISED. */
+  --glass-1: rgb(21 24 29);
+  --glass-2: rgb(26 29 34);
+  --glass-3: rgb(33 36 41);
   --hairline: rgb(255 255 255 / 0.10);
   --hairline-soft: rgb(255 255 255 / 0.06);
   --edge-catch: rgb(255 255 255 / 0.08);
@@ -210,14 +212,13 @@ kbd {
 /* --- Glass ---------------------------------------------------------------- */
 
 .glass {
-  background-color: rgb(14 17 22 / 0.9);
+  background-color: var(--ink-raised);
   border: 1px solid var(--hairline);
   border-radius: var(--r-panel);
   box-shadow: var(--lit), var(--shadow);
-  backdrop-filter: blur(24px) saturate(160%);
 }
 .glass--quiet {
-  background-color: var(--glass-1);
+  background-color: var(--ink-raised);
   border-color: var(--hairline-soft);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
   backdrop-filter: none;
@@ -244,7 +245,7 @@ kbd {
   white-space: nowrap;
   transition: background-color 170ms ease-out, transform 170ms ease-out, border-color 170ms ease-out;
 }
-.btn:hover { background-color: rgb(255 255 255 / 0.1); transform: translateY(-1px); }
+.btn:hover { background-color: rgb(38 41 45); transform: translateY(-1px); }
 .btn:active { transform: none; }
 .btn--primary { background-color: var(--text); border-color: var(--text); color: var(--ink); box-shadow: none; }
 .btn--primary:hover { background-color: #fff; }
@@ -354,7 +355,7 @@ kbd {
   border-bottom: 1px solid transparent;
   transition: border-color 220ms ease-out, background-color 220ms ease-out;
 }
-.tb.is-scrolled { border-bottom-color: var(--hairline-soft); background-color: rgb(10 12 16 / 0.82); backdrop-filter: blur(18px); }
+.tb.is-scrolled { border-bottom-color: var(--hairline-soft); background-color: var(--ink); }
 .tb__brand { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--text); }
 .tb__mark { width: 18px; height: 18px; flex: none; }
 .tb__name {
@@ -380,7 +381,7 @@ kbd {
   transition: background-color 120ms ease-out, color 120ms ease-out;
 }
 .tb__wbtn:hover { background-color: var(--glass-3); color: var(--text); }
-.tb__wbtn--close:hover { background-color: rgb(255 255 255 / 0.16); }
+.tb__wbtn--close:hover { background-color: rgb(49 51 54); }
 .tb__wbtn svg { width: 10px; height: 10px; }
 .tb__restore, .tb__wbtn.is-max .tb__max { display: none; }
 .tb__wbtn.is-max .tb__restore { display: block; }

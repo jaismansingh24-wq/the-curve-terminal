@@ -4,6 +4,12 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.6 · 9 October 2026
+
+- Every panel, card, button and field is now a plain surface, in the app
+  and in setup, so the grid or night sky only shows around them, never
+  through them.
+
 ## 0.3.5 · 9 October 2026
 
 - The charts on the Stats page sit on a plain surface, so the background

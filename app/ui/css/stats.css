@@ -28,8 +28,6 @@
   align-items: stretch;
 }
 .cpanel { padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-/* charts sit on a plain surface: nothing from the background shows through */
-.cpanel.glass--quiet { background-color: var(--ink-raised); }
 .cpanel__cap { font-size: 0.82rem; line-height: 1.45; color: var(--text-dim); margin-top: auto; }
 .chartbox { position: relative; height: 230px; min-width: 0; }
 .chartbox .chart { display: block; overflow: visible; }
@@ -61,7 +59,7 @@ rect.seg--flat { fill: var(--text-faint); }
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--hairline);
-  background-color: rgb(14 17 22 / 0.96);
+  background-color: var(--ink-raised);
   box-shadow: var(--lit), 0 12px 32px rgb(0 0 0 / 0.55);
   pointer-events: none;
   display: grid;
@@ -155,7 +153,7 @@ rect.seg--flat { fill: var(--text-faint); }
   flex-direction: column;
   gap: 6px;
 }
-.stat__scroll .gtable__row--head { position: sticky; top: 0; z-index: 1; background-color: rgb(14 17 22 / 0.96); }
+.stat__scroll .gtable__row--head { position: sticky; top: 0; z-index: 1; background-color: var(--ink-raised); }
 
 /* --- prop accounts and costs: equal, aligned cards ------------------------ */
 

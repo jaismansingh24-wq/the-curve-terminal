@@ -281,7 +281,7 @@ html.intro-armed .intro,
   font-variant-numeric: tabular-nums;
 }
 .intro__pct { color: var(--text-dim); letter-spacing: 0.06em; }
-.intro__bar { position: relative; height: 2px; border-radius: 2px; overflow: hidden; background-color: rgb(255 255 255 / 0.12); }
+.intro__bar { position: relative; height: 2px; border-radius: 2px; overflow: hidden; background-color: rgb(39 41 45); }
 .intro__fill { position: absolute; inset: 0; background-color: var(--text); transform: scaleX(0); transform-origin: left center; }
 .intro__line {
   min-height: 1.5em;
