@@ -42,7 +42,8 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let handle = app.handle().clone();
-            app.manage(presence::Presence::spawn(handle.clone()));
+            let testing = std::env::args().any(|a| a == "--test");
+            app.manage(presence::Presence::spawn(handle.clone(), testing));
 
             // The window starts hidden so it never flashes white; the
             // interface shows it on its first frame. If that never comes,

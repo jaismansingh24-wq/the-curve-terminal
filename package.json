@@ -12,7 +12,8 @@
     "preview:setup": "node scripts/sync-shared.mjs && node scripts/serve.mjs installer",
     "check": "node scripts/sync-shared.mjs && node scripts/check.mjs",
     "icons": "node scripts/icons.mjs",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "snap": "node scripts/snap.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

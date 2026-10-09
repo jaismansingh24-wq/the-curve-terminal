@@ -30,7 +30,14 @@ npm run dev              # the real app window, with Discord and the registry
 npm run dev:setup        # the real setup window (it has no app inside: see release)
 npm run check            # the rules, checked by machine
 npm run release          # builds dist/TheCurveTerminal-Setup-<version>.exe
+npm run snap             # starts the built app, screenshots it to dist/snaps/, closes it
 ```
+
+`npm run snap` is for testing from somewhere else: it drives the real window
+through WebView2's local debugging port and reports any errors from inside
+the app. Add `-- --at 1.5,3,7` for screenshots at those seconds, `-- --open
+settings` to open a panel first. It starts the app with `--test`, which keeps
+Discord status off for that run.
 
 The preview has no native side, so Discord status, opening with Windows and
 installing say they are not available there instead of pretending.

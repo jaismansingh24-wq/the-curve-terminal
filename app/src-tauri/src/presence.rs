@@ -71,10 +71,13 @@ pub struct Presence {
     tx: Mutex<Sender<Msg>>,
     status: Arc<Mutex<Status>>,
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
+    /// Started with --test (scripts/snap.mjs does this): Discord stays off
+    /// for the whole run, so testing never shows on anyone's profile.
+    quiet: bool,
 }
 
 impl Presence {
-    pub fn spawn(app: AppHandle) -> Self {
+    pub fn spawn(app: AppHandle, quiet: bool) -> Self {
         let (tx, rx) = mpsc::channel();
         let status = Arc::new(Mutex::new(Status::Off));
         let st = status.clone();
@@ -83,6 +86,7 @@ impl Presence {
             tx: Mutex::new(tx),
             status,
             worker: Mutex::new(Some(worker)),
+            quiet,
         }
     }
 
@@ -102,6 +106,9 @@ pub async fn presence_set(
     state: tauri::State<'_, Presence>,
     enabled: bool,
 ) -> Result<Status, String> {
+    if state.quiet {
+        return Ok(Status::Off);
+    }
     *state.status.lock().map_err(|e| e.to_string())? = Status::Connecting;
     state
         .tx
