@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en-GB" data-bg="sky">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Setup for The Curve Terminal, a trading journal from The Curve, by s7ven.">
+  <title>The Curve Terminal Setup</title>
+  <link rel="stylesheet" href="shared/css/fonts.css">
+  <link rel="stylesheet" href="shared/css/base.css">
+  <link rel="stylesheet" href="css/setup.css">
+  <script type="module" src="js/setup.js"></script>
+</head>
+<body>
+  <header class="tb" data-tauri-drag-region>
+    <div class="tb__brand" data-tauri-drag-region>
+      <svg class="tb__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.34" stroke-width="2.6"/>
+        <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linecap="round"/>
+        <circle cx="50" cy="14.5" r="4.8" fill="currentColor"/>
+      </svg>
+      <span class="tb__name" data-tauri-drag-region data-tb-name>Setup</span>
+    </div>
+    <div class="tb__drag" data-tauri-drag-region></div>
+    <div class="tb__win">
+      <button class="tb__wbtn" type="button" data-win="min" aria-label="Minimise" data-tip="Minimise">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button class="tb__wbtn tb__wbtn--close" type="button" data-win="close" aria-label="Close setup" data-tip="Close">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="frame">
+    <aside class="art" aria-hidden="true">
+      <canvas class="art__mark" width="300" height="300"></canvas>
+      <p class="art__name">The Curve Terminal</p>
+      <p class="art__by">by <span>s7ven</span></p>
+      <p class="kicker art__ver">Version <span data-version>0.1.0</span></p>
+    </aside>
+
+    <main class="panel-main glass" id="main">
+      <p class="sr" aria-live="polite" data-announce></p>
+
+      <!-- 1. Welcome -->
+      <section class="step" data-step="welcome" aria-labelledby="h-welcome">
+        <div class="step__body">
+          <p class="kicker step__k">Setup &middot; Step 1 of 3</p>
+          <h1 class="title step__title" id="h-welcome" tabindex="-1" data-welcome-title>Install The Curve Terminal</h1>
+          <p class="lede step__lede" data-welcome-lede>A trading journal from The Curve. Everything you write stays on this computer.</p>
+          <ul class="facts">
+            <li><span class="kicker">Size</span><span class="num" data-size>About 11 MB</span></li>
+            <li><span class="kicker">Account</span><span>None needed</span></li>
+            <li><span class="kicker">Admin rights</span><span>Not needed for the usual folder</span></li>
+          </ul>
+          <p class="step__note">Educational material, not investment advice. No strategies, no signals, no one telling you what to buy.</p>
+        </div>
+        <div class="step__foot">
+          <button class="btn btn--quiet" type="button" data-act="cancel">Cancel</button>
+          <button class="btn btn--primary" type="button" data-act="to-options">Continue</button>
+        </div>
+      </section>
+
+      <!-- 2. Options -->
+      <section class="step" data-step="options" aria-labelledby="h-options">
+        <div class="step__body">
+          <p class="kicker step__k">Setup &middot; Step 2 of 3</p>
+          <h1 class="title step__title" id="h-options" tabindex="-1">Where and how</h1>
+
+          <div class="field">
+            <label class="field__label" for="dir">Install in</label>
+            <div class="field__row">
+              <input class="field__input selectable" id="dir" type="text" readonly spellcheck="false" aria-describedby="dir-hint">
+              <button class="btn" type="button" data-act="pick">Change</button>
+            </div>
+            <p class="field__hint" id="dir-hint">Its own folder. No administrator rights needed here.</p>
+          </div>
+
+          <div class="opts" role="group" aria-label="Options">
+            <div class="opt">
+              <span class="opt__label" id="o-desktop">Desktop shortcut</span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-desktop" data-opt="desktop"><span class="switch__knob"></span></button>
+            </div>
+            <div class="opt">
+              <span class="opt__label" id="o-start">Start menu shortcut</span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-start" data-opt="startMenu"><span class="switch__knob"></span></button>
+            </div>
+            <div class="opt">
+              <span class="opt__label" id="o-startup">Open when Windows starts</span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-startup" data-opt="startup"><span class="switch__knob"></span></button>
+            </div>
+          </div>
+        </div>
+        <div class="step__foot">
+          <button class="btn btn--quiet" type="button" data-act="back">Back</button>
+          <button class="btn btn--primary" type="button" data-act="install" data-install-label>Install</button>
+        </div>
+      </section>
+
+      <!-- 3. Working (install or remove) -->
+      <section class="step" data-step="working" aria-labelledby="h-working">
+        <div class="step__body step__body--center">
+          <p class="kicker step__k" data-working-k>Setup &middot; Step 3 of 3</p>
+          <h1 class="title step__title" id="h-working" tabindex="-1" data-working-title>Installing</h1>
+          <div class="prog" role="progressbar" aria-labelledby="h-working" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="prog__row"><span class="prog__step" data-prog-step>Starting</span><span class="prog__pct num" data-prog-pct>0%</span></div>
+            <div class="prog__bar"><div class="prog__fill" data-prog-fill></div></div>
+            <p class="prog__bytes num" data-prog-bytes></p>
+          </div>
+          <p class="prog__line" aria-hidden="true" data-prog-line></p>
+        </div>
+      </section>
+
+      <!-- 4. Done -->
+      <section class="step" data-step="done" aria-labelledby="h-done">
+        <div class="step__body">
+          <p class="kicker step__k">Setup &middot; Finished</p>
+          <h1 class="title step__title" id="h-done" tabindex="-1" data-done-title>Installed</h1>
+          <p class="lede step__lede" data-done-lede>The Curve Terminal is ready.</p>
+          <p class="step__path num selectable" data-done-path></p>
+          <div class="opts" role="group" aria-label="When setup closes" data-done-opts>
+            <div class="opt">
+              <span class="opt__label" id="o-launch">Open The Curve Terminal</span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-launch" data-opt="launch"><span class="switch__knob"></span></button>
+            </div>
+            <div class="opt">
+              <span class="opt__label" id="o-readme">Open the readme</span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-readme" data-opt="readme"><span class="switch__knob"></span></button>
+            </div>
+          </div>
+        </div>
+        <!-- the countdown: setup carries on by itself unless asked to wait -->
+        <div class="count" data-count>
+          <div class="count__row">
+            <span class="count__text num" data-count-text>Opening The Curve Terminal in 15 seconds</span>
+            <button class="link count__wait" type="button" data-act="wait">Wait</button>
+          </div>
+          <div class="prog__bar"><div class="count__fill" data-count-fill></div></div>
+        </div>
+        <div class="step__foot">
+          <span></span>
+          <button class="btn btn--primary" type="button" data-act="finish" data-finish-label>Finish</button>
+        </div>
+      </section>
+
+      <!-- Something went wrong -->
+      <section class="step" data-step="error" aria-labelledby="h-error">
+        <div class="step__body">
+          <p class="kicker step__k">Setup &middot; Stopped</p>
+          <h1 class="title step__title" id="h-error" tabindex="-1">That did not work</h1>
+          <p class="lede step__lede" data-error-text></p>
+          <p class="step__note">Nothing else was changed after this point.</p>
+        </div>
+        <div class="step__foot">
+          <button class="btn btn--quiet" type="button" data-act="error-back">Back</button>
+          <button class="btn btn--primary" type="button" data-act="retry">Try again</button>
+        </div>
+      </section>
+
+      <!-- Remove -->
+      <section class="step" data-step="remove" aria-labelledby="h-remove">
+        <div class="step__body">
+          <p class="kicker step__k">Remove</p>
+          <h1 class="title step__title" id="h-remove" tabindex="-1">Remove The Curve Terminal</h1>
+          <p class="lede step__lede">This removes the app, its shortcuts and its startup entry from this computer.</p>
+          <div class="opts">
+            <div class="opt opt--tall">
+              <span class="opt__txt">
+                <span class="opt__label" id="o-data">Also delete my settings</span>
+                <span class="opt__desc">Deletes the app's storage folder in your Windows profile. This cannot be undone.</span>
+              </span>
+              <button class="switch" type="button" role="switch" aria-labelledby="o-data" data-opt="removeData"><span class="switch__knob"></span></button>
+            </div>
+          </div>
+        </div>
+        <div class="step__foot">
+          <button class="btn btn--quiet" type="button" data-act="cancel">Cancel</button>
+          <button class="btn btn--primary" type="button" data-act="remove">Remove</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

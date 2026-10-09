@@ -1,0 +1,179 @@
+/* ==========================================================================
+   The Curve Terminal Setup
+   The night sky behind everything, the mark on the left, one glass panel
+   on the right holding the current step.
+   ========================================================================== */
+
+.frame {
+  position: fixed;
+  top: var(--tb-h);
+  left: 0; right: 0; bottom: 0;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+/* --- The art side --------------------------------------------------------- */
+
+.art {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 0 24px 36px;
+}
+.art__mark { width: 150px; height: 150px; margin-bottom: 18px; }
+.art__name {
+  padding-left: 0.24em;
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.art__by {
+  padding-left: 0.26em;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.art__by span { color: var(--text-dim); }
+.art__ver { margin-top: 14px; }
+
+/* --- The panel ------------------------------------------------------------ */
+
+.panel-main {
+  margin: 14px 24px 24px 0;
+  border-radius: var(--r-overlay);
+  padding: 26px 32px 22px;
+  display: flex;
+  min-height: 0;
+}
+
+.step { display: none; flex-direction: column; width: 100%; min-height: 0; }
+.step.is-on { display: flex; animation: stepIn 520ms var(--ease-arrive) both; }
+@keyframes stepIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.step__body { flex: 1; min-height: 0; overflow-y: auto; }
+.step__body--center { display: grid; align-content: center; }
+.step__k { margin-bottom: 12px; }
+.step__title { font-size: 1.9rem; }
+.step__title:focus { outline: none; }
+.step__lede { margin-top: 12px; font-size: 1.04rem; max-width: 32em; }
+.step__note { margin-top: 22px; font-size: 0.86rem; color: var(--text-faint); max-width: 34em; }
+.step__path { margin-top: 18px; font-size: 0.78rem; color: var(--text-dim); word-break: break-all; }
+.step__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-top: 18px;
+  margin-top: 16px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.facts { margin-top: 24px; display: grid; gap: 0; }
+.facts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 0.92rem;
+  color: var(--text-dim);
+}
+.facts li:last-child { border-bottom: 1px solid var(--hairline-soft); }
+
+/* --- The folder field ----------------------------------------------------- */
+
+.field { margin-top: 18px; display: grid; gap: 8px; }
+.field__label { font-family: var(--display); font-size: 0.9rem; font-weight: 600; }
+.field__row { display: flex; gap: 8px; }
+.field__input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background-color: var(--glass-1);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  text-overflow: ellipsis;
+}
+.field__input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.field__hint { font-size: 0.84rem; color: var(--text-faint); }
+
+/* --- Options ---------------------------------------------------------------- */
+
+.opts { margin-top: 12px; display: grid; }
+.opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+.opt:first-child { border-top: 0; }
+.opt--tall { padding: 14px 0; }
+.opt__txt { display: grid; gap: 3px; }
+.opt__label { font-family: var(--display); font-size: 0.92rem; font-weight: 560; color: var(--text); }
+.opt__desc { font-size: 0.86rem; color: var(--text-dim); }
+
+/* --- Progress ------------------------------------------------------------- */
+
+.prog { margin-top: 30px; display: grid; gap: 10px; }
+.prog__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.prog__pct { color: var(--text-dim); letter-spacing: 0.06em; }
+.prog__bar { position: relative; height: 2px; border-radius: 2px; overflow: hidden; background-color: rgb(255 255 255 / 0.12); }
+.prog__fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--text);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 160ms linear;
+}
+.prog__bytes { min-height: 1.4em; font-size: 0.72rem; color: var(--text-faint); }
+.prog__line {
+  margin-top: 26px;
+  min-height: 1.5em;
+  font-style: italic;
+  font-size: 0.94rem;
+  color: var(--text-dim);
+  transition: opacity 260ms ease-out;
+}
+.prog__line.is-swap { opacity: 0; }
+
+/* --- The end screen's countdown ------------------------------------------ */
+
+.count { display: grid; gap: 9px; margin-top: 14px; }
+.count__row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.count__text { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-dim); }
+.count__wait { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; }
+.count__fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--text-dim);
+  transform-origin: left center;
+  transition: transform 100ms linear;
+}
+.count.is-held .count__fill { background-color: var(--text-faint); }
+.count.is-held .count__wait { display: none; }
+
+/* the close button is held while files are being written */
+.tb__wbtn[disabled] { opacity: 0.3; cursor: not-allowed; }
+.tb__wbtn[disabled]:hover { background: none; color: var(--text-dim); }

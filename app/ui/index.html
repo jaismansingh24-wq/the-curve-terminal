@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Curve Terminal, a trading journal from The Curve, by s7ven.">
+  <title>The Curve Terminal</title>
+  <link rel="stylesheet" href="shared/css/fonts.css">
+  <link rel="stylesheet" href="shared/css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/boot.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body class="intro-running">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- The title bar: the window is frameless, so these are its own controls -->
+  <header class="tb" data-tauri-drag-region>
+    <div class="tb__brand" data-tauri-drag-region>
+      <svg class="tb__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.34" stroke-width="2.6"/>
+        <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linecap="round"/>
+        <circle cx="50" cy="14.5" r="4.8" fill="currentColor"/>
+      </svg>
+      <span class="tb__name" data-tauri-drag-region>The Curve <span data-tauri-drag-region>Terminal</span></span>
+    </div>
+    <div class="tb__drag" data-tauri-drag-region></div>
+    <div class="tb__tools">
+      <button class="ibtn" type="button" data-open="keys" aria-label="Keyboard shortcuts" data-tip="Shortcuts  ?">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="2"/><path d="M4.5 7h.01M7 7h.01M9.5 7h.01M12 7h.01M5.5 9.75h5"/></svg>
+      </button>
+      <button class="ibtn" type="button" data-open="settings" aria-label="Settings" aria-keyshortcuts="Control+Comma" data-tip="Settings  Ctrl+,">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6M12 4.5h1.5M2.5 11.5h1.5M7.5 11.5h6"/><circle cx="10.25" cy="4.5" r="1.75"/><circle cx="5.75" cy="11.5" r="1.75"/></svg>
+      </button>
+    </div>
+    <div class="tb__win">
+      <button class="tb__wbtn" type="button" data-win="min" aria-label="Minimise" data-tip="Minimise">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button class="tb__wbtn" type="button" data-win="max" aria-label="Maximise" data-tip="Maximise">
+        <svg class="tb__max" viewBox="0 0 10 10" aria-hidden="true"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+        <svg class="tb__restore" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5V0.5h7v7h-2" fill="none" stroke="currentColor" stroke-width="1"/><rect x="0.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button class="tb__wbtn tb__wbtn--close" type="button" data-win="close" aria-label="Close" data-tip="Close">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="page" id="page">
+    <main id="main" class="shell" tabindex="-1">
+
+      <section class="hero" aria-labelledby="greet">
+        <svg class="hero__mark arrive" viewBox="0 0 64 64" role="img" aria-label="The Curve">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.22"/>
+          <circle cx="32" cy="32" r="24.5" fill="none" stroke="currentColor" stroke-opacity="0.10"/>
+          <g stroke="currentColor" stroke-opacity="0.30" stroke-width="1" stroke-linecap="round"><path d="M18 50.5h4M28 50.5h4M38 50.5h4"/></g>
+          <g stroke="currentColor" stroke-opacity="0.14" stroke-width="1"><path d="M24 16v28M40 16v28"/></g>
+          <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="50" cy="14.5" r="3.1" fill="currentColor"/>
+        </svg>
+        <p class="kicker hero__kicker arrive"><span>Journal</span><span data-date>Today</span></p>
+        <h1 class="title hero__title arrive" id="greet" data-greet>Good evening.</h1>
+        <p class="lede hero__lede arrive">A quiet place to write down what you saw in the market, and read it back later. Everything you write stays on this computer.</p>
+        <p class="hero__clock num arrive">
+          <span data-clock-et>--:-- ET</span>
+          <span class="hero__local" data-clock-local></span>
+        </p>
+        <div class="hero__actions arrive">
+          <button class="btn btn--primary" type="button" data-open="soon" data-soon="entry" aria-keyshortcuts="N">New entry <kbd aria-hidden="true">N</kbd></button>
+          <button class="btn" type="button" data-open="soon" data-soon="journal" aria-keyshortcuts="J">Open journal <kbd aria-hidden="true">J</kbd></button>
+        </div>
+      </section>
+
+      <div class="desk arrive">
+        <section class="panel glass glass--quiet" aria-labelledby="recent-h">
+          <div class="panel__head">
+            <h2 class="kicker" id="recent-h">Recent entries</h2>
+            <span class="kicker panel__count" aria-label="No entries">0</span>
+          </div>
+          <div class="recent__empty">
+            <p class="recent__lead">Nothing written yet.</p>
+            <p class="recent__hint">The journal arrives in the next update. Entries you write will be listed here, newest first.</p>
+            <div class="recent__ghost" aria-hidden="true"><span></span><span></span><span></span></div>
+          </div>
+        </section>
+
+        <div class="side">
+          <section class="card glass glass--quiet" aria-labelledby="discord-h">
+            <h2 class="kicker card__k" id="discord-h">Discord status</h2>
+            <p class="card__v"><span class="card__dot" data-presence-dot aria-hidden="true"></span><span data-presence-title>Looking for Discord</span></p>
+            <p class="card__p" data-presence-text>Checking whether the Discord app is open on this computer.</p>
+            <div class="card__act"><button class="link" type="button" data-open="settings" data-focus="discord">Change in settings</button></div>
+          </section>
+
+          <section class="card glass glass--quiet" aria-labelledby="build-h">
+            <h2 class="kicker card__k" id="build-h">This build</h2>
+            <p class="card__v num">Version <span data-version>0.1.0</span></p>
+            <p class="card__p">The first build: the opening, the home screen and settings. The journal comes next.</p>
+            <div class="card__act">
+              <button class="link" type="button" data-open="whatsnew">What's new</button>
+              <button class="link" type="button" data-link="site">thecurve.in</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot shell arrive">
+      <p class="foot__disc">Educational material, not investment advice. <button class="link" type="button" data-open="disclaimer">Read the disclaimer</button></p>
+      <nav class="foot__nav" aria-label="About this app">
+        <button class="link" type="button" data-open="privacy">Privacy</button>
+        <button class="link" type="button" data-open="terms">Terms</button>
+        <button class="link" type="button" data-open="whatsnew">What's new</button>
+        <button class="link" type="button" data-link="discord">Community</button>
+      </nav>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.1.0</span> &middot; by s7ven</p>
+    </footer>
+  </div>
+
+  <!-- The opening: a tape prints the curve, the mark forms, the app arrives -->
+  <div class="intro" id="intro">
+    <canvas class="intro__c" aria-hidden="true"></canvas>
+    <div class="intro__tape" aria-hidden="true">
+      <span class="intro__time">--:--:--.--- ET</span>
+      <span class="intro__count">Print 0 / 9</span>
+    </div>
+    <div class="intro__word" aria-hidden="true">
+      <p class="intro__name">The Curve Terminal</p>
+      <p class="intro__by">by <span>s7ven</span></p>
+    </div>
+    <div class="intro__load" role="progressbar" aria-label="Loading The Curve Terminal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="intro__row"><span class="intro__step">Starting</span><span class="intro__pct">0%</span></div>
+      <div class="intro__bar"><div class="intro__fill"></div></div>
+      <p class="intro__line" aria-hidden="true"></p>
+    </div>
+    <p class="intro__skip" aria-hidden="true">Click or press any key to skip</p>
+  </div>
+
+  <!-- Panels ------------------------------------------------------------- -->
+
+  <dialog class="dlg" id="dlg-soon" aria-labelledby="soon-h">
+    <div class="dlg__box dlg__box--small glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker" data-soon-kicker>Journal</p>
+          <h2 class="title dlg__title" id="soon-h">Arrives in the next update</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body">
+        <p>This first build sets up the app itself: the opening, the home screen and settings. The journal is the next thing to be built.</p>
+        <p>There is no date yet. When it lands, What's new will say so.</p>
+      </div>
+      <div class="dlg__foot"><button class="btn" type="button" data-close>Close</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-settings" aria-labelledby="settings-h">
+    <div class="dlg__box glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">Settings</p>
+          <h2 class="title dlg__title" id="settings-h">Make it yours</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body">
+
+        <div class="st__group" role="group" aria-labelledby="st-reading">
+          <h3 class="kicker st__h" id="st-reading">Reading</h3>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-text">Text size</span><span class="st__desc">Scales all the text and controls.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-text" data-setting="text">
+              <button class="seg__opt seg__opt--s" type="button" role="radio" data-value="s" aria-label="Small">A</button>
+              <button class="seg__opt seg__opt--m" type="button" role="radio" data-value="m" aria-label="Medium">A</button>
+              <button class="seg__opt seg__opt--l" type="button" role="radio" data-value="l" aria-label="Large">A</button>
+              <button class="seg__opt seg__opt--xl" type="button" role="radio" data-value="xl" aria-label="Extra large">A</button>
+            </div>
+          </div>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-contrast">Contrast</span><span class="st__desc">Brightens the grey text and the hairlines.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-contrast" data-setting="contrast">
+              <button class="seg__opt" type="button" role="radio" data-value="0">Standard</button>
+              <button class="seg__opt" type="button" role="radio" data-value="1">More</button>
+              <button class="seg__opt" type="button" role="radio" data-value="2">Most</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="st__group" role="group" aria-labelledby="st-motion">
+          <h3 class="kicker st__h" id="st-motion">Motion</h3>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-motion">Movement</span><span class="st__desc">Reduce stills every animation and shows each screen in its final state.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-motion" data-setting="motion">
+              <button class="seg__opt" type="button" role="radio" data-value="system">Follow Windows</button>
+              <button class="seg__opt" type="button" role="radio" data-value="reduce">Reduce</button>
+              <button class="seg__opt" type="button" role="radio" data-value="full">Full</button>
+            </div>
+          </div>
+          <div class="st__row">
+            <div class="st__txt"><span class="st__label" id="lbl-intro">Opening animation</span><span class="st__desc">The tape that prints the curve when the app opens. Off shows the loading bar alone.</span></div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-intro" data-setting="intro"><span class="switch__knob"></span></button>
+          </div>
+        </div>
+
+        <div class="st__group" role="group" aria-labelledby="st-bg">
+          <h3 class="kicker st__h" id="st-bg">Background</h3>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-bg">Behind everything</span><span class="st__desc">The night sky shows tonight's moon in its real phase, worked out on this computer.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-bg" data-setting="bg">
+              <button class="seg__opt" type="button" role="radio" data-value="grid">Footprint grid</button>
+              <button class="seg__opt" type="button" role="radio" data-value="sky">Night sky</button>
+              <button class="seg__opt" type="button" role="radio" data-value="plain">Plain</button>
+            </div>
+          </div>
+          <div class="st__row" data-needs="sky">
+            <div class="st__txt"><span class="st__label" id="lbl-stars">Shooting stars</span><span class="st__desc">Now and then, one crosses the night sky. Never with reduced motion.</span></div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-stars" data-setting="stars"><span class="switch__knob"></span></button>
+          </div>
+        </div>
+
+        <div class="st__group" role="group" aria-labelledby="st-discord" id="st-discord-group">
+          <h3 class="kicker st__h" id="st-discord">Discord</h3>
+          <div class="st__row">
+            <div class="st__txt">
+              <span class="st__label" id="lbl-discord">Show activity on Discord</span>
+              <span class="st__desc">Shows "The Curve Terminal" and a short rotating line, such as "Reading an old trade", on your Discord profile. Never your trades or anything you write.</span>
+              <span class="kicker st__status" data-presence-status>Status: checking</span>
+            </div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-discord" data-setting="discord"><span class="switch__knob"></span></button>
+          </div>
+        </div>
+
+        <div class="st__group" role="group" aria-labelledby="st-system">
+          <h3 class="kicker st__h" id="st-system">Windows</h3>
+          <div class="st__row">
+            <div class="st__txt">
+              <span class="st__label" id="lbl-startup">Open when Windows starts</span>
+              <span class="st__desc">Opens The Curve Terminal when you sign in to Windows.</span>
+              <span class="kicker st__status" data-startup-status hidden></span>
+            </div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-startup" data-startup><span class="switch__knob"></span></button>
+          </div>
+        </div>
+
+      </div>
+      <div class="st__foot">
+        <p class="st__note">Settings are kept on this computer.</p>
+        <button class="btn btn--quiet" type="button" data-reset>Reset settings</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-keys" aria-labelledby="keys-h">
+    <div class="dlg__box dlg__box--small glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">Keyboard</p>
+          <h2 class="title dlg__title" id="keys-h">Shortcuts</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body">
+        <div class="keys">
+          <div class="keys__row"><span>New entry</span><span><kbd>N</kbd></span></div>
+          <div class="keys__row"><span>Open the journal</span><span><kbd>J</kbd></span></div>
+          <div class="keys__row"><span>Settings</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+          <div class="keys__row"><span>This list</span><span><kbd>?</kbd></span></div>
+          <div class="keys__row"><span>Close a panel</span><span><kbd>Esc</kbd></span></div>
+          <div class="keys__row"><span>Skip the opening</span><span><kbd>Any key</kbd></span></div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-whatsnew" aria-labelledby="news-h">
+    <div class="dlg__box glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">What's new</p>
+          <h2 class="title dlg__title" id="news-h">The first build</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.1.0</h3><span class="kicker">8 October 2026</span></div>
+        <ul>
+          <li>The opening: stars print one at a time like a tape, settle into the curve and form the mark. The loading bar under it shows real progress.</li>
+          <li>The home screen, with New York time first and your own time beside it.</li>
+          <li>Settings for text size, contrast, movement, the background (footprint grid, night sky or plain), the opening animation, Discord status and opening with Windows. All kept on this computer.</li>
+          <li>Discord status, which shows The Curve Terminal and a short line on your profile. Never your trades.</li>
+          <li>Setup with a choice of folder, shortcuts, opening with Windows and the readme; and a matching uninstaller.</li>
+          <li>The journal itself arrives in the next update.</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-privacy" aria-labelledby="privacy-h">
+    <div class="dlg__box dlg__box--wide glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">Privacy &middot; What is stored and sent</p>
+          <h2 class="title dlg__title" id="privacy-h">What this app keeps, and what it sends</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body prose">
+        <h3>On this computer</h3>
+        <ul>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, and whether Discord status is on.</li>
+          <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
+          <li>Both live in the app's own storage, in your Windows profile at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>. Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
+          <li>When the journal arrives, its entries will be stored on this computer too. This page will say exactly where before that update ships.</li>
+        </ul>
+        <h3>In Windows</h3>
+        <ul>
+          <li>If "Open when Windows starts" is on: one value named <code>TheCurveTerminal</code> under <code>HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</code>, pointing at the app. Switching it off removes it.</li>
+          <li>Setup records the app under <code>HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\TheCurveTerminal</code>, so it appears in Installed apps and can be removed from there.</li>
+        </ul>
+        <h3>What leaves this computer</h3>
+        <ul>
+          <li><strong>Discord status, while it is on. It is on by default.</strong> The app talks only to the Discord app already running on this computer. Discord then shows on your profile: "The Curve Terminal", one short line from a fixed list of twenty (for example "Reading an old trade"), how long the app has been open, and a button that links to thecurve.in. Anyone who can see your Discord activity sees this. Discord's own activity privacy settings apply.</li>
+          <li>The status never includes your trades, notes, settings or anything you write. The lines are chosen at random and do not describe what you are doing.</li>
+          <li>To stop it, switch off "Show activity on Discord" in Settings. The status clears straight away.</li>
+          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. The app makes no network requests of its own.</li>
+          <li>The links to thecurve.in and the Discord community open in your browser, and only when you press them.</li>
+        </ul>
+        <h3>Removing it</h3>
+        <ul>
+          <li>Uninstalling from Installed apps removes the app, its shortcuts and its startup entry. Tick "Also delete my settings" to remove its storage folder as well.</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-terms" aria-labelledby="terms-h">
+    <div class="dlg__box dlg__box--wide glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">Terms</p>
+          <h2 class="title dlg__title" id="terms-h">Terms of use</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body prose">
+        <h3>Who makes it</h3>
+        <p>The Curve Terminal is made by s7ven (Jaisman), who writes and builds The Curve. There is no company behind it. It is free to use.</p>
+        <h3>Education, not advice</h3>
+        <p>It is educational material and a place to keep your own notes. It is not investment, financial, legal or tax advice, and not a recommendation. The disclaimer, linked at the foot of the home screen, applies in full.</p>
+        <h3>As it is</h3>
+        <p>The app is provided as it is, without warranty of any kind. It can contain mistakes. When the journal arrives, keep your own copy of anything you cannot afford to lose.</p>
+        <h3>Your data</h3>
+        <p>What you keep in the app stays on your computer. The Privacy panel lists every item it stores and the one thing it sends.</p>
+        <h3>Discord</h3>
+        <p>Discord status uses the Discord app on your computer. Discord is a separate service with its own terms and privacy policy.</p>
+        <h3>Changes</h3>
+        <p>These terms can change with an update. When they do, What's new will say so.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-disclaimer" aria-labelledby="disc-h">
+    <div class="dlg__box dlg__box--wide glass">
+      <div class="dlg__head">
+        <div>
+          <p class="kicker">Disclaimer</p>
+          <h2 class="title dlg__title" id="disc-h">Not advice, and says so</h2>
+        </div>
+        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="dlg__body prose" data-disclaimer>
+        <p>The Curve Terminal is an educational tool from The Curve. It is not investment, financial, legal or tax advice, not a recommendation, and not a solicitation to buy or sell any instrument.</p>
+        <h3>No advisory relationship</h3>
+        <p>Using this app does not create an advisory relationship of any kind. The author is not a research analyst registered with the Securities and Exchange Board of India, and is not registered or licensed as an investment adviser or broker in any jurisdiction.</p>
+        <h3>No strategies, by design</h3>
+        <p>The Terminal keeps what you write and shows what happened. It does not offer entry or exit rules, signals, targets or trade recommendations. If anything in it seems to suggest otherwise, report it on the Discord community so it can be corrected.</p>
+        <h3>Risk</h3>
+        <p>Trading futures and options involves substantial risk of loss, including losses that exceed the amount deposited for leveraged instruments. How a market behaved before says nothing certain about how it will behave next.</p>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>

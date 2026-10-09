@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["app/src-tauri", "installer/src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["s7ven"]
+license = "Proprietary"
+repository = "https://thecurve.in"
+
+# Small, fast release binaries: the app ships inside setup.exe, so every
+# megabyte saved is one the reader does not download.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

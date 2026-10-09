@@ -1,0 +1,5 @@
+# Build output lives outside OneDrive: the target folder holds tens of
+# thousands of files that OneDrive would otherwise try to sync (and lock
+# mid-build). Change the path here if this folder moves to another machine.
+[build]
+target-dir = "C:/Users/jaism/.cache/the-curve-terminal/target"

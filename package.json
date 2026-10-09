@@ -1,0 +1,20 @@
+{
+  "name": "the-curve-terminal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Curve Terminal, a trading journal from The Curve, by s7ven.",
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-shared.mjs",
+    "dev": "node scripts/sync-shared.mjs && cd app && tauri dev",
+    "dev:setup": "node scripts/sync-shared.mjs && cd installer && tauri dev",
+    "preview": "node scripts/sync-shared.mjs && node scripts/serve.mjs app",
+    "preview:setup": "node scripts/sync-shared.mjs && node scripts/serve.mjs installer",
+    "check": "node scripts/sync-shared.mjs && node scripts/check.mjs",
+    "icons": "node scripts/icons.mjs",
+    "release": "node scripts/release.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
