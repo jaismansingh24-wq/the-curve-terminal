@@ -172,9 +172,18 @@ fn plain(dir: &Path, e: io::Error) -> String {
     }
 }
 
-/// An open app holds its own file. Say so before touching anything.
+/// An open app holds its own file. Say so before touching anything. A copy
+/// closed a moment ago can hold it for a second or two while it shuts down,
+/// so wait up to five seconds for it to let go before deciding it is open.
 fn in_use(exe: &Path) -> bool {
-    exe.exists() && fs::OpenOptions::new().write(true).open(exe).is_err()
+    let locked = || exe.exists() && fs::OpenOptions::new().write(true).open(exe).is_err();
+    for _ in 0..10 {
+        if !locked() {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(500));
+    }
+    locked()
 }
 
 fn start_menu_link(app: &AppHandle) -> Option<PathBuf> {
