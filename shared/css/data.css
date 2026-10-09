@@ -13,6 +13,20 @@
 /* bars for results in the stats: SVG bars and horizontal bars */
 .bar--up { fill: var(--bid); fill-opacity: 0.75; }
 .bar--down { fill: var(--ask); fill-opacity: 0.75; }
+.seg--up { fill: var(--bid); }
+.seg--down { fill: var(--ask); }
+
+/* the calendar on the Stats page: four flat steps by the day's size, never
+   a blend; the sign is always written in the cell as well */
+.heat--up-1 { background-color: rgb(47 163 122 / 0.10); border-color: rgb(47 163 122 / 0.25); }
+.heat--up-2 { background-color: rgb(47 163 122 / 0.18); border-color: rgb(47 163 122 / 0.32); }
+.heat--up-3 { background-color: rgb(47 163 122 / 0.28); border-color: rgb(47 163 122 / 0.42); }
+.heat--up-4 { background-color: rgb(47 163 122 / 0.40); border-color: rgb(47 163 122 / 0.55); }
+.heat--down-1 { background-color: rgb(196 69 60 / 0.10); border-color: rgb(196 69 60 / 0.25); }
+.heat--down-2 { background-color: rgb(196 69 60 / 0.18); border-color: rgb(196 69 60 / 0.32); }
+.heat--down-3 { background-color: rgb(196 69 60 / 0.28); border-color: rgb(196 69 60 / 0.42); }
+.heat--down-4 { background-color: rgb(196 69 60 / 0.40); border-color: rgb(196 69 60 / 0.55); }
+
 .bar-h { display: block; height: 100%; border-radius: 2px; }
 .bar-h--up { background-color: var(--bid); }
 .bar-h--down { background-color: var(--ask); }

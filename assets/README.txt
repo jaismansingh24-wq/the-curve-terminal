@@ -2,7 +2,7 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.3.1, 9 October 2026.
+Version 0.3.2, 9 October 2026.
 
 
 WHAT IT IS

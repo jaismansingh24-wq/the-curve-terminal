@@ -4,6 +4,23 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.2 · 9 October 2026
+
+- The Stats page is reorganised. Six charts come first, in equal panels:
+  equity and drawdown, daily results, winners and losers (a ring),
+  R-multiples, rolling expectancy and results by time of day. Their axes
+  are labelled and drawn at the size of the panel, so the text is never
+  stretched.
+- Hover any chart, bar, ring segment, table row or calendar day for the
+  figures under the pointer.
+- Key figures sit in a row of eight equal tiles. The When and how cards
+  are all the same size and scroll inside, showing at least five rows
+  each. The prop account cards line their labels and values up in two
+  columns.
+- The calendar moves to the foot of the Stats page, in green and red by
+  the size of each day, with the sign always written. The Calendar page
+  itself stays in greys.
+
 ## 0.3.1 · 9 October 2026
 
 - Simulated entries and accounts, generated for trying the app out, are
