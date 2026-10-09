@@ -6,7 +6,7 @@
 import * as J from './journal.js';
 import * as settings from './settings.js';
 import * as C from './stats-calc.js';
-import { money, el, trades } from './format.js';
+import { money, el, trades, simTag } from './format.js';
 
 let editing = null;   /* the account in the form, or null for a new one */
 const KIND = { evaluation: 'Evaluation', funded: 'Funded', personal: 'Personal' };
@@ -28,7 +28,9 @@ function list() {
     const head = el('div', 'panel__head');
     const h = el('h2', 'acc__name', a.name);
     if (a.firm) h.appendChild(el('span', '', ' · ' + a.firm));
-    head.append(h, el('span', 'kicker', KIND[a.kind] || 'Account'));
+    const kind = el('span', 'kicker', KIND[a.kind] || 'Account');
+    if (J.isSim(a)) { kind.textContent = ''; kind.append(simTag(), document.createTextNode(' ' + (KIND[a.kind] || 'Account'))); }
+    head.append(h, kind);
     card.appendChild(head);
 
     const facts = el('dl', 'acc__facts');
@@ -114,6 +116,15 @@ async function submit(ev) {
   const name = f.name.value.trim();
   const err = f.querySelector('[data-acc-err]');
   if (!name) { err.textContent = 'Give the account a name. Entries find it by that name.'; f.name.setAttribute('aria-invalid', 'true'); f.name.focus(); return; }
+  /* the drawdown is an amount (2,000), not the balance line (48,000) */
+  const start = numOrNull(f.start.value), trailing = numOrNull(f.trailing.value);
+  if (trailing !== null && start !== null && start > 0 && trailing >= start * 0.5) {
+    err.textContent = 'The trailing drawdown is how far the balance may fall, such as 2,000 on a 50,000 account. ' +
+      trailing.toLocaleString('en-GB') + ' looks like the line itself; enter ' + (start - trailing > 0 ? (start - trailing).toLocaleString('en-GB') : 'the amount') + ' instead.';
+    f.trailing.setAttribute('aria-invalid', 'true');
+    f.trailing.focus();
+    return;
+  }
   const clash = J.accountByName(name);
   if (clash && (!editing || clash.id !== editing.id)) { err.textContent = 'There is already an account called ' + name + '.'; f.name.focus(); return; }
   const a = {

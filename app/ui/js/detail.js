@@ -6,7 +6,7 @@ import * as J from './journal.js';
 import * as settings from './settings.js';
 import { longDateET, shortDateET, timeBoth, duration } from './time.js';
 import { formatPrice, CHECKED } from './instruments.js';
-import { money, unit, tone, el } from './format.js';
+import { money, unit, tone, el, simTag } from './format.js';
 import { resultNode, dots } from './home.js';
 import { go } from './router.js';
 
@@ -55,7 +55,12 @@ export function renderEntry(id) {
   const r = J.result(e, s);
   const p = (v) => (Number.isFinite(v) ? '@ ' + formatPrice(e.instrument, v) : null);
 
-  document.querySelector('[data-entry-kicker]').textContent = 'Journal · ' + longDateET(r.at);
+  document.querySelector('[data-entry-kicker]').textContent = 'Journal · ' + (J.isSim(e) ? 'Simulated entry · ' : '') + longDateET(r.at);
+  if (J.isSim(e)) {
+    const n = el('p', 'simnote simnote--wide');
+    n.append(simTag(), document.createTextNode(' This entry is simulated: generated on real NQ prices, not a real trade.'));
+    box.appendChild(n);
+  }
   document.querySelector('[data-entry-title]').textContent = e.instrument + ' ' + e.direction + ', ' + e.contracts + (e.contracts === 1 ? ' contract' : ' contracts');
   const res = document.querySelector('[data-entry-result]');
   const costs = 'costs ' + money(r.costs, { sign: false }) + (r.costsFrom === 'default' ? ' (your default)' : r.costsFrom === 'none' ? ' (none recorded)' : '');

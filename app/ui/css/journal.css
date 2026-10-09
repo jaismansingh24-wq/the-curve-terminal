@@ -204,6 +204,28 @@ input[type="number"].inp::-webkit-inner-spin-button { opacity: 0.4; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hairline); font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); }
 
+/* --- Simulated: the label generated entries carry wherever they show ------- */
+
+.simtag {
+  display: inline-block;
+  margin: 0 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px dashed var(--text-faint);
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  vertical-align: 0.15em;
+  white-space: nowrap;
+}
+.simnote { margin-top: 12px; font-size: 0.86rem; line-height: 1.5; color: var(--text-dim); }
+.simnote .simtag { margin-left: 0; }
+.simnote--wide { grid-column: 1 / -1; margin: 0; }
+.simnote--banner { padding: 12px 16px; border: 1px dashed var(--hairline); border-radius: var(--r-panel); background-color: var(--glass-1); }
+
 /* --- Home: recent entries, last entry, profit and loss -------------------- */
 
 .rows { display: grid; }

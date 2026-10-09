@@ -4,7 +4,7 @@
 
 import * as J from './journal.js';
 import * as settings from './settings.js';
-import { money, unit, tone, trades, el, UNIT_LABEL } from './format.js';
+import { money, unit, tone, trades, el, UNIT_LABEL, simTag } from './format.js';
 import { shortDateET, timeBoth, boundaryText } from './time.js';
 import { formatPrice } from './instruments.js';
 
@@ -38,6 +38,7 @@ function recent(s) {
     a.href = '#/entry/' + e.id;
     a.appendChild(el('span', 'rowlink__when', shortDateET(r.at)));
     const what = el('span', 'rowlink__what', e.instrument + ' ' + SIDE[e.direction] + ' · ' + e.contracts + ' ');
+    if (J.isSim(e)) what.appendChild(simTag());
     what.appendChild(el('span', '', e.confluence));
     a.appendChild(what);
     a.appendChild(resultNode(e, r, s));
@@ -68,6 +69,7 @@ function last(s) {
   const wrap = el('div', 'last');
   const t = el('p', 'last__title', e.instrument + ' ');
   t.appendChild(el('span', '', SIDE[e.direction] + ', ' + e.contracts + (e.contracts === 1 ? ' contract' : ' contracts')));
+  if (J.isSim(e)) t.appendChild(simTag());
   wrap.appendChild(t);
   wrap.appendChild(el('p', 'last__prices', '@ ' + formatPrice(e.instrument, e.entryPrice) + '  →  @ ' + formatPrice(e.instrument, e.exitPrice)));
   const res = el('p', 'last__res');
@@ -106,6 +108,8 @@ function pl(s) {
     row.appendChild(v);
     box.appendChild(row);
   }
+  const sims = J.simCount();
+  if (sims) box.appendChild(el('p', 'simnote', 'Includes ' + sims + ' simulated ' + (sims === 1 ? 'entry' : 'entries') + ': generated, not real trades.'));
 }
 
 export function renderHome() {

@@ -41,6 +41,14 @@ export const UNIT_LABEL = { money: 'Money', ticks: 'Ticks', points: 'Points', r:
 /* "3 trades", "1 trade" */
 export const trades = (n) => int(n) + (n === 1 ? ' trade' : ' trades');
 
+/* the label every simulated entry and account carries wherever it shows */
+export function simTag() {
+  const t = document.createElement('span');
+  t.className = 'simtag';
+  t.textContent = 'Simulated';
+  return t;
+}
+
 /* text for an element, safely: everything the journal shows goes in as text */
 export function el(tag, cls, text) {
   const n = document.createElement(tag);

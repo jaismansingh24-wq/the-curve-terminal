@@ -97,6 +97,21 @@ export async function removeAccount(id) {
   await persist();
 }
 
+/* Simulated entries and accounts (generated, not real trades) carry
+   simulated: true, and say so wherever they are shown. They can all be
+   removed at once from Settings. */
+export const isSim = (x) => !!(x && x.simulated);
+export const simCount = (list = entries) => list.filter(isSim).length;
+
+export async function removeSimulated() {
+  ready();
+  const n = entries.filter(isSim).length + accounts.filter(isSim).length;
+  entries = entries.filter((e) => !isSim(e));
+  accounts = accounts.filter((a) => !isSim(a));
+  await persist();
+  return n;
+}
+
 /* the entries on one account (matched by its name, as typed on the entry) */
 export const entriesFor = (account) => entries.filter((e) => e.account && e.account.trim().toLowerCase() === account.name.trim().toLowerCase());
 

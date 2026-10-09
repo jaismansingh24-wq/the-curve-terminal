@@ -8,7 +8,7 @@ import * as settings from './settings.js';
 import * as C from './stats-calc.js';
 import { DEFS } from './stats-defs.js';
 import * as charts from './charts.js';
-import { money, unit as fmtUnit, tone, el, trades, UNIT_LABEL, int } from './format.js';
+import { money, unit as fmtUnit, tone, el, trades, UNIT_LABEL, int, simTag } from './format.js';
 import { tradingDay, weekOf, monthOf, boundaryText, shortDateET, longDateET, duration } from './time.js';
 import { SOURCE as NEWS_SOURCE, CHECKED as NEWS_CHECKED } from './news.js';
 
@@ -131,6 +131,12 @@ export function renderStats() {
     : 'No entries match. Stats are worked out from your entries as soon as there are some.';
   document.querySelector('[data-stats-boundary]').textContent = boundaryText(s.dayStart) + ' Moving that boundary changes every daily figure.';
   if (!st.n) return;
+  const sims = T.filter((t) => J.isSim(t.e)).length;
+  if (sims) {
+    const n = el('p', 'simnote simnote--banner');
+    n.append(simTag(), document.createTextNode(' ' + (sims === st.n ? 'All ' + st.n : sims + ' of these ' + st.n) + ' trades are simulated: generated, not real. Every figure below is worked out from them. Settings, under Journal, can remove them.'));
+    box.appendChild(n);
+  }
 
   const R = st.results, K = st.risk, X = st.execution, W = st.when, Q = st.consistency;
   const f = (v) => fmtUnit(v, u);
@@ -243,7 +249,7 @@ export function renderStats() {
       'After a loss: ' + (W.sizeAfter.loss !== null ? W.sizeAfter.loss.toFixed(1) + ' contracts' : 'none yet') + ' (n ' + W.sizeAfter.nLoss + ').',
       'After a win: ' + (W.sizeAfter.win !== null ? W.sizeAfter.win.toFixed(1) + ' contracts' : 'none yet') + ' (n ' + W.sizeAfter.nWin + ').'] }),
     card('news', { wide: true, n: st.n, body: pair(W.news.yes, W.news.no), lines: [
-      !W.news.yes.n ? 'No trades near a high-impact release.' : null,
+      !W.news.yes.n && W.news.no.n ? 'No trades near a high-impact release, of the ' + W.news.no.n + ' the app can tell about.' : null,
       W.news.unknown ? W.news.unknown + ' trades are outside the calendar and not marked on the entry, so they count as unknown.' : null,
       'Releases from ' + NEWS_SOURCE + ', checked ' + NEWS_CHECKED + '.'] }),
     card('afterLimit', { wide: true, n: st.n, body: pair(W.afterLimit.flagged, W.afterLimit.auto || W.afterLimit.within), lines: [
@@ -309,6 +315,7 @@ export function renderStats() {
     if (r.goal) row('Profit target', el('span', '', pctf(Math.max(0, r.goal.progress)) + ' of ' + money(r.goal.target, { sign: false })));
     const c = card('propRules', { n: r.n, body: rows });
     c.querySelector('.stat__name').textContent = a.name + (a.firm ? ' · ' + a.firm : '');
+    if (J.isSim(a)) c.querySelector('.stat__head').insertBefore(simTag(), c.querySelector('.stat__n'));
     return c;
   });
   const spent = accs.reduce((x, a) => x + C.account(a, s).spent, 0), paid = accs.reduce((x, a) => x + C.account(a, s).paid, 0);

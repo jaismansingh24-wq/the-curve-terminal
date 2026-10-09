@@ -4,6 +4,16 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.1 · 9 October 2026
+
+- Simulated entries and accounts, generated for trying the app out, are
+  labelled as simulated wherever they appear: on the home screen, in
+  Overview, on the entry's own page, in Stats, the Calendar and Accounts.
+- Settings, under Journal, can remove every simulated entry and account at
+  once. Your own entries are not touched.
+- The account form says plainly that the trailing drawdown is an amount,
+  such as 2,000, and catches a balance line typed there by mistake.
+
 ## 0.3.0 · 9 October 2026
 
 Stats and accounts.

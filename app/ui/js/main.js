@@ -26,7 +26,7 @@ import { initAccounts, renderAccounts } from './accounts.js';
 const S = settings.load();
 settings.apply();
 
-let version = '0.3.0';
+let version = '0.3.1';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -64,6 +64,19 @@ document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('clic
 document.querySelectorAll('[data-reveal]').forEach((b) => b.addEventListener('click', () => invoke('journal_reveal').catch(() => {})));
 const revealRow = document.querySelector('[data-reveal-row]');
 if (revealRow) revealRow.hidden = !isNative;
+
+/* Settings: remove every simulated entry and account in one go */
+function syncSimRow() {
+  const row = document.querySelector('[data-sim-row]');
+  const n = J.simCount(), a = J.allAccounts().filter(J.isSim).length;
+  row.hidden = !n && !a;
+  document.querySelector('[data-sim-desc]').textContent = n + ' simulated ' + (n === 1 ? 'entry' : 'entries') + (a ? ' and ' + a + ' simulated ' + (a === 1 ? 'account' : 'accounts') : '') + ', generated for trying the app out. Your own entries are not touched.';
+}
+document.querySelector('[data-remove-sim]').addEventListener('click', () => {
+  const n = J.simCount();
+  dialogs.confirm(n + ' simulated ' + (n === 1 ? 'entry' : 'entries') + ' and any simulated accounts. Your own entries stay.', async () => { await J.removeSimulated(); }, 'Remove the simulated entries?');
+});
+J.onChange(syncSimRow);
 
 /* the title bar gains a hairline once the page scrolls under it */
 const page = document.getElementById('page');

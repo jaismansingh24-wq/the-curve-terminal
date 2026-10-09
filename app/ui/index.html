@@ -486,7 +486,7 @@
             <label class="f"><span class="f__label">Firm <span class="f__opt">optional</span></span><input class="inp" name="firm"></label>
             <label class="f"><span class="f__label">Kind</span><select class="inp" name="kind"><option value="evaluation">Evaluation</option><option value="funded">Funded</option><option value="personal">Personal</option></select></label>
             <label class="f"><span class="f__label">Starting balance, $</span><input class="inp inp--num" name="start" inputmode="decimal"></label>
-            <label class="f"><span class="f__label">Trailing drawdown, $</span><input class="inp inp--num" name="trailing" inputmode="decimal"><span class="f__hint">How far the balance may fall below its peak.</span></label>
+            <label class="f"><span class="f__label">Trailing drawdown, $</span><input class="inp inp--num" name="trailing" inputmode="decimal"><span class="f__hint">The amount the balance may fall below its peak, such as 2,000. Not the balance line itself.</span></label>
             <label class="f"><span class="f__label">The drawdown trails</span><select class="inp" name="trailingType"><option value="eod">At the end of each day</option><option value="intraday">Intraday (closed trades here)</option><option value="static">Not at all (static)</option></select></label>
             <label class="f f--check"><input type="checkbox" name="lockAtStart"><span class="f__label">Stops trailing at the starting balance</span></label>
             <label class="f"><span class="f__label">Daily loss limit, $</span><input class="inp inp--num" name="dailyLimit" inputmode="decimal"></label>
@@ -515,7 +515,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.3.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.3.1</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -606,6 +606,10 @@
           <div class="st__row">
             <div class="st__txt"><label class="st__label" for="st-fees">Monthly platform and data fees</label><span class="st__desc">In dollars a month. Counted in the cost per round turn and per day.</span></div>
             <input class="inp inp--num inp--sm st__num" id="st-fees" inputmode="decimal" data-setting-num="monthlyFees" placeholder="0.00">
+          </div>
+          <div class="st__row" data-sim-row hidden>
+            <div class="st__txt"><span class="st__label">Simulated entries</span><span class="st__desc" data-sim-desc>Entries generated for trying the app out, not real trades.</span></div>
+            <button class="btn btn--quiet" type="button" data-remove-sim>Remove them</button>
           </div>
           <div class="st__row" data-reveal-row hidden>
             <div class="st__txt"><span class="st__label">The journal file</span><span class="st__desc">Everything you write is in one file on this computer. Copy it somewhere safe to keep a backup.</span></div>
@@ -733,6 +737,12 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.3.1</h3><span class="kicker">9 October 2026</span></div>
+        <ul>
+          <li>Simulated entries and accounts, generated for trying the app out, are labelled as simulated wherever they appear: on the home screen, in Overview, on the entry's own page, in Stats, the Calendar and Accounts.</li>
+          <li>Settings, under Journal, can remove every simulated entry and account at once. Your own entries are not touched.</li>
+          <li>The account form says plainly that the trailing drawdown is an amount, such as 2,000, and catches a balance line typed there by mistake.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.3.0</h3><span class="kicker">9 October 2026</span></div>
         <ul>
           <li>Stats: forty figures from your entries, in seven sections: results, risk and drawdown, execution, when and how, consistency, reliability, and prop accounts and costs. Net of costs by default, in money, ticks, points or R.</li>
