@@ -66,7 +66,7 @@ export function renderOverview() {
   document.querySelector('[data-result-head]').textContent = 'Result, ' + (s.basis === 'gross' ? 'gross' : 'net') + (s.units === 'money' ? '' : ', ' + UNIT_LABEL[s.units].toLowerCase());
   const empty = document.querySelector('[data-over-empty]');
   empty.hidden = rows.length > 0;
-  empty.textContent = all.length ? 'No entries match these filters.' : J.hiddenNote() || 'No entries yet. New entry, in the menu, starts your journal.';
+  empty.textContent = all.length ? 'No entries match these filters.' : J.emptyNote() || 'No entries yet. New entry, in the menu, starts your journal.';
   document.querySelector('[data-over-count]').textContent = all.length
     ? (rows.length === all.length ? trades(all.length) + ', newest first.' : rows.length + ' of ' + trades(all.length) + ' match these filters.')
     : 'Every entry, newest first.';

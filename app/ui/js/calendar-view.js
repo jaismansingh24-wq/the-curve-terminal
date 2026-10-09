@@ -34,7 +34,7 @@ export function renderCalendar() {
   sum.replaceChildren();
   if (monthTrades.length) {
     sum.append(document.createTextNode(trades(monthTrades.length) + ', '), el('span', tone(total), fmtUnit(total, s.units)), document.createTextNode(' for the month.'));
-  } else sum.textContent = 'No trades this month.' + (J.hiddenNote() ? ' ' + J.hiddenNote() : '');
+  } else sum.textContent = 'No trades this month.' + (J.emptyNote() ? ' ' + J.emptyNote() : '');
   const sims = monthTrades.filter((t) => J.isSim(t.e)).length;
   document.querySelector('[data-cal-note]').textContent = boundaryText(s.dayStart) + (sims ? ' ' + sims + ' of the trades this month are simulated: generated, not real.' : '');
 }

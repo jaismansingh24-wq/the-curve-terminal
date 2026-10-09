@@ -28,6 +28,8 @@
   align-items: stretch;
 }
 .cpanel { padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* charts sit on a plain surface: nothing from the background shows through */
+.cpanel.glass--quiet { background-color: var(--ink-raised); }
 .cpanel__cap { font-size: 0.82rem; line-height: 1.45; color: var(--text-dim); margin-top: auto; }
 .chartbox { position: relative; height: 230px; min-width: 0; }
 .chartbox .chart { display: block; overflow: visible; }

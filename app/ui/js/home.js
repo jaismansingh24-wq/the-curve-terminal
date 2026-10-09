@@ -31,7 +31,7 @@ function recent(s) {
   const items = J.all().slice(0, 6);
   list.replaceChildren();
   empty.hidden = items.length > 0;
-  empty.textContent = J.hiddenNote() || 'Nothing written yet. Entries you write are listed here, newest first.';
+  empty.textContent = J.emptyNote() || 'Nothing written yet. Entries you write are listed here, newest first.';
   for (const e of items) {
     const r = J.result(e, s);
     const li = el('li');
@@ -56,7 +56,7 @@ function last(s) {
   if (!e) {
     link.hidden = true;
     const wrap = el('div', 'last');
-    wrap.appendChild(el('p', 'empty', J.hiddenNote() || 'No entries yet. Your last entry shows here, with its result.'));
+    wrap.appendChild(el('p', 'empty', J.emptyNote() || 'No entries yet. Your last entry shows here, with its result.'));
     const a = el('a', 'btn btn--primary', 'New entry');
     a.href = '#/new';
     const row = el('div', 'form__foot'); row.appendChild(a);

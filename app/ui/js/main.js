@@ -27,7 +27,7 @@ const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.3.4';
+let version = '0.3.5';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -192,13 +192,20 @@ function appInfo() {
 }
 
 /* read the journal file; if a read fails, try twice more before saying so */
-let journalError = null;
-async function loadJournal() {
-  for (let i = 0; i < 3; i++) {
-    try { await J.load(); journalError = null; return; } catch (e) { journalError = e; }
-    await new Promise((r) => setTimeout(r, 700));
-  }
+let journalError = null, reading = null;
+function loadJournal() {
+  if (!reading) reading = (async () => {
+    for (let i = 0; i < 3; i++) {
+      try { await J.load(); journalError = null; return; } catch (e) { journalError = e; }
+      await new Promise((r) => setTimeout(r, 700));
+    }
+  })().finally(() => { reading = null; });
+  return reading;
 }
+/* moving to another page reads it again if it has not been read */
+window.addEventListener('hashchange', () => {
+  if (ready && J.persistent && !J.isLoaded()) loadJournal().then(() => { syncJournalRow(); refresh(); });
+});
 
 const steps = [
   { id: 'fonts', label: 'Fonts', run: () => Promise.all(FONTS.map((f) => document.fonts.load(f))) },

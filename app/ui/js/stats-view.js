@@ -172,7 +172,7 @@ export function renderStats() {
     ? trades(st.n) + (st.n > 1 ? ', closed between ' + shortDateET(st.from) + ' and ' + longDateET(st.to) : ', closed ' + longDateET(st.to)) + '. ' +
       (s.basis === 'gross' ? 'Gross, before costs.' : 'Net of costs.') + ' In ' + (u === 'r' ? 'R' : UNIT_LABEL[u].toLowerCase()) + (u === 'ticks' || u === 'points' ? ' per contract' : '') + '.' +
       (u === 'r' ? ' R counts only the ' + st.nv + ' trades with an initial stop.' : '')
-    : J.hiddenNote() || 'No entries match. Stats are worked out from your entries as soon as there are some.';
+    : J.emptyNote() || 'No entries match. Stats are worked out from your entries as soon as there are some.';
   document.querySelector('[data-stats-boundary]').textContent = boundaryText(s.dayStart) + ' Moving that boundary changes every daily figure.';
   if (!st.n) return;
   const sims = T.filter((t) => J.isSim(t.e)).length;

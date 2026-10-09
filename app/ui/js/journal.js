@@ -109,8 +109,10 @@ export async function removeAccount(id) {
 export const isSim = (x) => !!(x && x.simulated);
 /* counts across the whole file, shown or not */
 export const simCount = (list = entries) => list.filter(isSim).length;
-/* when they are switched off, every empty page says so rather than "nothing yet" */
-export const hiddenNote = () => {
+/* why a page is empty, when it is not because there are no entries: the
+   journal file has not been read yet, or the simulated entries are hidden */
+export const emptyNote = () => {
+  if (isNative && !loaded) return 'The journal file has not been read yet. Settings, under Journal, says why and can read it again.';
   const n = showSim ? 0 : entries.filter(isSim).length;
   return n ? n + ' simulated ' + (n === 1 ? 'entry is' : 'entries are') + ' hidden. Show simulated trades, in Settings under Journal, brings them back.' : '';
 };

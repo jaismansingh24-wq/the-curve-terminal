@@ -4,6 +4,14 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.5 · 9 October 2026
+
+- The charts on the Stats page sit on a plain surface, so the background
+  no longer shows through them.
+- If the journal file has not been read, an empty page says so instead of
+  looking like a journal with no entries, and moving to another page reads
+  it again.
+
 ## 0.3.4 · 9 October 2026
 
 - Settings, under Journal, has a Show simulated trades switch. Off leaves
