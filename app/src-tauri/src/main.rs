@@ -10,7 +10,7 @@ mod presence;
 mod startup;
 
 use std::time::Duration;
-use tauri::Manager;
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[derive(serde::Serialize)]
 struct AppInfo {
@@ -31,21 +31,47 @@ fn app_info(app: tauri::AppHandle) -> Result<AppInfo, String> {
 }
 
 fn main() {
-    tauri::Builder::default()
+    // --test (scripts/snap.mjs): a copy for checking the app, which runs
+    // beside the reader's own if it is open. It keeps Discord off, uses its
+    // own journal file, and keeps its window data apart, so it never
+    // touches the reader's copy.
+    let testing = std::env::args().any(|a| a == "--test");
+
+    let mut builder = tauri::Builder::default();
+    if !testing {
         // a second launch brings the open window forward instead
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.unminimize();
                 let _ = w.show();
                 let _ = w.set_focus();
             }
-        }))
+        }));
+    }
+    builder
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
+        .setup(move |app| {
             let handle = app.handle().clone();
-            let testing = std::env::args().any(|a| a == "--test");
             app.manage(journal::Files { testing });
             app.manage(presence::Presence::spawn(handle.clone(), testing));
+
+            let mut window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+                .title("The Curve Terminal")
+                .inner_size(1280.0, 820.0)
+                .min_inner_size(760.0, 540.0)
+                .center()
+                .resizable(true)
+                .decorations(false)
+                .shadow(true)
+                .visible(false)
+                .background_color(tauri::window::Color(10, 12, 16, 255))
+                .disable_drag_drop_handler()
+                .zoom_hotkeys_enabled(false);
+            if testing {
+                let dir = app.path().app_local_data_dir()?.join("test-window");
+                window = window.data_directory(dir);
+            }
+            window.build()?;
 
             // The window starts hidden so it never flashes white; the
             // interface shows it on its first frame. If that never comes,

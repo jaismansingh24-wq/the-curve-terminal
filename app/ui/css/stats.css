@@ -1,0 +1,133 @@
+/* ==========================================================================
+   Stats, Calendar and Accounts. Cards on calm glass, figures in mono with
+   tabular numbers, charts in greys and hairlines.
+   ========================================================================== */
+
+.stats-note { margin-top: 0; margin-bottom: 6px; }
+.stats { display: grid; gap: 34px; margin-top: 18px; max-width: 1480px; }
+
+.ssec__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 14px; }
+.ssec__title { font-size: 1.35rem; }
+.ssec__sub { color: var(--text-dim); font-size: 0.92rem; }
+
+.sgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* one figure */
+.stat { padding: 16px 18px 18px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.stat--wide { grid-column: span 2; }
+@media (max-width: 760px) { .stat--wide { grid-column: auto; } }
+.stat__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.stat__name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.2);
+  text-decoration-style: dotted;
+  text-underline-offset: 0.3em;
+}
+.stat__name:hover { text-decoration-color: var(--text); }
+.stat__name[aria-expanded="true"] { text-decoration-style: solid; }
+.stat__n { flex: none; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.stat__value { margin-top: 4px; font-family: var(--mono); font-size: 1.35rem; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat--key .stat__value { font-size: 1.7rem; }
+.stat__value--few { font-family: var(--display); font-size: 1.05rem; font-weight: 600; color: var(--text-dim); }
+.stat--key .stat__value--few { font-size: 1.1rem; }
+.stat__line { font-size: 0.86rem; line-height: 1.5; color: var(--text-dim); }
+.stat__line .pnl, .stat__row .pnl { font-family: var(--mono); font-size: 0.84rem; }
+.stat__k { margin-top: 10px; }
+.stat__rows { display: grid; margin-top: 4px; }
+.stat__row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--hairline-soft); font-size: 0.88rem; }
+.stat__row:first-child { border-top: 0; }
+.stat__row > span:last-child { font-family: var(--mono); font-size: 0.84rem; text-align: right; font-variant-numeric: tabular-nums; }
+.stat__none { color: var(--text-faint); font-size: 0.86rem; }
+.stat__toggle { margin: 4px 0 10px; }
+.stat__toggle .seg__opt { padding: 4px 10px; font-size: 0.74rem; }
+
+/* the definition, opened in place */
+.stat__def { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hairline-soft); display: grid; gap: 8px; }
+.stat__defp { display: grid; gap: 2px; font-size: 0.86rem; line-height: 1.5; color: var(--text-dim); }
+.stat__defp .kicker { font-size: 0.6rem; }
+
+/* --- charts --------------------------------------------------------------- */
+
+.chart { display: block; width: 100%; height: 170px; margin-top: 8px; overflow: visible; }
+.chart__zero { stroke: var(--hairline); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart__line { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.chart__peak { fill: none; stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.chart__dd { fill: rgb(255 255 255 / 0.07); stroke: none; }
+.chart__band { fill: rgb(255 255 255 / 0.08); stroke: none; }
+.chart__label { fill: var(--text-faint); font-family: var(--mono); font-size: 11px; }
+.chart__count { fill: var(--text-dim); font-family: var(--mono); font-size: 11px; }
+
+/* a table of groups with a bar for each total */
+.gtable { display: grid; margin-top: 6px; }
+.gtable__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.6fr) 54px minmax(80px, 0.9fr) minmax(80px, 0.9fr) 64px;
+  gap: 10px;
+  align-items: center;
+  padding: 7px 0;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 0.86rem;
+}
+.gtable__row:first-child { border-top: 0; }
+.gtable__row--head { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+.gtable__row > .num { font-family: var(--mono); font-size: 0.8rem; text-align: right; font-variant-numeric: tabular-nums; }
+.gtable__row--head > span:not(:first-child) { text-align: right; }
+.gtable__name { display: grid; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.gtable__bar { display: block; height: 3px; border-radius: 2px; background-color: var(--glass-2); overflow: hidden; }
+.gtable .dim { color: var(--text-faint); }
+
+/* --- calendar heatmap ------------------------------------------------------ */
+
+.heat { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.heat__dow { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding-bottom: 2px; }
+.heat__cell {
+  min-height: 64px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--hairline-soft);
+  display: grid;
+  align-content: space-between;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.heat__cell--blank { border-color: transparent; }
+.heat__d { font-family: var(--mono); font-size: 0.66rem; color: var(--text-faint); }
+.heat__v { font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
+.heat__n { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); }
+.calwrap { padding: 14px 16px 18px; max-width: 1100px; }
+.calwrap .heat__cell { min-height: 92px; }
+.calwrap .heat__v { font-size: 0.9rem; }
+.calbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 8px; max-width: 1100px; }
+.calbar__title { font-size: 1.3rem; min-width: 10ch; text-align: center; }
+
+/* --- accounts ---------------------------------------------------------------- */
+
+.accform { margin: 14px 0 18px; max-width: 1280px; }
+.f--check { grid-template-columns: auto 1fr; align-items: center; align-self: end; min-height: 42px; }
+.f--check input { width: 18px; height: 18px; accent-color: var(--text); }
+.accs { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 18px; margin-top: 18px; max-width: 1480px; }
+.acc { padding: 18px 20px 20px; display: grid; gap: 12px; align-content: start; }
+.acc__name { font-family: var(--display); font-size: 1.1rem; font-weight: 620; letter-spacing: -0.01em; }
+.acc__name span { color: var(--text-dim); font-weight: 500; }
+.acc__facts .row { display: grid; grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1.3fr); gap: 12px; padding: 7px 0; border-top: 1px solid var(--hairline-soft); }
+.acc__facts .row:first-child { border-top: 0; }
+.acc__facts dt { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding-top: 2px; }
+.acc__facts dd { font-size: 0.84rem; color: var(--text); }
+.acc__ledger { display: grid; gap: 6px; padding-top: 6px; border-top: 1px solid var(--hairline-soft); }
+.acc__lrow { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; font-size: 0.86rem; }
+.acc__lrow .num { font-family: var(--mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.acc__add { display: grid; grid-template-columns: 136px 1fr 110px 1fr auto; gap: 8px; margin-top: 6px; }
+@media (max-width: 760px) { .acc__add { grid-template-columns: 1fr 1fr; } }

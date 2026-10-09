@@ -2,16 +2,16 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.2.0, 9 October 2026.
+Version 0.3.0, 9 October 2026.
 
 
 WHAT IT IS
 
 A quiet place to write down what you saw in the market, and read it back
-later. New entry records a trade; Overview lists them all; the home screen
-shows your last entry and your profit and loss for today, this week and
-this month, net of costs. Stats, a calendar and charts of your trades come
-in later updates.
+later. New entry records a trade; Overview lists them all; Stats works
+out forty figures from them, each with its sample size and where it
+misleads; the Calendar shows each day; Accounts keeps your prop rules,
+fees and payouts. Charts of your trades come in a later update.
 
 It is an instrument for looking, not a machine for deciding. It offers no
 strategies, no signals and no one telling you what to buy.
@@ -47,6 +47,7 @@ H           Home
 N           New entry
 J           Overview
 S           Stats
+A           Accounts
 Ctrl + S    Save an entry
 Ctrl + ,    Settings
 ?           Shortcuts

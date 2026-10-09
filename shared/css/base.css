@@ -53,21 +53,9 @@ html[data-text="s"] { font-size: 14.5px; }
 html[data-text="l"] { font-size: 17.5px; }
 html[data-text="xl"] { font-size: 19px; }
 
-/* Contrast: the dim and faint greys and the hairlines walk towards white */
-html[data-contrast="1"] {
-  --text: rgb(246 247 249);
-  --text-dim: rgb(187 193 201);
-  --text-faint: rgb(149 155 164);
-  --hairline: rgb(255 255 255 / 0.17);
-  --hairline-soft: rgb(255 255 255 / 0.11);
-}
-html[data-contrast="2"] {
-  --text: rgb(255 255 255);
-  --text-dim: rgb(222 226 231);
-  --text-faint: rgb(190 196 204);
-  --hairline: rgb(255 255 255 / 0.24);
-  --hairline-soft: rgb(255 255 255 / 0.16);
-}
+/* Contrast is a setting from 0 to 100: the script (shared/js/contrast.js)
+   walks the dim and faint greys and the hairlines towards white by setting
+   these same tokens on <html> through the CSSOM. */
 
 /* --- Reset ---------------------------------------------------------------- */
 
@@ -330,6 +318,28 @@ kbd {
 }
 .seg__opt:hover { color: var(--text); }
 .seg__opt[aria-checked="true"] { background-color: var(--text); color: var(--ink); }
+
+/* a slider: a plain hairline track, the knob in TEXT */
+.range { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.range input {
+  flex: 1;
+  height: 26px;
+  margin: 0;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+}
+.range input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background-color: var(--hairline); }
+.range input::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px; height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background-color: var(--text);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+.range input:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; border-radius: 6px; }
+.range output { min-width: 2.6em; text-align: right; font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
 /* --- Title bar (the window is frameless) ---------------------------------- */
 

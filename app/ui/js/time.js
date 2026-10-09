@@ -53,6 +53,12 @@ export function wallToUtc(value, zone) {
   return t;
 }
 
+/* the New York clock at a moment: hour, minute and weekday */
+export function etClock(ms) {
+  const p = partsIn(ET, ms);
+  return { h: p.h, mi: p.mi, wd: p.wd };
+}
+
 /* UTC ms -> "2026-10-09T09:41" in `zone`, for a datetime-local input */
 export function utcToWall(ms, zone) {
   if (!Number.isFinite(ms)) return '';
@@ -110,6 +116,13 @@ export function tradingDay(ms, startHour = 18) {
   const p = partsIn(ET, ms);
   let d = Date.UTC(p.y, p.mo - 1, p.d);
   if (startHour > 0 && p.h >= startHour) d += 864e5;
+  /* on the Globex day there are no weekend sessions: anything that lands on
+     a Saturday or Sunday belongs to Monday's trading day */
+  if (startHour > 0) {
+    const wd = new Date(d).getUTCDay();
+    if (wd === 6) d += 2 * 864e5;
+    else if (wd === 0) d += 864e5;
+  }
   return new Date(d).toISOString().slice(0, 10);
 }
 

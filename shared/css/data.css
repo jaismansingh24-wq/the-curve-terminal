@@ -9,3 +9,10 @@
 .pnl--up { color: var(--bid); }
 .pnl--down { color: var(--ask); }
 .pnl--flat { color: var(--text-dim); }
+
+/* bars for results in the stats: SVG bars and horizontal bars */
+.bar--up { fill: var(--bid); fill-opacity: 0.75; }
+.bar--down { fill: var(--ask); fill-opacity: 0.75; }
+.bar-h { display: block; height: 100%; border-radius: 2px; }
+.bar-h--up { background-color: var(--bid); }
+.bar-h--down { background-color: var(--ask); }

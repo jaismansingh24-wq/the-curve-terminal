@@ -157,6 +157,7 @@ function collect() {
     sleep: n('sleep'),
     followedPlan: yesNo(radio('followedPlan')),
     afterLimit: yesNo(radio('afterLimit')),
+    nearNews: yesNo(radio('nearNews')),
     mistakes: [...f.querySelectorAll('input[name="mistakes"]:checked')].map((i) => i.value),
     notes: f.notes.value.trim(),
   };
@@ -327,6 +328,7 @@ export function openForm(id) {
     put('sleep', e.sleep);
     if (e.followedPlan !== null && e.followedPlan !== undefined) setRadio('followedPlan', e.followedPlan ? 'yes' : 'no');
     if (e.afterLimit !== null && e.afterLimit !== undefined) setRadio('afterLimit', e.afterLimit ? 'yes' : 'no');
+    if (e.nearNews !== null && e.nearNews !== undefined) setRadio('nearNews', e.nearNews ? 'yes' : 'no');
     put('notes', e.notes);
   }
   hints();

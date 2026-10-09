@@ -4,6 +4,30 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.0 · 9 October 2026
+
+Stats and accounts.
+
+- Stats: forty figures from your entries, in seven sections: results,
+  risk and drawdown, execution, when and how, consistency, reliability,
+  and prop accounts and costs. Net of costs by default, in money, ticks,
+  points or R.
+- Every figure shows its sample size. Rates and averages show a likely
+  range, and say "too few to say" when the sample is small. Press a stat's
+  name for what it measures, how it is worked out and where it misleads.
+- The Calendar: each trading day's result, a month at a time, in greys
+  with plus and minus signs.
+- Accounts: each prop or personal account's rules (trailing drawdown,
+  daily loss limit, consistency, profit target) and its fees and payouts.
+  Stats show the distance to each rule.
+- Entries can say whether a trade was near a high-impact release; October
+  2026's releases are already known to the app, from thecurve.in's checked
+  calendar.
+- Contrast is now a slider from 0 to 100. Settings also take your own
+  daily loss limit and your monthly platform and data fees.
+- A trade closed on a Friday evening now counts towards Monday's trading
+  day, as there is no weekend session.
+
 ## 0.2.0 · 9 October 2026
 
 The journal.

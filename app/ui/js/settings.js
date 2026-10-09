@@ -5,11 +5,13 @@
 
 import { getJSON, setJSON } from '../shared/js/store.js';
 import { applySky, SkyMotion } from '../shared/js/sky.js';
+import { applyContrast, migrateContrast } from '../shared/js/contrast.js';
 import { invoke, isNative } from '../shared/js/native.js';
 
 export const DEFAULTS = Object.freeze({
   text: 'm',
-  contrast: 0,
+  contrast: 0,                /* 0 (as designed) to 100 */
+  contrastScale: 100,
   motion: 'system',
   intro: true,
   bg: 'grid',
@@ -20,9 +22,11 @@ export const DEFAULTS = Object.freeze({
   units: 'money',             /* money, ticks, points or r */
   basis: 'net',               /* net of costs, or gross */
   costPerContract: 0,         /* default round-turn costs per contract, in dollars */
+  dailyLimit: 0,              /* the trader's own daily loss limit, in dollars */
+  monthlyFees: 0,             /* platform and data fees a month, in dollars */
   entryZone: 'America/New_York',
 });
-const NUMERIC = new Set(['contrast', 'dayStart']);
+const NUMERIC = new Set(['dayStart']);
 
 let S = { ...DEFAULTS };
 const listeners = [];
@@ -30,7 +34,7 @@ const sky = new SkyMotion();
 const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 export function load() {
-  const saved = getJSON('settings', {});
+  const saved = migrateContrast(getJSON('settings', {}));
   S = { ...DEFAULTS, ...saved };
   return S;
 }
@@ -46,7 +50,7 @@ export function reducedMotion() {
 export function apply() {
   const d = document.documentElement;
   if (S.text && S.text !== 'm') d.setAttribute('data-text', S.text); else d.removeAttribute('data-text');
-  if (+S.contrast) d.setAttribute('data-contrast', String(S.contrast)); else d.removeAttribute('data-contrast');
+  applyContrast(S.contrast);
   d.setAttribute('data-bg', S.bg);
   const rm = reducedMotion();
   d.classList.toggle('rm', rm);
@@ -132,6 +136,20 @@ export function bindPanel(panel) {
     if (document.activeElement !== inp) inp.value = S[inp.dataset.settingNum] ? Number(S[inp.dataset.settingNum]).toFixed(2) : '';
   }));
   nums.forEach((inp) => { inp.value = S[inp.dataset.settingNum] ? Number(S[inp.dataset.settingNum]).toFixed(2) : ''; });
+
+  /* sliders, such as contrast: the change shows as the knob moves */
+  const ranges = panel.querySelectorAll('[data-setting-range]');
+  const showRange = (r) => {
+    r.value = S[r.dataset.settingRange];
+    const out = r.parentElement.querySelector('output');
+    if (out) out.textContent = r.value;
+    r.setAttribute('aria-valuetext', r.value === '0' ? '0, as designed' : r.value + ' of 100');
+  };
+  ranges.forEach((r) => {
+    r.addEventListener('input', () => update({ [r.dataset.settingRange]: Number(r.value) }));
+    showRange(r);
+  });
+  onChange(() => ranges.forEach(showRange));
 
   const resetBtn = panel.querySelector('[data-reset]');
   if (resetBtn) resetBtn.addEventListener('click', reset);

@@ -19,11 +19,14 @@ import { renderHome, renderBoundaries } from './home.js';
 import { initForm, openForm, saveShortcut } from './form.js';
 import { initOverview, renderOverview } from './overview.js';
 import { initEntry, renderEntry } from './detail.js';
+import { initStats, renderStats } from './stats-view.js';
+import { initCalendar, renderCalendar } from './calendar-view.js';
+import { initAccounts, renderAccounts } from './accounts.js';
 
 const S = settings.load();
 settings.apply();
 
-let version = '0.2.0';
+let version = '0.3.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -46,13 +49,16 @@ const dialogs = initDialogs({
 settings.bindPanel(document.getElementById('dlg-settings'));
 settings.onChange((s, patch) => {
   if ('discord' in patch) presence.configure(s.discord);
-  if (['units', 'basis', 'dayStart', 'costPerContract'].some((k) => k in patch)) refresh();
+  if (['units', 'basis', 'dayStart', 'costPerContract', 'dailyLimit', 'monthlyFees'].some((k) => k in patch)) refresh();
 });
 presence.bindUI();
 initUnits();
 initForm();
 initOverview();
 initEntry({ confirm: dialogs.confirm });
+initStats();
+initCalendar();
+initAccounts({ confirm: dialogs.confirm });
 
 document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('click', () => openLink(b.dataset.link)));
 document.querySelectorAll('[data-reveal]').forEach((b) => b.addEventListener('click', () => invoke('journal_reveal').catch(() => {})));
@@ -79,6 +85,9 @@ router.on('home', () => renderHome());
 router.on('new', (r) => openForm(r.id));
 router.on('overview', () => renderOverview());
 router.on('entry', (r) => renderEntry(r.id));
+router.on('stats', () => renderStats());
+router.on('calendar', () => renderCalendar());
+router.on('accounts', () => renderAccounts());
 
 /* redraw whatever is showing when the journal or a setting changes */
 function refresh() {
@@ -88,6 +97,9 @@ function refresh() {
   if (r.view === 'home') renderHome();
   if (r.view === 'overview') renderOverview();
   if (r.view === 'entry') renderEntry(r.id);
+  if (r.view === 'stats') renderStats();
+  if (r.view === 'calendar') renderCalendar();
+  if (r.view === 'accounts') renderAccounts();
 }
 J.onChange(refresh);
 
@@ -116,6 +128,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'n') router.go('/new');
   else if (k === 'j') router.go('/overview');
   else if (k === 's') router.go('/stats');
+  else if (k === 'a') router.go('/accounts');
   else if (e.key === '?') dialogs.open('keys');
 });
 

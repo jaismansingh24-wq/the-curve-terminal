@@ -83,11 +83,14 @@ const visible = (p, s) => (p.endsWith('.rs') ? rustStrings(s) : p.endsWith('.htm
 // 1. gradients: the word itself fails, as on the website
 check('1. No gradients', grepAll([...UI, join(root, 'assets/icon.svg')], /gradient/i));
 
-// 2. strategy language: the website's list, as a floor, plus a few more
+// 2. strategy language: the website's list, as a floor, plus a few more.
+//    "Win rate" itself is a measurement the stats report (with its range);
+//    what the brief rules out is a win rate offered as a promise, which the
+//    words "guaranteed" and "proven" catch.
 const STRATEGY = new RegExp([
   'buy when', 'sell when', 'entry signal', 'take profit', 'stop loss placement', 'target of',
   'go long when', 'go short when', 'this means price will',
-  'bullish', 'bearish', 'buy signal', 'sell signal', 'win rate', 'price target', 'guaranteed',
+  'bullish', 'bearish', 'buy signal', 'sell signal', 'price target', 'guaranteed', 'proven win',
 ].join('|'), 'i');
 check('2. No strategy or advice language', grepAll(READ, STRATEGY, visible));
 

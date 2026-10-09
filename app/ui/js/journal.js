@@ -16,8 +16,10 @@ import { invoke, isNative } from '../shared/js/native.js';
 import { get as instrument } from './instruments.js';
 import { tradingDay, weekOf, monthOf } from './time.js';
 
-export const SCHEMA = 1;
+export const SCHEMA = 2;
 let entries = [];
+/* prop and personal accounts: rules, fees and payouts (the Accounts page) */
+let accounts = [];
 const listeners = [];
 export const persistent = isNative;
 
@@ -28,9 +30,12 @@ export async function load() {
   let data = [];
   try { data = JSON.parse(text || '[]'); } catch (e) { throw new Error('The journal file could not be read. It has not been changed.'); }
   const fromFile = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
+  const accountsFromFile = Array.isArray(data.accounts) ? data.accounts : [];
   /* anything saved while the file was being read wins over the file */
   const mine = new Set(entries.map((e) => e.id));
   entries = [...entries, ...fromFile.filter((e) => !mine.has(e.id))];
+  const myAccounts = new Set(accounts.map((a) => a.id));
+  accounts = [...accounts, ...accountsFromFile.filter((a) => !myAccounts.has(a.id))];
   loaded = true;
   listeners.forEach((fn) => fn(entries));
   return entries;
@@ -43,7 +48,7 @@ function ready() {
 }
 
 async function persist() {
-  if (isNative) await invoke('journal_write', { json: JSON.stringify({ schema: SCHEMA, entries }, null, 1) });
+  if (isNative) await invoke('journal_write', { json: JSON.stringify({ schema: SCHEMA, entries, accounts }, null, 1) });
   listeners.forEach((fn) => fn(entries));
 }
 
@@ -70,6 +75,30 @@ export async function remove(id) {
   entries = entries.filter((e) => e.id !== id);
   await persist();
 }
+
+/* ------------------------------------------------------------ accounts */
+
+export const allAccounts = () => accounts.slice().sort((a, b) => a.name.localeCompare(b.name));
+export const accountById = (id) => accounts.find((a) => a.id === id) || null;
+export const accountByName = (name) => accounts.find((a) => a.name.trim().toLowerCase() === String(name || '').trim().toLowerCase()) || null;
+
+export async function saveAccount(account) {
+  ready();
+  const i = accounts.findIndex((a) => a.id === account.id);
+  if (i >= 0) accounts[i] = { ...account };
+  else accounts.push({ ...account, id: account.id || crypto.randomUUID() });
+  await persist();
+  return i >= 0 ? accounts[i] : accounts[accounts.length - 1];
+}
+
+export async function removeAccount(id) {
+  ready();
+  accounts = accounts.filter((a) => a.id !== id);
+  await persist();
+}
+
+/* the entries on one account (matched by its name, as typed on the entry) */
+export const entriesFor = (account) => entries.filter((e) => e.account && e.account.trim().toLowerCase() === account.name.trim().toLowerCase());
 
 /* ------------------------------------------------------------- results */
 

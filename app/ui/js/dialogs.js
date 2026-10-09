@@ -52,8 +52,9 @@ export function initDialogs({ onOpen } = {}) {
   });
 
   /* "Delete this entry?": runs `yes` only on the Delete button */
-  function confirm(what, yes) {
+  function confirm(what, yes, title = 'Delete this entry?') {
     const dlg = get('confirm');
+    dlg.querySelector('#confirm-h').textContent = title;
     dlg.querySelector('[data-confirm-what]').textContent = what;
     const btn = dlg.querySelector('[data-confirm-delete]');
     const fresh = btn.cloneNode(true);

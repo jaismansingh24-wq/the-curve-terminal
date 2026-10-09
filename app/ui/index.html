@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="shared/css/data.css">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/journal.css">
+  <link rel="stylesheet" href="css/stats.css">
   <script src="js/boot.js"></script>
   <script type="module" src="js/main.js"></script>
 </head>
@@ -71,6 +72,10 @@
     <a class="side__item" href="#/calendar" data-route="calendar">
       <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
       <span class="side__label">Calendar</span>
+    </a>
+    <a class="side__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
+      <span class="side__label">Accounts</span><kbd aria-hidden="true">A</kbd>
     </a>
     <div class="side__foot">
       <button class="side__item" type="button" data-open="settings">
@@ -267,6 +272,14 @@
                 <span class="f__label">Account</span>
                 <input class="inp" name="account" list="dl-account" placeholder="For example: evaluation 1">
               </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-news">
+                <span class="f__label" id="lbl-news">Near a high-impact release</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="nearNews" value="yes"><span>Yes</span></label>
+                  <label class="rseg__opt"><input type="radio" name="nearNews" value="no"><span>No</span></label>
+                </div>
+                <span class="f__hint">Within 5 minutes of the entry or exit, or while the trade was open. Leave it blank for October 2026: the app knows those releases.</span>
+              </div>
               <div class="f" role="radiogroup" aria-labelledby="lbl-bias">
                 <span class="f__label" id="lbl-bias">Your bias going in</span>
                 <div class="rseg">
@@ -424,8 +437,19 @@
         <header class="vhead">
           <p class="kicker">Journal &middot; Stats</p>
           <h1 class="title vhead__title" id="stats-h" tabindex="-1">Stats</h1>
-          <p class="lede vhead__lede">The stats arrive in a later update, after the charts. They will be worked out from your entries: net of costs by default, each with its sample size, its likely range and its common misreading, and "too few to say" when the sample is small.</p>
+          <p class="lede vhead__lede" data-stats-lede>Worked out from your entries.</p>
         </header>
+        <div class="toolbar" role="group" aria-label="Filters">
+          <label class="tf"><span class="kicker">Period</span><select class="inp inp--sm" data-sfilter="period">
+            <option value="">All time</option><option value="month">This month</option><option value="week">This week</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option>
+          </select></label>
+          <label class="tf"><span class="kicker">Instrument</span><select class="inp inp--sm" data-sfilter="instrument"><option value="">All</option></select></label>
+          <label class="tf"><span class="kicker">Account</span><select class="inp inp--sm" data-sfilter="account"><option value="">All</option></select></label>
+          <div class="units toolbar__units" data-units></div>
+        </div>
+        <p class="note stats-note" data-stats-boundary></p>
+        <p class="note stats-note">Press a stat's name for what it measures, how it is worked out and where it misleads.</p>
+        <div class="stats" data-stats></div>
       </section>
 
       <!-- Calendar ------------------------------------------------------------- -->
@@ -433,8 +457,52 @@
         <header class="vhead">
           <p class="kicker">Journal &middot; Calendar</p>
           <h1 class="title vhead__title" id="cal-h" tabindex="-1">Calendar</h1>
-          <p class="lede vhead__lede">The calendar arrives with the stats: each trading day's result, in greys with plus and minus signs.</p>
+          <p class="lede vhead__lede">Each trading day's result, in greys with plus and minus signs. Darker for larger days, in either direction.</p>
         </header>
+        <div class="calbar">
+          <button class="btn btn--quiet" type="button" data-cal-prev aria-label="Previous month">&larr; Previous</button>
+          <h2 class="title calbar__title" data-cal-title aria-live="polite">Month</h2>
+          <button class="btn btn--quiet" type="button" data-cal-next aria-label="Next month">Next &rarr;</button>
+          <div class="units toolbar__units" data-units></div>
+        </div>
+        <p class="note" data-cal-sum></p>
+        <div class="calwrap glass glass--quiet" data-cal></div>
+        <p class="note" data-cal-note></p>
+      </section>
+
+      <!-- Accounts -------------------------------------------------------------- -->
+      <section class="view" data-view="accounts" aria-labelledby="acc-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Journal &middot; Accounts</p>
+          <h1 class="title vhead__title" id="acc-h" tabindex="-1">Accounts</h1>
+          <p class="lede vhead__lede">Prop and personal accounts: the rules each firm sets, and the money in and out. An entry counts towards an account when its Account field matches the account's name.</p>
+        </header>
+        <div class="form__foot"><button class="btn btn--primary" type="button" data-acc-new>Add an account</button></div>
+
+        <form class="fs glass glass--quiet accform" id="account-form" novalidate autocomplete="off" hidden>
+          <h2 class="kicker fs__k" data-acc-title>New account</h2>
+          <div class="fg">
+            <label class="f"><span class="f__label">Name</span><input class="inp" name="name" placeholder="For example: evaluation 1" required></label>
+            <label class="f"><span class="f__label">Firm <span class="f__opt">optional</span></span><input class="inp" name="firm"></label>
+            <label class="f"><span class="f__label">Kind</span><select class="inp" name="kind"><option value="evaluation">Evaluation</option><option value="funded">Funded</option><option value="personal">Personal</option></select></label>
+            <label class="f"><span class="f__label">Starting balance, $</span><input class="inp inp--num" name="start" inputmode="decimal"></label>
+            <label class="f"><span class="f__label">Trailing drawdown, $</span><input class="inp inp--num" name="trailing" inputmode="decimal"><span class="f__hint">How far the balance may fall below its peak.</span></label>
+            <label class="f"><span class="f__label">The drawdown trails</span><select class="inp" name="trailingType"><option value="eod">At the end of each day</option><option value="intraday">Intraday (closed trades here)</option><option value="static">Not at all (static)</option></select></label>
+            <label class="f f--check"><input type="checkbox" name="lockAtStart"><span class="f__label">Stops trailing at the starting balance</span></label>
+            <label class="f"><span class="f__label">Daily loss limit, $</span><input class="inp inp--num" name="dailyLimit" inputmode="decimal"></label>
+            <label class="f"><span class="f__label">Consistency rule, %</span><input class="inp inp--num" name="consistency" inputmode="decimal"><span class="f__hint">The most the best day may be, as a share of total profit.</span></label>
+            <label class="f"><span class="f__label">Profit target, $</span><input class="inp inp--num" name="profitTarget" inputmode="decimal"></label>
+            <label class="f f--wide"><span class="f__label">Notes <span class="f__opt">optional</span></span><input class="inp" name="notes"></label>
+          </div>
+          <p class="f__err" data-acc-err role="alert"></p>
+          <div class="form__foot">
+            <button class="btn btn--primary" type="submit">Save account</button>
+            <button class="btn btn--quiet" type="button" data-acc-cancel>Cancel</button>
+          </div>
+        </form>
+
+        <div class="accs" data-accounts></div>
+        <p class="empty" data-accounts-empty>No accounts yet. Add one to see the distance to its rules on the Stats page.</p>
       </section>
     </main>
 
@@ -447,7 +515,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.2.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.3.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -531,6 +599,14 @@
             <div class="st__txt"><label class="st__label" for="st-cost">Default costs per contract</label><span class="st__desc">Commission and fees for one contract in and out, in dollars. Used when an entry leaves costs blank.</span></div>
             <input class="inp inp--num inp--sm st__num" id="st-cost" inputmode="decimal" data-setting-num="costPerContract" placeholder="0.00">
           </div>
+          <div class="st__row">
+            <div class="st__txt"><label class="st__label" for="st-limit">Your daily loss limit</label><span class="st__desc">Your own limit, in dollars. Stats count the trades taken after a day reached it.</span></div>
+            <input class="inp inp--num inp--sm st__num" id="st-limit" inputmode="decimal" data-setting-num="dailyLimit" placeholder="0.00">
+          </div>
+          <div class="st__row">
+            <div class="st__txt"><label class="st__label" for="st-fees">Monthly platform and data fees</label><span class="st__desc">In dollars a month. Counted in the cost per round turn and per day.</span></div>
+            <input class="inp inp--num inp--sm st__num" id="st-fees" inputmode="decimal" data-setting-num="monthlyFees" placeholder="0.00">
+          </div>
           <div class="st__row" data-reveal-row hidden>
             <div class="st__txt"><span class="st__label">The journal file</span><span class="st__desc">Everything you write is in one file on this computer. Copy it somewhere safe to keep a backup.</span></div>
             <button class="btn btn--quiet" type="button" data-reveal>Show in File Explorer</button>
@@ -549,11 +625,10 @@
             </div>
           </div>
           <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-contrast">Contrast</span><span class="st__desc">Brightens the grey text and the hairlines.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-contrast" data-setting="contrast">
-              <button class="seg__opt" type="button" role="radio" data-value="0">Standard</button>
-              <button class="seg__opt" type="button" role="radio" data-value="1">More</button>
-              <button class="seg__opt" type="button" role="radio" data-value="2">Most</button>
+            <div class="st__txt"><label class="st__label" for="st-contrast">Contrast</label><span class="st__desc">Walks the grey text and the hairlines towards white. 0 is as designed.</span></div>
+            <div class="range">
+              <input id="st-contrast" type="range" min="0" max="100" step="1" data-setting-range="contrast">
+              <output for="st-contrast">0</output>
             </div>
           </div>
         </div>
@@ -637,6 +712,7 @@
           <div class="keys__row"><span>New entry</span><span><kbd>N</kbd></span></div>
           <div class="keys__row"><span>Overview</span><span><kbd>J</kbd></span></div>
           <div class="keys__row"><span>Stats</span><span><kbd>S</kbd></span></div>
+          <div class="keys__row"><span>Accounts</span><span><kbd>A</kbd></span></div>
           <div class="keys__row"><span>Save an entry</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
           <div class="keys__row"><span>Settings</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
           <div class="keys__row"><span>This list</span><span><kbd>?</kbd></span></div>
@@ -652,11 +728,21 @@
       <div class="dlg__head">
         <div>
           <p class="kicker">What's new</p>
-          <h2 class="title dlg__title" id="news-h">The journal</h2>
+          <h2 class="title dlg__title" id="news-h">Stats and accounts</h2>
         </div>
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.3.0</h3><span class="kicker">9 October 2026</span></div>
+        <ul>
+          <li>Stats: forty figures from your entries, in seven sections: results, risk and drawdown, execution, when and how, consistency, reliability, and prop accounts and costs. Net of costs by default, in money, ticks, points or R.</li>
+          <li>Every figure shows its sample size. Rates and averages show a likely range, and say "too few to say" when the sample is small. Press a stat's name for what it measures, how it is worked out and where it misleads.</li>
+          <li>The Calendar: each trading day's result, a month at a time, in greys with plus and minus signs.</li>
+          <li>Accounts: each prop or personal account's rules (trailing drawdown, daily loss limit, consistency, profit target) and its fees and payouts. Stats show the distance to each rule.</li>
+          <li>Entries can say whether a trade was near a high-impact release; October 2026's releases are already known to the app, from thecurve.in's checked calendar.</li>
+          <li>Contrast is now a slider from 0 to 100. Settings also take your own daily loss limit and your monthly platform and data fees.</li>
+          <li>A trade closed on a Friday evening now counts towards Monday's trading day, as there is no weekend session.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.2.0</h3><span class="kicker">9 October 2026</span></div>
         <ul>
           <li>The journal. New entry records a trade: what you traded, when (in any time zone, converted to New York time), the prices, your confidence and the main confluence. Partials, the plan, order flow, mood and notes are optional.</li>
@@ -690,8 +776,9 @@
       <div class="dlg__body prose">
         <h3>On this computer</h3>
         <ul>
-          <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, when the trading day starts, how results are shown, your default costs, and the time zone you last typed times in.</li>
+          <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
         </ul>
