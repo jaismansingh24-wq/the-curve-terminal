@@ -4,6 +4,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod journal;
 mod links;
 mod presence;
 mod startup;
@@ -43,6 +44,7 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
             let testing = std::env::args().any(|a| a == "--test");
+            app.manage(journal::Files { testing });
             app.manage(presence::Presence::spawn(handle.clone(), testing));
 
             // The window starts hidden so it never flashes white; the
@@ -60,6 +62,9 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            journal::journal_read,
+            journal::journal_write,
+            journal::journal_reveal,
             links::open_link,
             presence::presence_set,
             startup::startup_get,

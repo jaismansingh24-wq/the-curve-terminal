@@ -3,7 +3,7 @@
    at a time. A click on the dimmed backdrop closes it too. */
 
 const IDS = {
-  soon: 'dlg-soon',
+  confirm: 'dlg-confirm',
   settings: 'dlg-settings',
   keys: 'dlg-keys',
   whatsnew: 'dlg-whatsnew',
@@ -11,8 +11,6 @@ const IDS = {
   terms: 'dlg-terms',
   disclaimer: 'dlg-disclaimer',
 };
-
-const SOON_KICKER = { entry: 'New entry', journal: 'Journal' };
 
 export function initDialogs({ onOpen } = {}) {
   const get = (name) => document.getElementById(IDS[name]);
@@ -22,10 +20,6 @@ export function initDialogs({ onOpen } = {}) {
     if (!dlg) return;
     document.querySelectorAll('dialog[open]').forEach((d) => { if (d !== dlg) d.close(); });
 
-    if (name === 'soon') {
-      const k = dlg.querySelector('[data-soon-kicker]');
-      if (k) k.textContent = SOON_KICKER[opts.soon] || 'Journal';
-    }
     if (!dlg.open) dlg.showModal();
     const body = dlg.querySelector('.dlg__body');
     if (body) body.scrollTop = 0;
@@ -44,7 +38,7 @@ export function initDialogs({ onOpen } = {}) {
   document.addEventListener('click', (e) => {
     const opener = e.target.closest('[data-open]');
     if (opener) {
-      open(opener.dataset.open, { soon: opener.dataset.soon, focus: opener.dataset.focus });
+      open(opener.dataset.open, { focus: opener.dataset.focus });
       return;
     }
     const closer = e.target.closest('[data-close]');
@@ -57,5 +51,17 @@ export function initDialogs({ onOpen } = {}) {
     if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close();
   });
 
-  return { open };
+  /* "Delete this entry?": runs `yes` only on the Delete button */
+  function confirm(what, yes) {
+    const dlg = get('confirm');
+    dlg.querySelector('[data-confirm-what]').textContent = what;
+    const btn = dlg.querySelector('[data-confirm-delete]');
+    const fresh = btn.cloneNode(true);
+    btn.replaceWith(fresh);
+    fresh.addEventListener('click', async () => { fresh.disabled = true; dlg.close(); await yes(); });
+    open('confirm');
+    dlg.querySelector('[data-close]').focus();
+  }
+
+  return { open, confirm };
 }

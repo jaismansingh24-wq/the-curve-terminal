@@ -1,9 +1,11 @@
 /* The app's start-up, in order: settings and the title bar straight away,
    then the window is shown and the opening plays while the real start-up
-   steps run under the loading bar. */
+   steps run under the loading bar, the journal among them. */
 
 import * as settings from './settings.js';
 import * as presence from './presence.js';
+import * as J from './journal.js';
+import * as router from './router.js';
 import { initTitlebar } from '../shared/js/titlebar.js';
 import { invoke, isNative, currentWindow, openLink } from '../shared/js/native.js';
 import { get as sget, set as sset } from '../shared/js/store.js';
@@ -12,11 +14,16 @@ import { createLoader } from './loader.js';
 import { runIntro } from './intro.js';
 import { startClock } from './clock.js';
 import { initDialogs } from './dialogs.js';
+import { initUnits } from './units.js';
+import { renderHome, renderBoundaries } from './home.js';
+import { initForm, openForm, saveShortcut } from './form.js';
+import { initOverview, renderOverview } from './overview.js';
+import { initEntry, renderEntry } from './detail.js';
 
 const S = settings.load();
 settings.apply();
 
-let version = '0.1.0';
+let version = '0.2.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -37,10 +44,20 @@ const dialogs = initDialogs({
 });
 
 settings.bindPanel(document.getElementById('dlg-settings'));
-settings.onChange((s, patch) => { if ('discord' in patch) presence.configure(s.discord); });
+settings.onChange((s, patch) => {
+  if ('discord' in patch) presence.configure(s.discord);
+  if (['units', 'basis', 'dayStart', 'costPerContract'].some((k) => k in patch)) refresh();
+});
 presence.bindUI();
+initUnits();
+initForm();
+initOverview();
+initEntry({ confirm: dialogs.confirm });
 
 document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('click', () => openLink(b.dataset.link)));
+document.querySelectorAll('[data-reveal]').forEach((b) => b.addEventListener('click', () => invoke('journal_reveal').catch(() => {})));
+const revealRow = document.querySelector('[data-reveal-row]');
+if (revealRow) revealRow.hidden = !isNative;
 
 /* the title bar gains a hairline once the page scrolls under it */
 const page = document.getElementById('page');
@@ -56,22 +73,49 @@ function markNew() {
   });
 }
 
+/* ---------------------------------------------------------------- pages */
+
+router.on('home', () => renderHome());
+router.on('new', (r) => openForm(r.id));
+router.on('overview', () => renderOverview());
+router.on('entry', (r) => renderEntry(r.id));
+
+/* redraw whatever is showing when the journal or a setting changes */
+function refresh() {
+  renderBoundaries();
+  const r = router.now();
+  if (!r) return;
+  if (r.view === 'home') renderHome();
+  if (r.view === 'overview') renderOverview();
+  if (r.view === 'entry') renderEntry(r.id);
+}
+J.onChange(refresh);
+
 /* ------------------------------------------------------------ keyboard */
 
 const BLOCKED = new Set(['F3', 'F5', 'F7']);
 document.addEventListener('keydown', (e) => {
+  const k = (e.key || '').toLowerCase();
+  /* Ctrl+S saves the entry being written */
+  if (e.ctrlKey && k === 's') {
+    e.preventDefault();
+    const r = router.now();
+    if (ready && r && r.view === 'new' && !document.querySelector('dialog[open]')) saveShortcut();
+    return;
+  }
   /* the browser's own shortcuts mean nothing in an app window */
-  const k = e.key.toLowerCase();
-  if (BLOCKED.has(e.key) || (e.ctrlKey && ['r', 'p', 'f', 'g', 'u', 'j', 's'].includes(k))) { e.preventDefault(); return; }
+  if (BLOCKED.has(e.key) || (e.ctrlKey && ['r', 'p', 'f', 'g', 'u', 'j'].includes(k))) { e.preventDefault(); return; }
 
   if (!ready || document.querySelector('dialog[open]')) return;
   const t = e.target;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
 
   if (e.ctrlKey && e.key === ',') { e.preventDefault(); dialogs.open('settings'); return; }
   if (e.ctrlKey || e.altKey || e.metaKey) return;
-  if (k === 'n') dialogs.open('soon', { soon: 'entry' });
-  else if (k === 'j') dialogs.open('soon', { soon: 'journal' });
+  if (k === 'h') router.go('/home');
+  else if (k === 'n') router.go('/new');
+  else if (k === 'j') router.go('/overview');
+  else if (k === 's') router.go('/stats');
   else if (e.key === '?') dialogs.open('keys');
 });
 
@@ -106,17 +150,29 @@ function appInfo() {
   });
 }
 
+let journalError = null;
+async function loadJournal() {
+  try { await J.load(); } catch (e) { journalError = e; }
+}
+
 const steps = [
   { id: 'fonts', label: 'Fonts', run: () => Promise.all(FONTS.map((f) => document.fonts.load(f))) },
   { id: 'settings', label: 'Settings', run: () => { settings.load(); settings.apply(); } },
   { id: 'background', label: 'Background', run: prepareBackground },
   { id: 'data', label: 'Data folder', run: appInfo },
+  { id: 'journal', label: 'Journal', run: loadJournal, limit: 5000 },
   { id: 'discord', label: 'Discord', run: () => presence.configure(settings.get().discord), limit: 2500 },
 ];
 
-const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+/* a frame, or 100 ms if the window is hidden and frames are not coming */
+const frame = () => new Promise((r) => { requestAnimationFrame(() => r()); setTimeout(r, 100); });
 
 async function start() {
+  /* always open on the home screen, where the opening lands */
+  if (location.hash && location.hash !== '#/home') history.replaceState(null, '', '#/home');
+  renderBoundaries();
+  router.start();
+
   /* the window starts hidden so it never flashes white; show it now that
      the first frame is ink, then give it two frames to settle */
   const w = currentWindow();
@@ -124,9 +180,14 @@ async function start() {
   await frame(); await frame();
 
   const loader = createLoader(steps);
+  loader.promise.then(() => refresh());
   await runIntro({ animate: S.intro !== false, reduced: settings.reducedMotion(), loader });
   ready = true;
   markNew();
+  if (journalError) {
+    const box = document.querySelector('[data-recent-empty]');
+    if (box) { box.hidden = false; box.textContent = String(journalError.message || journalError); }
+  }
 }
 
 start();

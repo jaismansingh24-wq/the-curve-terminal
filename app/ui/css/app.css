@@ -2,40 +2,104 @@
    The Curve Terminal: the app's own screens (intro, home, settings)
    Tokens and shared components live in shared/css/base.css.
    ========================================================================== */
+/* --- The frame: the menu on the left, one scrolling page beside it -------- */
 
-/* --- The page: one scrolling column under the title bar ------------------- */
+:root { --side-w: 216px; --gut: clamp(22px, 2.6vw, 44px); }
+@media (max-width: 980px) { :root { --side-w: 64px; } }
+
+.side {
+  position: fixed;
+  top: var(--tb-h);
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  width: var(--side-w);
+  padding: 18px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--hairline-soft);
+  transition: opacity 420ms ease-out;
+}
+.side__k { margin: 18px 12px 6px; }
+.side__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-dim);
+  font-family: var(--display);
+  font-size: 0.9rem;
+  font-weight: 560;
+  text-align: left;
+  text-decoration: none;
+  transition: color 160ms ease-out, background-color 160ms ease-out;
+}
+.side__item:hover { color: var(--text); background-color: var(--glass-2); }
+.side__item .icon { width: 16px; height: 16px; flex: none; }
+.side__item kbd { margin-left: auto; opacity: 0.7; }
+.side__item[aria-current="page"] {
+  color: var(--text);
+  background-color: var(--glass-3);
+  box-shadow: inset 0 1px 0 var(--edge-catch);
+}
+.side__item[aria-current="page"]::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 2px;
+  background-color: var(--text);
+}
+.side__foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--hairline-soft); }
+@media (max-width: 980px) {
+  .side { padding-inline: 10px; }
+  .side__item { justify-content: center; padding: 0; }
+  .side__label, .side__item kbd { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .side__k { margin: 14px 0 4px; text-align: center; font-size: 0; }
+  .side__k::after { content: ''; display: block; height: 1px; margin: 0 6px; background-color: var(--hairline-soft); }
+}
 
 .page {
   position: fixed;
   top: var(--tb-h);
-  left: 0; right: 0; bottom: 0;
+  left: var(--side-w);
+  right: 0;
+  bottom: 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.14) transparent;
 }
+.view { padding: 30px var(--gut) 0; }
+.view[hidden] { display: none; }
 
-.shell {
-  width: min(980px, 100%);
-  margin: 0 auto;
-  padding: 0 clamp(20px, 5vw, 56px);
-}
+/* --- Home: the greeting on the left, the dashboard filling the rest ------- */
 
-/* --- Hero ----------------------------------------------------------------- */
-
-.hero {
-  padding-top: clamp(36px, 10vh, 120px);
+.home {
   display: grid;
-  justify-items: start;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(380px, 1.1fr);
+  gap: clamp(24px, 3vw, 52px);
+  align-items: start;
 }
-.hero__mark { width: 62px; height: 62px; color: var(--text); margin-bottom: 28px; }
+@media (max-width: 1180px) { .home { grid-template-columns: minmax(0, 1fr); } }
+.home__lead, .home__dash { display: grid; gap: 22px; align-content: start; min-width: 0; }
+
+.hero { padding-top: clamp(8px, 4vh, 48px); display: grid; justify-items: start; }
+.hero__mark { width: 62px; height: 62px; color: var(--text); margin-bottom: 26px; }
 .hero__kicker { margin-bottom: 14px; }
 .hero__kicker span + span::before { content: '\00B7'; margin: 0 0.6em; color: var(--text-faint); }
-.hero__title { font-size: clamp(2.4rem, 1.6rem + 2.4vw, 3.6rem); }
-.hero__lede { margin-top: 14px; max-width: 34em; font-size: 1.12rem; }
+.hero__title { font-size: clamp(2.3rem, 1.5rem + 2.2vw, 3.4rem); }
+.hero__lede { margin-top: 14px; max-width: 32em; font-size: 1.08rem; }
 .hero__clock {
-  margin-top: 22px;
+  margin-top: 20px;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -45,34 +109,22 @@
   color: var(--text);
 }
 .hero__local { color: var(--text-faint); }
-.hero__actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
+.hero__actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px; }
+a.btn { text-decoration: none; }
 
-/* --- The desk: recent entries and the side cards -------------------------- */
-
-.desk {
-  margin-top: clamp(40px, 8vh, 72px);
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
-@media (max-width: 780px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+.panel__head .link { font-size: 0.84rem; }
+.recent { margin-top: 18px; }
+.empty { padding: 18px 0 4px; color: var(--text-dim); font-size: 0.95rem; max-width: 36em; }
+.note { margin-top: 12px; font-size: 0.82rem; color: var(--text-faint); }
 
-.panel { padding: 20px 22px 22px; }
-.panel__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline-soft); }
-.panel__count { color: var(--text-dim); }
-
-.recent__empty { padding: 26px 0 6px; display: grid; gap: 8px; }
-.recent__lead { font-family: var(--display); font-size: 1.05rem; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
-.recent__hint { color: var(--text-dim); font-size: 0.95rem; max-width: 36em; }
-/* three faint placeholder rows, so the empty list still reads as a list */
-.recent__ghost { margin-top: 18px; display: grid; gap: 10px; }
-.recent__ghost span { display: block; height: 10px; border-radius: 3px; background-color: var(--glass-2); }
-.recent__ghost span:nth-child(1) { width: 72%; }
-.recent__ghost span:nth-child(2) { width: 54%; }
-.recent__ghost span:nth-child(3) { width: 63%; }
-
-.side { display: grid; gap: 18px; }
 .card { padding: 18px 20px 20px; }
 .card__k { margin-bottom: 10px; }
 .card__v { font-family: var(--display); font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
@@ -91,7 +143,7 @@
 /* --- Footer --------------------------------------------------------------- */
 
 .foot {
-  margin-top: clamp(48px, 9vh, 96px);
+  margin: clamp(44px, 8vh, 88px) var(--gut) 0;
   padding: 22px 0 28px;
   border-top: 1px solid var(--hairline-soft);
   display: flex;
@@ -120,7 +172,8 @@
 /* --- Arrival: a short rise and fade, staggered ---------------------------- */
 
 html.intro-armed .arrive,
-html.intro-armed .tb__brand { opacity: 0; }
+html.intro-armed .tb__brand,
+html.intro-armed .side { opacity: 0; }
 body.is-revealed .arrive {
   animation: arrive 700ms var(--ease-arrive) backwards;
   animation-delay: calc(var(--i, 0) * 110ms);
@@ -131,7 +184,7 @@ body.is-revealed.no-stagger .arrive { animation: none; }
 /* while the flying mark is landing, the hero's own mark waits for it */
 body.intro-landing:not(.intro-landed) .hero__mark { opacity: 0 !important; animation: none !important; }
 body.intro-landing .hero__mark { animation: none; }
-body.intro-running .tb__brand,
+body.intro-running .tb__brand, body.intro-running .side,
 body.intro-running .tb__tools { opacity: 0; visibility: hidden; }
 .tb__brand, .tb__tools { transition: opacity 420ms ease-out, visibility 0s; }
 

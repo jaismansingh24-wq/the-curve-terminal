@@ -2,14 +2,16 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.1.0, 8 October 2026.
+Version 0.2.0, 9 October 2026.
 
 
 WHAT IT IS
 
 A quiet place to write down what you saw in the market, and read it back
-later. This first build sets up the app itself: the opening, the home
-screen and settings. The journal arrives in the next update.
+later. New entry records a trade; Overview lists them all; the home screen
+shows your last entry and your profit and loss for today, this week and
+this month, net of costs. Stats, a calendar and charts of your trades come
+in later updates.
 
 It is an instrument for looking, not a machine for deciding. It offers no
 strategies, no signals and no one telling you what to buy.
@@ -19,6 +21,9 @@ WHERE THINGS ARE
 
 The app        The folder you chose in setup, usually
                %LOCALAPPDATA%\Programs\The Curve Terminal
+Your journal   %LOCALAPPDATA%\in.thecurve.terminal\journal.json
+               (with the version before your last change beside it,
+               as journal.bak.json; copy it somewhere safe as a backup)
 Your settings  %LOCALAPPDATA%\in.thecurve.terminal
                (kept on this computer only)
 
@@ -29,7 +34,8 @@ Discord status, while it is on. It is on by default. The app tells the
 Discord app on this computer to show "The Curve Terminal", a short line
 from a fixed list (for example "Reading an old trade"), how long the app
 has been open, and a link to thecurve.in. It never includes your trades or
-anything you write. Switch it off in Settings, under Discord.
+anything you write. Switch it off in Settings, under Discord. Your journal
+is never sent anywhere.
 
 Nothing else. No analytics, no tracking, no advertising, no accounts and
 no update checks.
@@ -37,8 +43,11 @@ no update checks.
 
 KEYBOARD
 
+H           Home
 N           New entry
-J           Open the journal
+J           Overview
+S           Stats
+Ctrl + S    Save an entry
 Ctrl + ,    Settings
 ?           Shortcuts
 Esc         Close a panel

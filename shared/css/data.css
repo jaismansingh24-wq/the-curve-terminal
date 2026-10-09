@@ -1,0 +1,11 @@
+/* ==========================================================================
+   Data colours: the one stylesheet allowed to use bid green and ask red.
+   Results (P&L) use them, by the owner's choice, always alongside a + or a
+   minus sign so colour is never the only cue. Chart marks for buys and
+   sells (bid and ask) will live here too. Chrome never does.
+   ========================================================================== */
+
+.pnl { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+.pnl--up { color: var(--bid); }
+.pnl--down { color: var(--ask); }
+.pnl--flat { color: var(--text-dim); }

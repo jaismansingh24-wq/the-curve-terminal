@@ -15,7 +15,14 @@ export const DEFAULTS = Object.freeze({
   bg: 'grid',
   stars: true,
   discord: true,
+  /* the journal */
+  dayStart: 18,               /* ET hour the trading day begins: 18 (CME Globex) or 0 */
+  units: 'money',             /* money, ticks, points or r */
+  basis: 'net',               /* net of costs, or gross */
+  costPerContract: 0,         /* default round-turn costs per contract, in dollars */
+  entryZone: 'America/New_York',
 });
+const NUMERIC = new Set(['contrast', 'dayStart']);
 
 let S = { ...DEFAULTS };
 const listeners = [];
@@ -92,7 +99,7 @@ export function bindPanel(panel) {
     const opts = [...g.querySelectorAll('.seg__opt')];
     const pick = (b) => {
       const v = b.dataset.value;
-      update({ [key]: key === 'contrast' ? +v : v });
+      update({ [key]: NUMERIC.has(key) ? +v : v });
     };
     opts.forEach((b) => b.addEventListener('click', () => pick(b)));
     /* a radio group: the arrow keys move the choice, as screen readers expect */
@@ -114,6 +121,17 @@ export function bindPanel(panel) {
     const key = sw.dataset.setting;
     update({ [key]: !S[key] });
   }));
+
+  /* amounts typed in, such as the default costs per contract */
+  const nums = panel.querySelectorAll('[data-setting-num]');
+  nums.forEach((inp) => inp.addEventListener('change', () => {
+    const v = Number(String(inp.value).replace(/[$,\s]/g, ''));
+    update({ [inp.dataset.settingNum]: Number.isFinite(v) && v >= 0 ? v : 0 });
+  }));
+  onChange(() => nums.forEach((inp) => {
+    if (document.activeElement !== inp) inp.value = S[inp.dataset.settingNum] ? Number(S[inp.dataset.settingNum]).toFixed(2) : '';
+  }));
+  nums.forEach((inp) => { inp.value = S[inp.dataset.settingNum] ? Number(S[inp.dataset.settingNum]).toFixed(2) : ''; });
 
   const resetBtn = panel.querySelector('[data-reset]');
   if (resetBtn) resetBtn.addEventListener('click', reset);

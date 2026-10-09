@@ -123,10 +123,13 @@ check('4. No mention of AI', grepAll(READ, AI, visible));
   check('5. Strict security policy', fails);
 }
 
-// 6. data colours: defined once as tokens; any other use is chrome
+// 6. data colours: defined once as tokens, used only in the data stylesheet
+//    (results and chart marks); anywhere else they would be chrome
 {
   const DATA = /#2fa37a|#c4453c|47 163 122|196 69 60|var\(--(bid|ask)/i;
-  const fails = grepAll(UI, DATA).filter((f) => !/shared\/css\/base\.css:\d+\s+--(bid|ask)/.test(f));
+  const fails = grepAll(UI, DATA)
+    .filter((f) => !/shared\/css\/base\.css:\d+\s+--(bid|ask)/.test(f))
+    .filter((f) => !/^shared\/css\/data\.css:/.test(f));
   check('6. Bid and ask colours only for data', fails);
 }
 

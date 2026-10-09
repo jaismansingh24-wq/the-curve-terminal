@@ -101,6 +101,9 @@ p, dd, .selectable, input { user-select: text; }
 /* --- Focus: visible on everything interactive ----------------------------- */
 
 :focus { outline: none; }
+/* headings and the page take focus on a page change, for screen readers;
+   they are not controls, so they show no outline */
+[tabindex="-1"]:focus-visible { outline: none; }
 :focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;

@@ -1,0 +1,251 @@
+/* ==========================================================================
+   The journal: the entry form, the overview, an entry's own page, and the
+   home screen's last entry and profit and loss. Results are coloured by
+   shared/css/data.css (the only place bid and ask colours are allowed).
+   ========================================================================== */
+
+/* --- A page's heading ----------------------------------------------------- */
+
+.vhead { padding: clamp(4px, 2vh, 24px) 0 22px; max-width: 980px; }
+.vhead .kicker { margin-bottom: 12px; }
+.vhead__title { font-size: clamp(2rem, 1.4rem + 1.8vw, 2.9rem); }
+.vhead__title:focus { outline: none; }
+.vhead__lede { margin-top: 12px; max-width: 46em; font-size: 1.02rem; }
+
+/* --- Form controls -------------------------------------------------------- */
+
+.inp {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background-color: var(--glass-1);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 0.92rem;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+}
+.inp::placeholder { color: var(--text-faint); }
+.inp:hover { border-color: rgb(255 255 255 / 0.16); }
+.inp:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.inp[aria-invalid="true"] { border-color: var(--text); }
+.inp--num { font-family: var(--mono); font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.inp--sm { min-height: 34px; font-size: 0.84rem; border-radius: 10px; }
+.inp--area { min-height: 120px; padding: 12px; line-height: 1.55; font-family: var(--body); font-size: 0.98rem; resize: vertical; }
+select.inp {
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2398A0AA' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+select.inp option, select.inp optgroup { background-color: var(--ink-raised); color: var(--text); }
+input[type="datetime-local"].inp::-webkit-calendar-picker-indicator { filter: invert(0.75); cursor: pointer; }
+input[type="number"].inp::-webkit-inner-spin-button { opacity: 0.4; }
+
+/* a radio group drawn as a segmented control */
+.rseg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline-soft);
+  background-color: var(--glass-1);
+}
+.rseg__opt { position: relative; }
+.rseg__opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.rseg__opt span {
+  display: block;
+  min-width: 40px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  color: var(--text-dim);
+  font-family: var(--display);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: center;
+  transition: color 160ms ease-out, background-color 160ms ease-out;
+}
+.rseg__opt:hover span { color: var(--text); }
+.rseg__opt input:checked + span { background-color: var(--text); color: var(--ink); }
+.rseg__opt input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* tags as chips: fully rounded, mono, TEXT fill when on */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span {
+  display: inline-block;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  transition: color 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out;
+}
+.chip:hover span { color: var(--text); }
+.chip input:checked + span { background-color: var(--text); border-color: var(--text); color: var(--ink); }
+.chip input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+.chip-add { display: flex; gap: 8px; max-width: 420px; margin-bottom: 18px; }
+
+/* --- The entry form ------------------------------------------------------- */
+
+.form { display: grid; gap: 18px; max-width: 1280px; }
+.form__err {
+  padding: 12px 16px;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--text);
+  background-color: var(--glass-2);
+  color: var(--text);
+  font-size: 0.94rem;
+}
+.fs { margin: 0; padding: 18px 22px 22px; min-width: 0; }
+.fs__k { padding: 0 6px; margin-left: -6px; }
+.fs__p { margin: 6px 0 12px; color: var(--text-dim); font-size: 0.9rem; max-width: 46em; }
+.fg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px 20px;
+  margin-top: 8px;
+}
+.f { display: grid; gap: 7px; align-content: start; min-width: 0; }
+.f--wide { grid-column: 1 / -1; }
+.f__label { font-family: var(--display); font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.f__opt { margin-left: 6px; font-family: var(--mono); font-size: 0.62rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
+.f__hint { font-size: 0.8rem; line-height: 1.45; color: var(--text-faint); }
+.f__hint:empty, .f__err:empty { display: none; }
+.f__err { font-size: 0.84rem; line-height: 1.45; color: var(--text); }
+.f__err::before { content: '\2192  '; color: var(--text-dim); }
+.result-preview {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline-soft);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.result-preview:empty { display: none; }
+.result-preview .pnl { font-size: 1rem; }
+
+.partials { display: grid; gap: 10px; margin-bottom: 10px; }
+.partial {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(120px, 1fr) minmax(90px, 0.6fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+.partial .f__label { font-size: 0.78rem; }
+@media (max-width: 760px) { .partial { grid-template-columns: 1fr 1fr; } }
+
+.form__foot { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 0 4px; }
+
+/* --- Units: money, ticks, points or R; net or gross ----------------------- */
+
+.units { display: flex; flex-wrap: wrap; gap: 6px; }
+.units .seg { padding: 3px; border-radius: 10px; }
+.units .seg__opt { min-width: 0; padding: 4px 10px; font-size: 0.74rem; border-radius: 7px; }
+
+/* --- Overview ------------------------------------------------------------- */
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-bottom: 16px; }
+.tf { display: grid; gap: 6px; min-width: 150px; }
+.toolbar__units { margin-left: auto; }
+
+.tablewrap { overflow-x: auto; padding: 4px 6px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tbl th {
+  padding: 12px 14px;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.tbl td { padding: 12px 14px; border-top: 1px solid var(--hairline-soft); color: var(--text); vertical-align: baseline; }
+.tbl tbody tr:first-child td { border-top: 0; }
+.tbl tbody tr { cursor: pointer; transition: background-color 120ms ease-out; }
+.tbl tbody tr:hover { background-color: var(--glass-2); }
+.tbl tbody tr:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+.tbl .r { text-align: right; }
+.tbl .num, .tbl td.r { font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tbl .dim { color: var(--text-dim); }
+.tbl .conf { max-width: 28em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); font-family: var(--body); }
+.over-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px 20px; }
+
+/* confidence as five small marks, filled up to the level */
+.dots { display: inline-flex; gap: 3px; vertical-align: 0.05em; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--text-faint); }
+.dots i.on { background-color: var(--text); border-color: var(--text); }
+
+/* --- One entry ------------------------------------------------------------- */
+
+.entry-result { margin-top: 14px; font-family: var(--mono); font-size: 0.9rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.entry-result .pnl { font-size: 1.6rem; margin-right: 12px; font-weight: 500; }
+.detail { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; max-width: 1280px; margin-bottom: 22px; }
+.dgroup { padding: 18px 20px 20px; }
+.dgroup dl { display: grid; gap: 0; margin-top: 4px; }
+.dgroup .row { display: grid; grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1.4fr); gap: 14px; padding: 9px 0; border-top: 1px solid var(--hairline-soft); }
+.dgroup .row:first-child { border-top: 0; }
+.dgroup dt { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding-top: 3px; }
+.dgroup dd { font-size: 0.92rem; color: var(--text); overflow-wrap: anywhere; }
+.dgroup dd.num { font-family: var(--mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+.dgroup dd .sub { display: block; color: var(--text-faint); font-size: 0.8rem; font-family: var(--body); }
+.dnotes { grid-column: 1 / -1; }
+.dnotes p { white-space: pre-wrap; color: var(--text-dim); max-width: 60em; margin-top: 8px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hairline); font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); }
+
+/* --- Home: recent entries, last entry, profit and loss -------------------- */
+
+.rows { display: grid; }
+.rowlink {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 11px 4px;
+  border-top: 1px solid var(--hairline-soft);
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 120ms ease-out;
+}
+.rows li:first-child .rowlink { border-top: 0; }
+.rowlink:hover { background-color: var(--glass-2); }
+.rowlink__when { font-family: var(--mono); font-size: 0.74rem; color: var(--text-faint); white-space: nowrap; }
+.rowlink__what { font-family: var(--display); font-size: 0.92rem; font-weight: 560; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowlink__what span { color: var(--text-dim); font-weight: 400; }
+.rowlink .pnl { font-family: var(--mono); font-size: 0.84rem; }
+
+.last { padding-top: 14px; display: grid; gap: 10px; }
+.last__title { font-family: var(--display); font-size: 1.3rem; font-weight: 620; letter-spacing: -0.015em; }
+.last__title span { color: var(--text-dim); font-weight: 500; }
+.last__prices { font-family: var(--mono); font-size: 0.86rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.last__res { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-family: var(--mono); font-size: 0.84rem; color: var(--text-dim); }
+.last__res .pnl { font-size: 1.5rem; font-weight: 500; }
+.last__meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; color: var(--text-dim); }
+.last__conf { font-family: var(--body); color: var(--text); }
+
+.pl { display: grid; }
+.pl__row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+.pl__row:first-child { border-top: 0; }
+.pl__k { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); }
+.pl__v { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.pl__main { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; }
+.pl__sub { font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.pl__none { font-size: 0.92rem; color: var(--text-dim); }

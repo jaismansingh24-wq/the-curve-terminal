@@ -7,7 +7,9 @@
   <title>The Curve Terminal</title>
   <link rel="stylesheet" href="shared/css/fonts.css">
   <link rel="stylesheet" href="shared/css/base.css">
+  <link rel="stylesheet" href="shared/css/data.css">
   <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/journal.css">
   <script src="js/boot.js"></script>
   <script type="module" src="js/main.js"></script>
 </head>
@@ -47,74 +49,405 @@
     </div>
   </header>
 
-  <div class="page" id="page">
-    <main id="main" class="shell" tabindex="-1">
+  <!-- The menu, down the left side -->
+  <nav class="side" aria-label="Main">
+    <a class="side__item" href="#/home" data-route="home" aria-keyshortcuts="H">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13a.5.5 0 0 1-.5.5H9.5V10h-3v3.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+      <span class="side__label">Home</span><kbd aria-hidden="true">H</kbd>
+    </a>
+    <p class="kicker side__k">Journal</p>
+    <a class="side__item" href="#/new" data-route="new" aria-keyshortcuts="N">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+      <span class="side__label">New entry</span><kbd aria-hidden="true">N</kbd>
+    </a>
+    <a class="side__item" href="#/overview" data-route="overview" aria-keyshortcuts="J">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
+      <span class="side__label">Overview</span><kbd aria-hidden="true">J</kbd>
+    </a>
+    <a class="side__item" href="#/stats" data-route="stats" aria-keyshortcuts="S">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V9M6.5 13V5M10 13V7.5M13.5 13V3"/></svg>
+      <span class="side__label">Stats</span><kbd aria-hidden="true">S</kbd>
+    </a>
+    <a class="side__item" href="#/calendar" data-route="calendar">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
+      <span class="side__label">Calendar</span>
+    </a>
+    <div class="side__foot">
+      <button class="side__item" type="button" data-open="settings">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6M12 4.5h1.5M2.5 11.5h1.5M7.5 11.5h6"/><circle cx="10.25" cy="4.5" r="1.75"/><circle cx="5.75" cy="11.5" r="1.75"/></svg>
+        <span class="side__label">Settings</span>
+      </button>
+    </div>
+  </nav>
 
-      <section class="hero" aria-labelledby="greet">
-        <svg class="hero__mark arrive" viewBox="0 0 64 64" role="img" aria-label="The Curve">
-          <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.22"/>
-          <circle cx="32" cy="32" r="24.5" fill="none" stroke="currentColor" stroke-opacity="0.10"/>
-          <g stroke="currentColor" stroke-opacity="0.30" stroke-width="1" stroke-linecap="round"><path d="M18 50.5h4M28 50.5h4M38 50.5h4"/></g>
-          <g stroke="currentColor" stroke-opacity="0.14" stroke-width="1"><path d="M24 16v28M40 16v28"/></g>
-          <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="50" cy="14.5" r="3.1" fill="currentColor"/>
-        </svg>
-        <p class="kicker hero__kicker arrive"><span>Journal</span><span data-date>Today</span></p>
-        <h1 class="title hero__title arrive" id="greet" data-greet>Good evening.</h1>
-        <p class="lede hero__lede arrive">A quiet place to write down what you saw in the market, and read it back later. Everything you write stays on this computer.</p>
-        <p class="hero__clock num arrive">
-          <span data-clock-et>--:-- ET</span>
-          <span class="hero__local" data-clock-local></span>
-        </p>
-        <div class="hero__actions arrive">
-          <button class="btn btn--primary" type="button" data-open="soon" data-soon="entry" aria-keyshortcuts="N">New entry <kbd aria-hidden="true">N</kbd></button>
-          <button class="btn" type="button" data-open="soon" data-soon="journal" aria-keyshortcuts="J">Open journal <kbd aria-hidden="true">J</kbd></button>
+  <div class="page" id="page">
+    <main id="main" tabindex="-1">
+
+      <!-- Home ------------------------------------------------------------ -->
+      <section class="view" data-view="home" aria-labelledby="greet">
+        <div class="home">
+          <div class="home__lead">
+            <section class="hero" aria-labelledby="greet">
+              <svg class="hero__mark arrive" viewBox="0 0 64 64" role="img" aria-label="The Curve">
+                <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.22"/>
+                <circle cx="32" cy="32" r="24.5" fill="none" stroke="currentColor" stroke-opacity="0.10"/>
+                <g stroke="currentColor" stroke-opacity="0.30" stroke-width="1" stroke-linecap="round"><path d="M18 50.5h4M28 50.5h4M38 50.5h4"/></g>
+                <g stroke="currentColor" stroke-opacity="0.14" stroke-width="1"><path d="M24 16v28M40 16v28"/></g>
+                <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="50" cy="14.5" r="3.1" fill="currentColor"/>
+              </svg>
+              <p class="kicker hero__kicker arrive"><span>Journal</span><span data-date>Today</span></p>
+              <h1 class="title hero__title arrive" id="greet" data-greet>Good evening.</h1>
+              <p class="lede hero__lede arrive">A quiet place to write down what you saw in the market, and read it back later. Everything you write stays on this computer.</p>
+              <p class="hero__clock num arrive">
+                <span data-clock-et>--:-- ET</span>
+                <span class="hero__local" data-clock-local></span>
+              </p>
+              <div class="hero__actions arrive">
+                <a class="btn btn--primary" href="#/new">New entry <kbd aria-hidden="true">N</kbd></a>
+                <a class="btn" href="#/overview">Overview <kbd aria-hidden="true">J</kbd></a>
+              </div>
+            </section>
+
+            <section class="recent arrive" aria-labelledby="recent-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="recent-h">Recent entries</h2>
+                <a class="link" href="#/overview">All entries</a>
+              </div>
+              <ul class="rows" data-recent></ul>
+              <p class="empty" data-recent-empty>Nothing written yet. Entries you write are listed here, newest first.</p>
+            </section>
+          </div>
+
+          <div class="home__dash">
+            <section class="card glass glass--quiet arrive" aria-labelledby="last-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="last-h">Last entry</h2>
+                <a class="link" href="#/overview" data-last-link hidden>Open it</a>
+              </div>
+              <div data-last></div>
+            </section>
+
+            <section class="card glass glass--quiet arrive" aria-labelledby="pl-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="pl-h">Profit and loss</h2>
+                <div class="units" data-units></div>
+              </div>
+              <div class="pl" data-pl></div>
+              <p class="note" data-boundary></p>
+            </section>
+
+            <section class="card glass glass--quiet arrive" aria-labelledby="discord-h">
+              <h2 class="kicker card__k" id="discord-h">Discord status</h2>
+              <p class="card__v"><span class="card__dot" data-presence-dot aria-hidden="true"></span><span data-presence-title>Looking for Discord</span></p>
+              <p class="card__p" data-presence-text>Checking whether the Discord app is open on this computer.</p>
+              <div class="card__act"><button class="link" type="button" data-open="settings" data-focus="discord">Change in settings</button></div>
+            </section>
+          </div>
         </div>
       </section>
 
-      <div class="desk arrive">
-        <section class="panel glass glass--quiet" aria-labelledby="recent-h">
-          <div class="panel__head">
-            <h2 class="kicker" id="recent-h">Recent entries</h2>
-            <span class="kicker panel__count" aria-label="No entries">0</span>
-          </div>
-          <div class="recent__empty">
-            <p class="recent__lead">Nothing written yet.</p>
-            <p class="recent__hint">The journal arrives in the next update. Entries you write will be listed here, newest first.</p>
-            <div class="recent__ghost" aria-hidden="true"><span></span><span></span><span></span></div>
-          </div>
-        </section>
+      <!-- New entry, and editing one ----------------------------------------- -->
+      <section class="view" data-view="new" aria-labelledby="new-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Journal &middot; <span data-form-kicker>New entry</span></p>
+          <h1 class="title vhead__title" id="new-h" tabindex="-1" data-form-title>New entry</h1>
+          <p class="lede vhead__lede">The first section is needed to work out the result. Everything else is optional, and adds to the stats.</p>
+          <p class="note" data-preview-note hidden>Design preview: entries are kept only until this page reloads.</p>
+        </header>
 
-        <div class="side">
-          <section class="card glass glass--quiet" aria-labelledby="discord-h">
-            <h2 class="kicker card__k" id="discord-h">Discord status</h2>
-            <p class="card__v"><span class="card__dot" data-presence-dot aria-hidden="true"></span><span data-presence-title>Looking for Discord</span></p>
-            <p class="card__p" data-presence-text>Checking whether the Discord app is open on this computer.</p>
-            <div class="card__act"><button class="link" type="button" data-open="settings" data-focus="discord">Change in settings</button></div>
-          </section>
+        <form class="form" id="entry-form" novalidate autocomplete="off">
+          <div class="form__err" role="alert" data-form-error hidden></div>
 
-          <section class="card glass glass--quiet" aria-labelledby="build-h">
-            <h2 class="kicker card__k" id="build-h">This build</h2>
-            <p class="card__v num">Version <span data-version>0.1.0</span></p>
-            <p class="card__p">The first build: the opening, the home screen and settings. The journal comes next.</p>
-            <div class="card__act">
-              <button class="link" type="button" data-open="whatsnew">What's new</button>
-              <button class="link" type="button" data-link="site">thecurve.in</button>
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">The trade &middot; required</legend>
+            <div class="fg">
+              <label class="f">
+                <span class="f__label">Instrument</span>
+                <select class="inp" name="instrument" data-instruments required></select>
+                <span class="f__err" data-err="instrument"></span>
+              </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-dir">
+                <span class="f__label" id="lbl-dir">Direction</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="direction" value="long"><span>Long</span></label>
+                  <label class="rseg__opt"><input type="radio" name="direction" value="short"><span>Short</span></label>
+                </div>
+                <span class="f__err" data-err="direction"></span>
+              </div>
+              <label class="f">
+                <span class="f__label">Contracts</span>
+                <input class="inp inp--num" name="contracts" type="number" inputmode="numeric" min="1" step="1" value="1" required>
+                <span class="f__err" data-err="contracts"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Times are in</span>
+                <select class="inp" name="zone" data-zones></select>
+                <span class="f__hint">Converted to New York time when saved.</span>
+              </label>
+              <label class="f">
+                <span class="f__label">Entry date and time</span>
+                <input class="inp inp--num" name="entryAt" type="datetime-local" required>
+                <span class="f__hint" data-shows="entryAt"></span>
+                <span class="f__err" data-err="entryAt"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Exit date and time <span class="f__opt">optional</span></span>
+                <input class="inp inp--num" name="exitAt" type="datetime-local">
+                <span class="f__hint" data-shows="exitAt"></span>
+                <span class="f__err" data-err="exitAt"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Entry price</span>
+                <input class="inp inp--num" name="entryPrice" inputmode="decimal" required>
+                <span class="f__hint" data-tick="entryPrice"></span>
+                <span class="f__err" data-err="entryPrice"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Exit price <span class="f__opt">final exit</span></span>
+                <input class="inp inp--num" name="exitPrice" inputmode="decimal" required>
+                <span class="f__hint" data-tick="exitPrice"></span>
+                <span class="f__err" data-err="exitPrice"></span>
+              </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-conf">
+                <span class="f__label" id="lbl-conf">Confidence</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="confidence" value="1"><span>1</span></label>
+                  <label class="rseg__opt"><input type="radio" name="confidence" value="2"><span>2</span></label>
+                  <label class="rseg__opt"><input type="radio" name="confidence" value="3"><span>3</span></label>
+                  <label class="rseg__opt"><input type="radio" name="confidence" value="4"><span>4</span></label>
+                  <label class="rseg__opt"><input type="radio" name="confidence" value="5"><span>5</span></label>
+                </div>
+                <span class="f__hint">1 is a guess, 5 is as sure as you get.</span>
+                <span class="f__err" data-err="confidence"></span>
+              </div>
+              <label class="f f--wide">
+                <span class="f__label">Main confluence</span>
+                <input class="inp" name="confluence" list="dl-confluence" placeholder="For example: absorption at the value area low" required>
+                <span class="f__err" data-err="confluence"></span>
+              </label>
             </div>
-          </section>
+            <p class="result-preview" data-result-preview aria-live="polite"></p>
+          </fieldset>
+
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">Partial exits &middot; optional</legend>
+            <p class="fs__p">Contracts closed before the final exit. The final exit price above covers whatever is left.</p>
+            <div class="partials" data-partials></div>
+            <button class="btn btn--quiet" type="button" data-add-partial>Add a partial exit</button>
+            <span class="f__err" data-err="partials"></span>
+          </fieldset>
+
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">Plan and risk &middot; optional</legend>
+            <div class="fg">
+              <label class="f">
+                <span class="f__label">Initial stop</span>
+                <input class="inp inp--num" name="stop" inputmode="decimal">
+                <span class="f__hint">The stop planned at entry. Results in R use it, so keep it as planned, even if you moved it.</span>
+                <span class="f__err" data-err="stop"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Planned exit</span>
+                <input class="inp inp--num" name="plannedExit" inputmode="decimal">
+                <span class="f__hint">Where you meant to get out, for exit efficiency.</span>
+              </label>
+              <label class="f">
+                <span class="f__label">Intended entry price</span>
+                <input class="inp inp--num" name="intendedEntry" inputmode="decimal">
+                <span class="f__hint">The price you meant to get, for slippage.</span>
+              </label>
+              <label class="f">
+                <span class="f__label">Costs, in dollars</span>
+                <input class="inp inp--num" name="costs" inputmode="decimal" data-costs>
+                <span class="f__hint" data-costs-hint>Commissions and fees for the whole trade.</span>
+                <span class="f__err" data-err="costs"></span>
+              </label>
+              <label class="f">
+                <span class="f__label">Account</span>
+                <input class="inp" name="account" list="dl-account" placeholder="For example: evaluation 1">
+              </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-bias">
+                <span class="f__label" id="lbl-bias">Your bias going in</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="bias" value="up"><span>Up</span></label>
+                  <label class="rseg__opt"><input type="radio" name="bias" value="down"><span>Down</span></label>
+                  <label class="rseg__opt"><input type="radio" name="bias" value="balanced"><span>Balanced</span></label>
+                  <label class="rseg__opt"><input type="radio" name="bias" value=""><span>None</span></label>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">Order flow &middot; optional</legend>
+            <p class="fs__p">What you saw. Pick any that applied, or add your own.</p>
+            <div class="chips" data-chips="orderflow"></div>
+            <div class="chip-add">
+              <input class="inp" data-chip-new="orderflow" placeholder="Add your own" aria-label="Add your own order flow tag">
+              <button class="btn btn--quiet" type="button" data-chip-add="orderflow">Add</button>
+            </div>
+            <div class="fg">
+              <label class="f">
+                <span class="f__label">Setup</span>
+                <input class="inp" name="setup" list="dl-setup" placeholder="Your own name for it">
+              </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-check">
+                <span class="f__label" id="lbl-check">Checklist met</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="checklist" value="met"><span>Met</span></label>
+                  <label class="rseg__opt"><input type="radio" name="checklist" value="partly"><span>Partly</span></label>
+                  <label class="rseg__opt"><input type="radio" name="checklist" value="not"><span>Not</span></label>
+                </div>
+              </div>
+              <label class="f">
+                <span class="f__label">Went against you (MAE)</span>
+                <input class="inp inp--num" name="mae" inputmode="decimal" placeholder="Points">
+                <span class="f__hint">The furthest the trade went against you, in points.</span>
+              </label>
+              <label class="f">
+                <span class="f__label">Went in your favour (MFE)</span>
+                <input class="inp inp--num" name="mfe" inputmode="decimal" placeholder="Points">
+                <span class="f__hint">The furthest it went your way, in points.</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">You &middot; optional</legend>
+            <div class="fg">
+              <div class="f" role="radiogroup" aria-labelledby="lbl-mood">
+                <span class="f__label" id="lbl-mood">Mood</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="mood" value="1"><span>1</span></label>
+                  <label class="rseg__opt"><input type="radio" name="mood" value="2"><span>2</span></label>
+                  <label class="rseg__opt"><input type="radio" name="mood" value="3"><span>3</span></label>
+                  <label class="rseg__opt"><input type="radio" name="mood" value="4"><span>4</span></label>
+                  <label class="rseg__opt"><input type="radio" name="mood" value="5"><span>5</span></label>
+                </div>
+                <span class="f__hint">1 is low, 5 is settled and clear.</span>
+              </div>
+              <label class="f">
+                <span class="f__label">Sleep, in hours</span>
+                <input class="inp inp--num" name="sleep" inputmode="decimal">
+              </label>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-plan">
+                <span class="f__label" id="lbl-plan">Followed your plan</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="followedPlan" value="yes"><span>Yes</span></label>
+                  <label class="rseg__opt"><input type="radio" name="followedPlan" value="no"><span>No</span></label>
+                </div>
+              </div>
+              <div class="f" role="radiogroup" aria-labelledby="lbl-limit">
+                <span class="f__label" id="lbl-limit">Taken after your daily limit</span>
+                <div class="rseg">
+                  <label class="rseg__opt"><input type="radio" name="afterLimit" value="yes"><span>Yes</span></label>
+                  <label class="rseg__opt"><input type="radio" name="afterLimit" value="no"><span>No</span></label>
+                </div>
+              </div>
+            </div>
+            <p class="fs__p">Anything that went wrong in how you traded it.</p>
+            <div class="chips" data-chips="mistakes"></div>
+          </fieldset>
+
+          <fieldset class="fs glass glass--quiet">
+            <legend class="kicker fs__k">Notes &middot; optional</legend>
+            <textarea class="inp inp--area" name="notes" rows="5" aria-label="Notes" placeholder="What you saw, what you did, and what you would look for next time."></textarea>
+          </fieldset>
+
+          <div class="form__foot">
+            <button class="btn btn--primary" type="submit" data-save>Save entry <kbd aria-hidden="true">Ctrl S</kbd></button>
+            <a class="btn btn--quiet" href="#/overview" data-cancel>Cancel</a>
+          </div>
+        </form>
+
+        <datalist id="dl-confluence"></datalist>
+        <datalist id="dl-account"></datalist>
+        <datalist id="dl-setup"></datalist>
+      </section>
+
+      <!-- Overview ------------------------------------------------------------ -->
+      <section class="view" data-view="overview" aria-labelledby="over-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Journal &middot; Overview</p>
+          <h1 class="title vhead__title" id="over-h" tabindex="-1">Overview</h1>
+          <p class="lede vhead__lede" data-over-count>Every entry, newest first.</p>
+        </header>
+        <div class="toolbar" role="group" aria-label="Filters">
+          <label class="tf"><span class="kicker">Instrument</span><select class="inp inp--sm" data-filter="instrument"><option value="">All</option></select></label>
+          <label class="tf"><span class="kicker">Side</span><select class="inp inp--sm" data-filter="side"><option value="">Both</option><option value="long">Long</option><option value="short">Short</option></select></label>
+          <label class="tf"><span class="kicker">Period</span><select class="inp inp--sm" data-filter="period"><option value="">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option></select></label>
+          <div class="units toolbar__units" data-units></div>
         </div>
-      </div>
+        <div class="tablewrap glass glass--quiet">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th scope="col">Closed</th>
+                <th scope="col">Instrument</th>
+                <th scope="col">Side</th>
+                <th scope="col" class="r">Contracts</th>
+                <th scope="col" class="r">Entry</th>
+                <th scope="col" class="r">Exit</th>
+                <th scope="col" class="r" data-result-head>Result</th>
+                <th scope="col">Main confluence</th>
+                <th scope="col" class="r">Confidence</th>
+              </tr>
+            </thead>
+            <tbody data-rows></tbody>
+          </table>
+          <p class="empty" data-over-empty hidden></p>
+        </div>
+        <div class="over-foot">
+          <p class="note" data-boundary></p>
+          <button class="link" type="button" data-reveal hidden>Show the journal file</button>
+        </div>
+      </section>
+
+      <!-- One entry ------------------------------------------------------------ -->
+      <section class="view" data-view="entry" aria-labelledby="entry-h" hidden>
+        <header class="vhead">
+          <p class="kicker" data-entry-kicker>Journal &middot; Entry</p>
+          <h1 class="title vhead__title" id="entry-h" tabindex="-1" data-entry-title>Entry</h1>
+          <p class="entry-result" data-entry-result></p>
+        </header>
+        <div class="detail" data-entry-detail></div>
+        <div class="form__foot">
+          <a class="btn" href="#/overview" data-entry-edit>Edit</a>
+          <button class="btn btn--quiet" type="button" data-entry-delete>Delete</button>
+          <a class="btn btn--quiet" href="#/overview">Back to overview</a>
+        </div>
+      </section>
+
+      <!-- Stats ---------------------------------------------------------------- -->
+      <section class="view" data-view="stats" aria-labelledby="stats-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Journal &middot; Stats</p>
+          <h1 class="title vhead__title" id="stats-h" tabindex="-1">Stats</h1>
+          <p class="lede vhead__lede">The stats arrive in a later update, after the charts. They will be worked out from your entries: net of costs by default, each with its sample size, its likely range and its common misreading, and "too few to say" when the sample is small.</p>
+        </header>
+      </section>
+
+      <!-- Calendar ------------------------------------------------------------- -->
+      <section class="view" data-view="calendar" aria-labelledby="cal-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Journal &middot; Calendar</p>
+          <h1 class="title vhead__title" id="cal-h" tabindex="-1">Calendar</h1>
+          <p class="lede vhead__lede">The calendar arrives with the stats: each trading day's result, in greys with plus and minus signs.</p>
+        </header>
+      </section>
     </main>
 
-    <footer class="foot shell arrive">
+    <footer class="foot arrive">
       <p class="foot__disc">Educational material, not investment advice. <button class="link" type="button" data-open="disclaimer">Read the disclaimer</button></p>
       <nav class="foot__nav" aria-label="About this app">
         <button class="link" type="button" data-open="privacy">Privacy</button>
         <button class="link" type="button" data-open="terms">Terms</button>
         <button class="link" type="button" data-open="whatsnew">What's new</button>
+        <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.1.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.2.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -139,20 +472,22 @@
 
   <!-- Panels ------------------------------------------------------------- -->
 
-  <dialog class="dlg" id="dlg-soon" aria-labelledby="soon-h">
+  <dialog class="dlg" id="dlg-confirm" aria-labelledby="confirm-h">
     <div class="dlg__box dlg__box--small glass">
       <div class="dlg__head">
         <div>
-          <p class="kicker" data-soon-kicker>Journal</p>
-          <h2 class="title dlg__title" id="soon-h">Arrives in the next update</h2>
+          <p class="kicker">Journal</p>
+          <h2 class="title dlg__title" id="confirm-h">Delete this entry?</h2>
         </div>
-        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body">
-        <p>This first build sets up the app itself: the opening, the home screen and settings. The journal is the next thing to be built.</p>
-        <p>There is no date yet. When it lands, What's new will say so.</p>
+        <p data-confirm-what></p>
+        <p>It is removed from the journal file. The copy saved just before, journal.bak.json, still holds it until your next change.</p>
       </div>
-      <div class="dlg__foot"><button class="btn" type="button" data-close>Close</button></div>
+      <div class="dlg__foot">
+        <button class="btn btn--quiet" type="button" data-close>Keep it</button>
+        <button class="btn btn--primary" type="button" data-confirm-delete>Delete</button>
+      </div>
     </div>
   </dialog>
 
@@ -166,6 +501,41 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body">
+
+        <div class="st__group" role="group" aria-labelledby="st-journal">
+          <h3 class="kicker st__h" id="st-journal">Journal</h3>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-day">Trading day starts</span><span class="st__desc">Which day a trade counts towards. Moving this changes every daily figure.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-day" data-setting="dayStart">
+              <button class="seg__opt" type="button" role="radio" data-value="18">6:00 pm ET (CME)</button>
+              <button class="seg__opt" type="button" role="radio" data-value="0">Midnight ET</button>
+            </div>
+          </div>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-units">Show results in</span><span class="st__desc">Ticks and points are per contract. R needs the initial stop on the entry.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-units" data-setting="units">
+              <button class="seg__opt" type="button" role="radio" data-value="money">Money</button>
+              <button class="seg__opt" type="button" role="radio" data-value="ticks">Ticks</button>
+              <button class="seg__opt" type="button" role="radio" data-value="points">Points</button>
+              <button class="seg__opt" type="button" role="radio" data-value="r">R</button>
+            </div>
+          </div>
+          <div class="st__row st__row--wrap">
+            <div class="st__txt"><span class="st__label" id="lbl-basis">Results are</span><span class="st__desc">Net takes commissions and fees off. It is the default because it is what reaches the account.</span></div>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-basis" data-setting="basis">
+              <button class="seg__opt" type="button" role="radio" data-value="net">Net of costs</button>
+              <button class="seg__opt" type="button" role="radio" data-value="gross">Gross</button>
+            </div>
+          </div>
+          <div class="st__row">
+            <div class="st__txt"><label class="st__label" for="st-cost">Default costs per contract</label><span class="st__desc">Commission and fees for one contract in and out, in dollars. Used when an entry leaves costs blank.</span></div>
+            <input class="inp inp--num inp--sm st__num" id="st-cost" inputmode="decimal" data-setting-num="costPerContract" placeholder="0.00">
+          </div>
+          <div class="st__row" data-reveal-row hidden>
+            <div class="st__txt"><span class="st__label">The journal file</span><span class="st__desc">Everything you write is in one file on this computer. Copy it somewhere safe to keep a backup.</span></div>
+            <button class="btn btn--quiet" type="button" data-reveal>Show in File Explorer</button>
+          </div>
+        </div>
 
         <div class="st__group" role="group" aria-labelledby="st-reading">
           <h3 class="kicker st__h" id="st-reading">Reading</h3>
@@ -263,8 +633,11 @@
       </div>
       <div class="dlg__body">
         <div class="keys">
+          <div class="keys__row"><span>Home</span><span><kbd>H</kbd></span></div>
           <div class="keys__row"><span>New entry</span><span><kbd>N</kbd></span></div>
-          <div class="keys__row"><span>Open the journal</span><span><kbd>J</kbd></span></div>
+          <div class="keys__row"><span>Overview</span><span><kbd>J</kbd></span></div>
+          <div class="keys__row"><span>Stats</span><span><kbd>S</kbd></span></div>
+          <div class="keys__row"><span>Save an entry</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
           <div class="keys__row"><span>Settings</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
           <div class="keys__row"><span>This list</span><span><kbd>?</kbd></span></div>
           <div class="keys__row"><span>Close a panel</span><span><kbd>Esc</kbd></span></div>
@@ -279,11 +652,20 @@
       <div class="dlg__head">
         <div>
           <p class="kicker">What's new</p>
-          <h2 class="title dlg__title" id="news-h">The first build</h2>
+          <h2 class="title dlg__title" id="news-h">The journal</h2>
         </div>
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.2.0</h3><span class="kicker">9 October 2026</span></div>
+        <ul>
+          <li>The journal. New entry records a trade: what you traded, when (in any time zone, converted to New York time), the prices, your confidence and the main confluence. Partials, the plan, order flow, mood and notes are optional.</li>
+          <li>Overview lists every entry with filters, and each entry has its own page to read, edit or delete.</li>
+          <li>The home screen now fills the window: a menu on the left, then the greeting and recent entries, then the last entry and profit and loss for today, this week and this month.</li>
+          <li>Results are net of costs by default, and can be shown in money, ticks, points or R.</li>
+          <li>Contract specifications for 26 CME futures, checked against CME Group's own on 9 October 2026.</li>
+          <li>Setup now takes about five seconds so each step can be read, and finishes with a countdown.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.1.0</h3><span class="kicker">8 October 2026</span></div>
         <ul>
           <li>The opening: stars print one at a time like a tape, settle into the curve and form the mark. The loading bar under it shows real progress.</li>
@@ -291,7 +673,6 @@
           <li>Settings for text size, contrast, movement, the background (footprint grid, night sky or plain), the opening animation, Discord status and opening with Windows. All kept on this computer.</li>
           <li>Discord status, which shows The Curve Terminal and a short line on your profile. Never your trades.</li>
           <li>Setup with a choice of folder, shortcuts, opening with Windows and the readme; and a matching uninstaller.</li>
-          <li>The journal itself arrives in the next update.</li>
         </ul>
       </div>
     </div>
@@ -309,10 +690,10 @@
       <div class="dlg__body prose">
         <h3>On this computer</h3>
         <ul>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, and whether Discord status is on.</li>
+          <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, when the trading day starts, how results are shown, your default costs, and the time zone you last typed times in.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
-          <li>Both live in the app's own storage, in your Windows profile at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>. Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
-          <li>When the journal arrives, its entries will be stored on this computer too. This page will say exactly where before that update ships.</li>
+          <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
         </ul>
         <h3>In Windows</h3>
         <ul>
@@ -322,14 +703,14 @@
         <h3>What leaves this computer</h3>
         <ul>
           <li><strong>Discord status, while it is on. It is on by default.</strong> The app talks only to the Discord app already running on this computer. Discord then shows on your profile: "The Curve Terminal", one short line from a fixed list of twenty (for example "Reading an old trade"), how long the app has been open, and a button that links to thecurve.in. Anyone who can see your Discord activity sees this. Discord's own activity privacy settings apply.</li>
-          <li>The status never includes your trades, notes, settings or anything you write. The lines are chosen at random and do not describe what you are doing.</li>
+          <li>The status never includes your trades, your journal, your settings or anything you write. The lines are chosen at random and do not describe what you are doing.</li>
           <li>To stop it, switch off "Show activity on Discord" in Settings. The status clears straight away.</li>
-          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. The app makes no network requests of its own.</li>
+          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. Your journal is never sent anywhere. The app makes no network requests of its own.</li>
           <li>The links to thecurve.in and the Discord community open in your browser, and only when you press them.</li>
         </ul>
         <h3>Removing it</h3>
         <ul>
-          <li>Uninstalling from Installed apps removes the app, its shortcuts and its startup entry. Tick "Also delete my settings" to remove its storage folder as well.</li>
+          <li>Uninstalling from Installed apps removes the app, its shortcuts and its startup entry. Tick "Also delete my settings" to remove its folder as well, which includes your journal.</li>
         </ul>
       </div>
     </div>
@@ -348,9 +729,9 @@
         <h3>Who makes it</h3>
         <p>The Curve Terminal is made by s7ven (Jaisman), who writes and builds The Curve. There is no company behind it. It is free to use.</p>
         <h3>Education, not advice</h3>
-        <p>It is educational material and a place to keep your own notes. It is not investment, financial, legal or tax advice, and not a recommendation. The disclaimer, linked at the foot of the home screen, applies in full.</p>
+        <p>It is educational material and a place to keep your own notes. It is not investment, financial, legal or tax advice, and not a recommendation. The disclaimer, linked at the foot of every page, applies in full.</p>
         <h3>As it is</h3>
-        <p>The app is provided as it is, without warranty of any kind. It can contain mistakes. When the journal arrives, keep your own copy of anything you cannot afford to lose.</p>
+        <p>The app is provided as it is, without warranty of any kind. It can contain mistakes, including in how it works out results. Check figures that matter against your broker's statements, and keep your own copy of the journal file.</p>
         <h3>Your data</h3>
         <p>What you keep in the app stays on your computer. The Privacy panel lists every item it stores and the one thing it sends.</p>
         <h3>Discord</h3>
