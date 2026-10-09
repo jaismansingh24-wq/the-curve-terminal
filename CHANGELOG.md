@@ -4,6 +4,11 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.7 · 9 October 2026
+
+- Journal, in the menu, is now a title of its own: centred above its
+  pages and set apart from Home by a line.
+
 ## 0.3.6 · 9 October 2026
 
 - Every panel, card, button and field is now a plain surface, in the app
