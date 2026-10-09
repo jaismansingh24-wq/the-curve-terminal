@@ -271,3 +271,4 @@ input[type="number"].inp::-webkit-inner-spin-button { opacity: 0.4; }
 .pl__main { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; }
 .pl__sub { font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .pl__none { font-size: 0.92rem; color: var(--text-dim); }
+.pl__where { margin-top: 12px; font-size: 0.88rem; color: var(--text-dim); }

@@ -108,8 +108,20 @@ function pl(s) {
     row.appendChild(v);
     box.appendChild(row);
   }
+  /* nothing this month, but there are entries: say where they are */
+  const latest = J.all()[0];
+  if (!p.month.count && latest) {
+    const note = el('p', 'pl__where');
+    note.append(document.createTextNode('Your latest entry closed on ' + shortDateET(J.closedAt(latest)) + '. '));
+    const a = el('a', 'link', 'Overview');
+    a.href = '#/overview';
+    const b = el('a', 'link', 'Stats');
+    b.href = '#/stats';
+    note.append(a, document.createTextNode(' and '), b, document.createTextNode(' show every entry.'));
+    box.appendChild(note);
+  }
   const sims = J.simCount();
-  if (sims) box.appendChild(el('p', 'simnote', 'Includes ' + sims + ' simulated ' + (sims === 1 ? 'entry' : 'entries') + ': generated, not real trades.'));
+  if (sims) box.appendChild(el('p', 'simnote', 'Your journal includes ' + sims + ' simulated ' + (sims === 1 ? 'entry' : 'entries') + ': generated, not real trades.'));
 }
 
 export function renderHome() {

@@ -26,7 +26,7 @@ import { initAccounts, renderAccounts } from './accounts.js';
 const S = settings.load();
 settings.apply();
 
-let version = '0.3.2';
+let version = '0.3.3';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */

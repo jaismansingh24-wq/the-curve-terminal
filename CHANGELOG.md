@@ -4,6 +4,15 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.3.3 · 9 October 2026
+
+- The Calendar page opens on the latest month that has trades when this
+  month has none yet, instead of an empty month.
+- When this month has no entries, the home screen says when your latest
+  entry closed and points to Overview and Stats.
+- Setup waits a few seconds for a copy of the app that has just been
+  closed to let go of its file, instead of saying it is still open.
+
 ## 0.3.2 · 9 October 2026
 
 - The Stats page is reorganised. Six charts come first, in equal panels:

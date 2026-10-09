@@ -12,11 +12,15 @@ let ym = null;   /* [year, month index] being shown */
 
 export function renderCalendar() {
   const s = settings.get();
+  const T = C.prepare(J.all(), s);
   if (!ym) {
-    const d = tradingDay(Date.now(), s.dayStart);
+    /* open on this month, or, if it has no trades yet, the latest month that has */
+    const today = tradingDay(Date.now(), s.dayStart);
+    const thisMonth = today.slice(0, 7);
+    const latest = T.length ? T[T.length - 1].day.slice(0, 7) : thisMonth;
+    const d = T.some((t) => t.day.startsWith(thisMonth)) ? thisMonth : latest;
     ym = [Number(d.slice(0, 4)), Number(d.slice(5, 7)) - 1];
   }
-  const T = C.prepare(J.all(), s);
   const st = C.compute(T, s);
   const key = ym[0] + '-' + String(ym[1] + 1).padStart(2, '0');
   const box = document.querySelector('[data-cal]');
