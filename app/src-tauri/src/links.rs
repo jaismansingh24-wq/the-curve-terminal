@@ -19,7 +19,7 @@ pub fn open_link(app: tauri::AppHandle, which: String) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-/// The hosts whose pages The Backdrop may open: the publishers of its data.
+/// The hosts whose pages Atlas may open: the publishers of its data.
 /// An address from a fetched feed (a Fed press release, say) opens only if
 /// it is https and on one of these, so a feed cannot send the reader
 /// anywhere else.
@@ -48,7 +48,7 @@ fn source_allowed(url: &str) -> bool {
 #[tauri::command]
 pub fn open_source(app: tauri::AppHandle, url: String) -> Result<(), String> {
     if !source_allowed(&url) {
-        return Err("That address is not one of The Backdrop's sources.".into());
+        return Err("That address is not one of Atlas's sources.".into());
     }
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }

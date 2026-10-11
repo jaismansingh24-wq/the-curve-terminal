@@ -121,3 +121,36 @@
 .bd-error { display: grid; gap: 6px; margin-top: 18px; padding: 18px 20px; max-width: 46em; }
 .bd-error p { font-size: 0.92rem; color: var(--text-dim); line-height: 1.55; }
 .bd-error .bd-error__h { font-family: var(--display); font-weight: 600; color: var(--text); }
+
+/* ---------------------------------------------------------------- How it connects */
+
+.gd-title { font-family: var(--display); font-size: 1.02rem; font-weight: 640; letter-spacing: -0.01em; color: var(--text); }
+.gd-panel .stat__head { align-items: center; margin-bottom: 4px; }
+.gd-panel .stat__head .bd-srclink { margin-left: auto; }
+.gd-p { font-size: 0.94rem; line-height: 1.6; color: var(--text-dim); max-width: 62em; }
+.gd-p + .gd-p { margin-top: 4px; }
+.gd-caution { color: var(--text); }
+.gd-k { margin-bottom: 4px; }
+
+/* the explanation on the left, the figures Atlas holds now on the right */
+.gd-cols { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(16em, 1fr); gap: 18px 28px; align-items: start; }
+.gd-text { display: grid; gap: 14px; }
+.gd-now { padding: 12px 14px; border: 1px solid var(--hairline-soft); border-radius: 10px; background-color: var(--glass-1); }
+.gd-wait { font-size: 0.82rem; color: var(--text-faint); }
+.gd-facts { list-style: none; margin: 0; padding: 0; display: grid; }
+.gd-fact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 8px 0; border-top: 1px solid var(--hairline-soft); }
+.gd-fact:first-child { border-top: 0; padding-top: 2px; }
+.gd-fact__k { font-size: 0.86rem; color: var(--text-dim); }
+.gd-fact__v { max-width: 13em; font-family: var(--mono); font-size: 0.82rem; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+.gd-fact__v:empty { display: none; }
+.gd-fact:has(.gd-fact__v:empty) .gd-fact__k { grid-column: 1 / -1; color: var(--text); }
+.gd-fact__n { grid-column: 1 / -1; font-size: 0.74rem; line-height: 1.45; color: var(--text-faint); }
+@media (max-width: 1000px) { .gd-cols { grid-template-columns: minmax(0, 1fr); } }
+
+.gd-steps { margin: 6px 0 6px; padding-left: 1.6em; display: grid; gap: 6px; list-style: decimal outside; }
+.gd-steps li { display: list-item; font-size: 0.94rem; line-height: 1.55; color: var(--text); padding-left: 4px; }
+.gd-steps li::marker { font-family: var(--mono); font-size: 0.78rem; color: var(--text-faint); }
+.gd-regimes { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 8px 0 14px; }
+.gd-regimes dt { font-family: var(--display); font-size: 0.92rem; font-weight: 600; color: var(--text); }
+.gd-regimes dd { margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-dim); }
+@media (max-width: 760px) { .gd-regimes { grid-template-columns: minmax(0, 1fr); } .gd-regimes dd { margin-bottom: 6px; } }

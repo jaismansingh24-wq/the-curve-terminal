@@ -2,7 +2,7 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.4.0, 9 October 2026.
+Version 0.4.1, 11 October 2026.
 
 
 WHAT IT IS
@@ -13,11 +13,14 @@ out forty figures from them, each with its sample size and where it
 misleads; the Calendar shows each day; Accounts keeps your prop rules,
 fees and payouts. Charts of your trades come in a later update.
 
-The Backdrop shows the market's background from official public data:
+Atlas shows the market's background from official public data:
 Treasury yields and auctions, the New York Fed's overnight rates, the
 CFTC's Commitments of Traders, EIA's weekly petroleum stocks, the ECB's
 euro reference rates, a calendar of scheduled releases, and the Federal
 Reserve Board's press releases. Each figure names its publisher and date.
+Its first page, How it connects, explains how each part is linked to NQ,
+how that link is usually read and where the read goes wrong. It does not
+say what NQ will do.
 
 It is an instrument for looking, not a machine for deciding. It offers no
 strategies, no signals and no one telling you what to buy.
@@ -45,13 +48,13 @@ has been open, and a link to thecurve.in. It never includes your trades or
 anything you write. Switch it off in Settings, under Discord. Your journal
 is never sent anywhere.
 
-The Backdrop's requests for public data, while fetching is on. It is on
+Atlas's requests for public data, while fetching is on. It is on
 by default. While one of its pages is open, the app fetches published
 figures from the US Treasury, the Federal Reserve Bank of New York, the
 Federal Reserve Board, the CFTC, the European Central Bank and the US
 Energy Information Administration. The requests name the app and its
 version and carry nothing about you. Switch it off in Settings, under
-The Backdrop. Sources, in the app, lists every address.
+Atlas. Sources, in the app, lists every address.
 
 Nothing else. No analytics, no tracking, no advertising, no accounts and
 no update checks.

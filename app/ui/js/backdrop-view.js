@@ -1,6 +1,7 @@
-/* The Backdrop: the market's background, from official public data only.
-   Seven pages: Rates, Auctions, Positioning, Energy, Currencies, Releases
-   and the Fed's press releases.
+/* Atlas: the market's background, from official public data only.
+   Eight pages: How it connects (a guide to the rest, for an index future),
+   Rates, Auctions, Positioning, Energy, Currencies, Releases and the Fed's
+   press releases.
 
    Every figure names its publisher and the date it is for, and every page
    says when its copy was fetched (and when a newer one could not be). A
@@ -18,11 +19,12 @@ import * as settings from './settings.js';
 import { el, int } from './format.js';
 import { timeBoth, shortDateET, longDateET, wallToUtc, ET } from './time.js';
 import { invoke, isNative } from '../shared/js/native.js';
+import { INDICES, GUIDE } from './atlas-guide.js';
 
 const MINUS = '−';
 const state = {
   token: 0,
-  range: '1y', posRange: '3y', market: 'ES', auc: 'coupons', family: '', fx: 'USD', rel: '30',
+  range: '1y', posRange: '3y', market: 'ES', auc: 'coupons', family: '', fx: 'USD', rel: '30', index: 'NQ',
 };
 
 /* ------------------------------------------------------------ numbers */
@@ -718,10 +720,230 @@ async function buildWire(force) {
   };
 }
 
+/* ------------------------------------------------------------ How it connects */
+
+/* a panel with a plain title, for the guide's own text */
+function textPanel(title, parts, { cls = '', extra = null } = {}) {
+  const art = el('article', 'cpanel bd-panel gd-panel glass glass--quiet' + (cls ? ' ' + cls : ''));
+  const head = el('div', 'stat__head');
+  head.appendChild(el('h3', 'gd-title', title));
+  if (extra) head.appendChild(extra);
+  art.appendChild(head);
+  for (const p of parts.filter(Boolean)) art.appendChild(typeof p === 'string' ? el('p', 'gd-p', p) : p);
+  return art;
+}
+
+/* "In Atlas now": label, figure, and where and when it is from */
+function factList(rows) {
+  const ul = el('ul', 'gd-facts');
+  for (const [k, v, note] of rows) {
+    const li = el('li', 'gd-fact');
+    li.append(el('span', 'gd-fact__k', k), el('span', 'gd-fact__v', v || ''));
+    if (note) li.appendChild(el('span', 'gd-fact__n', note));
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+/* the latest Treasury curve, with enough of last year for a month's change */
+async function recentCurve(id, force) {
+  const y = thisYear();
+  const cur = await D.get(id, String(y), { maxAge: D.DAILY, force });
+  const parts = [D.treasury(cur.text)];
+  if (parts[0].rows.length < 30) {
+    try { parts.unshift(D.treasury((await D.get(id, String(y - 1), { maxAge: 24 * 30 })).text)); } catch (e) { /* the month's change is left out */ }
+  }
+  return { ...D.joinYears(parts), got: cur };
+}
+
+const by = (who, iso) => who + ', ' + D.shortDayY(iso);
+
+/* fill each topic's facts as its source arrives, and keep the status line current */
+async function connectFacts(root, force, setStatus, alive) {
+  const gots = [];
+  const put = (id, rows) => { if (!alive()) return; const box = root.querySelector('[data-fact="' + id + '"]'); if (box) box.replaceChildren(factList(rows)); };
+  const fail = (id, e) => put(id, [['Not available', '', String(e && e.message ? e.message : e)]]);
+  const seen = (got, what, asOf) => { if (got && alive()) { gots.push({ got, what, asOf }); setStatus(gots); } };
+  const change = (rows, last, key, back) => { const b = onOrBefore(rows, back); return b && fin(b.v[key]) && fin(last.v[key]) ? last.v[key] - b.v[key] : null; };
+
+  const jobs = [
+    (async () => {
+      try {
+        const c = await recentCurve('tsy-nominal', force);
+        const last = c.rows[c.rows.length - 1];
+        const mo = monthBack(last.date);
+        const s210 = (r) => (r && fin(r.v['10Y']) && fin(r.v['2Y']) ? r.v['10Y'] - r.v['2Y'] : null);
+        const before = onOrBefore(c.rows, mo);
+        put('curve', [
+          ['2-year yield', pct(last.v['2Y']), bp(change(c.rows, last, '2Y', mo)) + ' on the month'],
+          ['10-year yield', pct(last.v['10Y']), bp(change(c.rows, last, '10Y', mo)) + ' on the month'],
+          ['2s10s', pp(s210(last)), before ? 'from ' + pp(s210(before)) + ' a month before' : ''],
+          ['3m10y', pp(last.v['10Y'] - last.v['3M']), ''],
+          ['Figures for', D.longDay(last.date), 'US Treasury, daily par yield curve'],
+        ]);
+        seen(c.got, 'Daily par yield curve', 'figures for ' + D.longDay(last.date));
+      } catch (e) { fail('curve', e); }
+    })(),
+    (async () => {
+      try {
+        const c = await recentCurve('tsy-real', force);
+        const last = c.rows[c.rows.length - 1];
+        put('real', [
+          ['10-year real yield', pct(last.v['10Y']), by('US Treasury', last.date)],
+          ['On the week', bp(change(c.rows, last, '10Y', D.addDays(last.date, -7))), ''],
+          ['On the month', bp(change(c.rows, last, '10Y', monthBack(last.date))), ''],
+          ['5-year real yield', pct(last.v['5Y']), bp(change(c.rows, last, '5Y', monthBack(last.date))) + ' on the month'],
+        ]);
+        seen(c.got, 'Daily par real yield curve', 'figures for ' + D.longDay(last.date));
+      } catch (e) { fail('real', e); }
+    })(),
+    (async () => {
+      try {
+        const got = await D.get('nyfed-latest', '', { maxAge: D.DAILY, force });
+        const L = D.nyfedLatest(got.text), e = L.EFFR, s = L.SOFR;
+        const fomc = SCH.EVENTS.find((x) => x.agency === 'Fed' && x.at >= Date.now() - 864e5);
+        put('fed', [
+          ['Fed funds target range', e && fin(e.targetRateFrom) ? pct(e.targetRateFrom) + ' to ' + pct(e.targetRateTo) : '', e ? 'as carried with the EFFR for ' + D.shortDayY(e.effectiveDate) : ''],
+          ['EFFR', e ? pct(e.percentRate) : '', e ? by('New York Fed', e.effectiveDate) : ''],
+          ['SOFR', s ? pct(s.percentRate) : '', s ? by('New York Fed', s.effectiveDate) : ''],
+          ['Next FOMC meeting ends', fomc ? longDateET(fomc.at) : 'not in the published calendar', fomc ? 'Fed meeting calendar' : ''],
+        ]);
+        seen(got, 'Reference rates', '');
+      } catch (e) { fail('fed', e); }
+    })(),
+    (async () => {
+      try {
+        const got = await D.get('auctions', '', { maxAge: D.DAILY, force });
+        const list = D.auctions(got.text);
+        const done = list.filter((a) => a.done).sort((a, b) => (a.date < b.date ? 1 : -1));
+        const row = (fam) => {
+          const a = done.find((x) => x.kind !== 'Bill' && family(x) === fam && fin(x.btc));
+          return a ? [fam + ', ' + D.shortDayY(a.date), pct(a.high, 3), 'bid-to-cover ' + a.btc.toFixed(2) + ', indirect ' + share(a.indirect)] : [fam, 'none in the list', ''];
+        };
+        const next = list.filter((a) => !a.done && a.kind !== 'Bill').sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+        put('auctions', [
+          row('10-year note'), row('30-year bond'),
+          ['Next note or bond auction', next ? D.shortDayY(next.date) : 'none announced yet', next ? next.term + ' ' + next.kind.toLowerCase() + (fin(next.offering) ? ', ' + bn(next.offering) : '') : 'Treasury announces each a few days ahead'],
+        ]);
+        seen(got, 'Auction results', '');
+      } catch (e) { fail('auctions', e); }
+    })(),
+    (async () => {
+      try {
+        const got = await D.get('ecb-90d', '', { maxAge: D.DAILY, force });
+        const days = D.ecb(got.text), last = days[days.length - 1];
+        const then = onOrBefore(days, monthBack(last.date)) || days[0];
+        const ch = (a, b) => (fin(a) && fin(b) ? signed(((a - b) / b) * 100, 2) + '%' : '');
+        const jpy = (d) => (d.r.JPY && d.r.USD ? d.r.JPY / d.r.USD : null);
+        put('dollar', [
+          ['US dollars per euro', fx(last.r.USD), by('ECB', last.date)],
+          ['On the month', ch(last.r.USD, then.r.USD), 'a fall means a stronger dollar against the euro'],
+          ['Yen per US dollar', fx(jpy(last)), 'worked out here from the ECB\'s euro rates; ' + ch(jpy(last), jpy(then)) + ' on the month'],
+        ]);
+        seen(got, 'Euro reference rates', 'rates for ' + D.longDay(last.date));
+      } catch (e) { fail('dollar', e); }
+    })(),
+    (async () => {
+      try {
+        const got = await D.get('cftc-tff', '209742', { maxAge: D.WEEKLY, force });
+        const rows = D.cftc(got.text, 'tff'), last = rows[rows.length - 1], prev = rows[rows.length - 2];
+        const span = rows.filter((r) => r.date >= monthBack(last.date, 36));
+        const lev = span.map((r) => r.g.lev.net).filter(fin);
+        put('positioning', [
+          ['Leveraged funds, net', sint(last.g.lev.net), sint(last.g.lev.net - prev.g.lev.net) + ' on the week'],
+          ['Their range over 3 years', sint(Math.min(...lev)) + ' to ' + sint(Math.max(...lev)), 'net contracts, weekly'],
+          ['Asset managers, net', sint(last.g.asset.net), sint(last.g.asset.net - prev.g.asset.net) + ' on the week'],
+          ['Dealers, net', sint(last.g.dealer.net), sint(last.g.dealer.net - prev.g.dealer.net) + ' on the week'],
+          ['Positions on', D.weekday(last.date) + ' ' + D.longDay(last.date), 'CFTC, NASDAQ MINI, futures only'],
+        ]);
+        seen(got, 'Traders in Financial Futures, NQ', 'positions on ' + D.longDay(last.date));
+      } catch (e) { fail('positioning', e); }
+    })(),
+    (async () => {
+      try {
+        const got = await D.get('eia', 'WCESTUS1', { maxAge: D.WEEKLY, force });
+        const e = D.eia(got.text), rows = e.rows, last = rows[rows.length - 1], prev = rows[rows.length - 2];
+        const fy = fiveYear(rows, last.date);
+        put('energy', [
+          ['Commercial crude stocks', mb(last.v) + ' million barrels', 'week ending ' + D.shortDayY(last.date) + ', EIA'],
+          ['On the week', mbs(last.v - prev.v), ''],
+          ['Against the same week, five years before', fy ? mbs(last.v - fy.avg) + ' from the average' : 'not enough history here', fy ? 'range ' + mb(fy.lo) + ' to ' + mb(fy.hi) + ' (worked out here)' : ''],
+          ['Next EIA release', e.next ? D.longDay(e.next) : '', 'EIA\'s own date'],
+        ]);
+        seen(got, 'Commercial crude oil', 'week ending ' + D.longDay(last.date));
+      } catch (e) { fail('energy', e); }
+    })(),
+  ];
+  /* the calendar ships with the app: no fetch */
+  const next = SCH.EVENTS.filter((x) => x.at >= Date.now() && x.agency !== 'EIA' && x.agency !== 'CFTC').slice(0, 5);
+  put('releases', next.length ? next.map((x) => [x.what, '', (x.time ? shortDateET(x.at) + ', ' + timeBoth(x.at) : longDateET(x.at)) + ' · ' + x.agency + ' schedule']) : [['Nothing scheduled', '', 'in the calendars checked on ' + SCH.CHECKED]]);
+  await Promise.all(jobs);
+}
+
+async function buildConnects() {
+  const g = GUIDE[state.index] || GUIDE.NQ;
+  const idx = INDICES.find((i) => i.code === state.index) || INDICES[0];
+
+  const sel = el('select', 'inp inp--sm bd-select');
+  sel.setAttribute('aria-label', 'Explained for');
+  INDICES.forEach((i) => {
+    const o = new Option(i.code + ' · ' + i.name + (i.ready ? '' : ' (a later update)'), i.code);
+    o.disabled = !i.ready;
+    sel.appendChild(o);
+  });
+  sel.value = idx.code;
+  sel.addEventListener('change', () => { if ((INDICES.find((i) => i.code === sel.value) || {}).ready) { state.index = sel.value; renderBackdrop('connects'); } });
+  const tools = el('div', 'bd-tools');
+  tools.append(el('span', 'kicker', 'Explained for'), sel);
+
+  const open = (page, name, market) => {
+    const b = el('button', 'link bd-srclink', 'Open ' + name);
+    b.type = 'button';
+    b.addEventListener('click', () => { if (market) state.market = market; location.hash = '#/' + page; });
+    return b;
+  };
+  const block = (k, v) => { const d = el('div', 'gd-block'); d.append(el('p', 'kicker gd-k', k), el('p', 'gd-p', v)); return d; };
+
+  const topics = g.topics.map((t, i) => {
+    const facts = el('div', 'gd-now');
+    facts.append(el('p', 'kicker gd-k', 'In Atlas now'));
+    const slot = el('div', 'gd-slot');
+    slot.dataset.fact = t.id;
+    slot.appendChild(el('p', 'gd-wait', 'Reading Atlas\'s last copy.'));
+    facts.appendChild(slot);
+    const cols = el('div', 'gd-cols');
+    const text = el('div', 'gd-text');
+    text.append(block('The link', t.link), block('How it is usually read', t.read), block('Where that read goes wrong', t.wrong));
+    cols.append(text, facts);
+    return textPanel((i + 1) + '. ' + t.title, [cols], { cls: 'bd-panel--wide', extra: open(t.page, t.pageName, t.page === 'positioning' ? idx.code : null) });
+  });
+
+  const steps = el('ol', 'gd-steps');
+  g.together.steps.forEach((s) => steps.appendChild(el('li', '', s)));
+  const regimes = el('dl', 'gd-regimes');
+  g.regimes.list.forEach(([k, v]) => { regimes.append(el('dt', '', k), el('dd', '', v)); });
+
+  return {
+    nodes: [
+      tools,
+      el('p', 'note bd-asof', 'Written for ' + idx.code + ' first. ' + INDICES.filter((i) => !i.ready).map((i) => i.code).join(', ') + ' follow in a later update. Each topic says how it is linked to ' + idx.code + ', how that link is usually read, and where the read goes wrong; beside it are the figures Atlas holds now, as plain facts with their source and date.'),
+      section('Before you read on', '', [textPanel(idx.code + ' and the background', [...g.intro, ...g.caution.map((c) => { const p = el('p', 'gd-p gd-caution', c); return p; })], { cls: 'bd-panel--wide' })], 'bgrid bgrid--one'),
+      section('Topic by topic', 'Each part of Atlas, as it relates to ' + idx.code + '.', topics, 'bgrid bgrid--one'),
+      section('Putting it together', '', [
+        textPanel('Reading the background', [g.together.lead, steps, ...g.together.after], { cls: 'bd-panel--wide' }),
+        textPanel('Words used for regimes', [g.regimes.lead, regimes, block('Where these words go wrong', g.regimes.wrong)], { cls: 'bd-panel--wide' }),
+      ], 'bgrid bgrid--one'),
+    ],
+    status: [],
+    after: (setStatus, alive, root, force) => connectFacts(root, force, setStatus, alive),
+  };
+}
+
 /* ------------------------------------------------------------ rendering */
 
-const BUILD = { rates: buildRates, auctions: buildAuctions, positioning: buildPositioning, energy: buildEnergy, currencies: buildCurrencies, releases: buildReleases, wire: buildWire };
+const BUILD = { connects: buildConnects, rates: buildRates, auctions: buildAuctions, positioning: buildPositioning, energy: buildEnergy, currencies: buildCurrencies, releases: buildReleases, wire: buildWire };
 const WAIT = {
+  connects: 'Reading Atlas.',
   rates: 'Reading Treasury\'s yield files and the New York Fed\'s rates. Treasury\'s site can take half a minute to answer; after that, a copy is kept for 12 hours.',
   auctions: 'Reading Treasury\'s auction results.',
   positioning: 'Reading the CFTC\'s Commitments of Traders.',
@@ -747,11 +969,16 @@ export async function renderBackdrop(view, force = false) {
     body.replaceChildren(...built.nodes);
     status.replaceChildren(statusLines(built.status || []));
     charts.observe(body);
+    /* a page that fills in as its sources arrive (How it connects) */
+    if (built.after) {
+      built.after((items) => { if (my === state.token) status.replaceChildren(statusLines(items)); }, () => my === state.token, body, force)
+        .catch(() => {});
+    }
   } catch (e) {
     if (my !== state.token) return;
     const box = el('div', 'bd-error glass glass--quiet');
     box.append(el('p', 'bd-error__h', 'Nothing to show yet'), el('p', '', String(e && e.message ? e.message : e)));
-    if (settings.get().backdrop === false) box.appendChild(el('p', '', 'Fetching is switched off. Settings, under The Backdrop, switches it on.'));
+    if (settings.get().backdrop === false) box.appendChild(el('p', '', 'Fetching is switched off. Settings, under Atlas, switches it on.'));
     body.replaceChildren(box);
     status.replaceChildren();
   } finally {

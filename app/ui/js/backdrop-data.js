@@ -1,9 +1,9 @@
-/* The Backdrop's data: official public sources, fetched by the native side
+/* Atlas's data: official public sources, fetched by the native side
    (src-tauri/src/backdrop.rs) from a fixed list of addresses and kept as a
    last copy in the app's folder. This module asks for a source by name,
    reads what comes back in the publisher's own format, and keeps track of
    where each figure came from and how fresh it is. It contacts nothing
-   itself, and nothing is fetched unless a Backdrop page is open.
+   itself, and nothing is fetched unless an Atlas page is open.
 
    How often: a daily source is fetched again once its copy is 12 hours old,
    a weekly one at 24 hours, and Treasury files for past years are kept.
@@ -38,7 +38,7 @@ const lastForced = new Map();
 /* one source's text: { text, fetchedAt, fresh, error }. Throws with a plain
    reason when there is nothing to show at all. */
 export async function get(id, arg = '', { maxAge = DAILY, force = false } = {}) {
-  if (!isNative) throw new Error('The Backdrop fetches its data in the installed app. This design preview has no native side to fetch with.');
+  if (!isNative) throw new Error('Atlas fetches its data in the installed app. This design preview has no native side to fetch with.');
   const key = id + '|' + arg;
   if (force) {
     const last = lastForced.get(key) || 0;

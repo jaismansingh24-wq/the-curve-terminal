@@ -92,6 +92,8 @@ const STRATEGY = new RegExp([
   'buy when', 'sell when', 'entry signal', 'take profit', 'stop loss placement', 'target of',
   'go long when', 'go short when', 'this means price will',
   'bullish', 'bearish', 'buy signal', 'sell signal', 'price target', 'guaranteed', 'proven win',
+  /* How it connects explains links; it never forecasts, labels a regime or names a move */
+  'price will', 'will rally', 'expected move', 'the regime is', 'regime: ',
 ].join('|'), 'i');
 check('2. No strategy or advice language', grepAll(READ, STRATEGY, visible));
 

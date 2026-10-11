@@ -4,6 +4,22 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.4.1 · 11 October 2026
+
+- The Backdrop is now called Atlas.
+- Atlas has a new first page, How it connects. It takes each part of Atlas
+  in turn (real yields, Treasury yields and the curve, the Fed and
+  overnight rates, auctions, the dollar, positioning, energy and scheduled
+  releases) and says how it is linked to NQ, how that link is usually
+  read, and where the read goes wrong, with the figures Atlas holds now
+  beside each one as plain facts with their source and date.
+- It closes with a checklist for reading the background and the words
+  people use for regimes, each with where it misleads. It explains; it
+  does not say what NQ will do, label the current regime or score
+  anything.
+- It is written for NQ. A menu at the top lists ES, YM and RTY, which
+  follow in a later update.
+
 ## 0.4.0 · 9 October 2026
 
 - The Backdrop, a new part of the menu: the market's background from
