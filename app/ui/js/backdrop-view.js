@@ -939,6 +939,51 @@ async function buildConnects() {
   };
 }
 
+/* ------------------------------------------------------------ a background card for the Folio */
+
+/* The figures Atlas holds now, as a small card a Folio page can keep: each
+   with its source and date, and the moment it was taken. Uses the same
+   copies and fetching rules as Atlas; a source that cannot be read is left
+   out. Returns null when there is nothing at all. */
+export async function backgroundCard() {
+  const rows = [];
+  const add = (k, v, n) => { if (v) rows.push([k, v, n]); };
+  await Promise.allSettled([
+    recentCurve('tsy-real', false).then((c) => { const l = c.rows[c.rows.length - 1]; add('10-year real yield', pct(l.v['10Y']), 'US Treasury, ' + D.shortDayY(l.date)); }),
+    recentCurve('tsy-nominal', false).then((c) => {
+      const l = c.rows[c.rows.length - 1];
+      add('2-year yield', pct(l.v['2Y']), 'US Treasury, ' + D.shortDayY(l.date));
+      add('10-year yield', pct(l.v['10Y']), 'US Treasury, ' + D.shortDayY(l.date));
+      if (fin(l.v['10Y']) && fin(l.v['2Y'])) add('2s10s', pp(l.v['10Y'] - l.v['2Y']), 'worked out from Treasury\'s curve');
+    }),
+    D.get('nyfed-latest', '', { maxAge: D.DAILY }).then((g) => {
+      const e = D.nyfedLatest(g.text).EFFR;
+      if (e) add('EFFR', pct(e.percentRate) + (fin(e.targetRateFrom) ? ' (range ' + pct(e.targetRateFrom) + ' to ' + pct(e.targetRateTo) + ')' : ''), 'New York Fed, ' + D.shortDayY(e.effectiveDate));
+    }),
+    D.get('ecb-90d', '', { maxAge: D.DAILY }).then((g) => { const d = D.ecb(g.text); const l = d[d.length - 1]; add('US dollars per euro', fx(l.r.USD), 'ECB, ' + D.shortDayY(l.date)); }),
+    D.get('cftc-tff', '209742', { maxAge: D.WEEKLY }).then((g) => {
+      const r = D.cftc(g.text, 'tff'); const l = r[r.length - 1];
+      add('NQ leveraged funds, net', sint(l.g.lev.net), 'CFTC, positions on ' + D.shortDayY(l.date));
+      add('NQ asset managers, net', sint(l.g.asset.net), 'CFTC, positions on ' + D.shortDayY(l.date));
+    }),
+    D.get('eia', 'WCESTUS1', { maxAge: D.WEEKLY }).then((g) => { const e = D.eia(g.text); const l = e.rows[e.rows.length - 1]; add('Commercial crude stocks', mb(l.v) + ' million barrels', 'EIA, week ending ' + D.shortDayY(l.date)); }),
+  ]);
+  if (!rows.length) return null;
+  const order = ['10-year real yield', '2-year yield', '10-year yield', '2s10s', 'EFFR', 'US dollars per euro', 'NQ leveraged funds, net', 'NQ asset managers, net', 'Commercial crude stocks'];
+  rows.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+  const card = document.createElement('div');
+  card.className = 'fbg';
+  card.appendChild(el('p', 'fbg__h', 'Background from Atlas, taken ' + shortDateET(Date.now()) + ', ' + timeBoth(Date.now())));
+  const ul = el('ul', 'fbg__list');
+  for (const [k, v, n] of rows) {
+    const li = document.createElement('li');
+    li.append(el('span', 'fbg__k', k), el('span', 'fbg__v', v), el('span', 'fbg__n', n));
+    ul.appendChild(li);
+  }
+  card.appendChild(ul);
+  return card;
+}
+
 /* ------------------------------------------------------------ rendering */
 
 const BUILD = { connects: buildConnects, rates: buildRates, auctions: buildAuctions, positioning: buildPositioning, energy: buildEnergy, currencies: buildCurrencies, releases: buildReleases, wire: buildWire };

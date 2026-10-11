@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/journal.css">
   <link rel="stylesheet" href="css/stats.css">
   <link rel="stylesheet" href="css/backdrop.css">
+  <link rel="stylesheet" href="css/folio.css">
   <script src="js/boot.js"></script>
   <script type="module" src="js/main.js"></script>
 </head>
@@ -77,6 +78,19 @@
     <a class="side__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
       <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
       <span class="side__label">Accounts</span><kbd aria-hidden="true">A</kbd>
+    </a>
+    <h2 class="side__k">Folio</h2>
+    <a class="side__item" href="#/digest" data-route="digest" aria-keyshortcuts="D">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5h7v11L8 10.5l-3.5 3Z"/></svg>
+      <span class="side__label">Digest</span><kbd aria-hidden="true">D</kbd>
+    </a>
+    <a class="side__item" href="#/pages" data-route="pages" aria-keyshortcuts="P">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8h4M6 10.5h2.5"/></svg>
+      <span class="side__label">Pages</span><kbd aria-hidden="true">P</kbd>
+    </a>
+    <a class="side__item" href="#/page/new" data-route="pagenew">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+      <span class="side__label">New page</span>
     </a>
     <h2 class="side__k">Atlas</h2>
     <a class="side__item" href="#/connects" data-route="connects">
@@ -539,6 +553,57 @@
         <p class="empty" data-accounts-empty>No accounts yet. Add one to see the distance to its rules on the Stats page.</p>
       </section>
 
+      <!-- Folio: Digest -------------------------------------------------------- -->
+      <section class="view" data-view="digest" aria-labelledby="digest-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Folio &middot; Digest</p>
+          <h1 class="title vhead__title" id="digest-h" tabindex="-1">Digest</h1>
+          <p class="lede vhead__lede">Every line you marked as important, gathered from all your pages, newest page first. The lines stay where you wrote them; this only collects them.</p>
+        </header>
+        <div class="toolbar fo-tools" role="group" aria-label="Filters">
+          <label class="tf"><span class="kicker">Search</span><input class="inp inp--sm" type="search" data-dg-q placeholder="Words in a marked line" autocomplete="off"></label>
+          <label class="tf"><span class="kicker">Tag</span><select class="inp inp--sm" data-dg-tag><option value="">All</option></select></label>
+          <div class="fo-tools__seg" data-dg-show></div>
+        </div>
+        <p class="note" data-dg-sum></p>
+        <div class="fo-digest" data-dg-list></div>
+      </section>
+
+      <!-- Folio: Pages --------------------------------------------------------- -->
+      <section class="view" data-view="pages" aria-labelledby="pages-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Folio &middot; Pages</p>
+          <h1 class="title vhead__title" id="pages-h" tabindex="-1">Pages</h1>
+          <p class="lede vhead__lede">Research, notes and screenshots, kept on this computer. Mark the lines that matter and the Digest gathers them.</p>
+        </header>
+        <div class="toolbar fo-tools" role="group" aria-label="Pages">
+          <button class="btn btn--primary" type="button" data-fo-new>New page</button>
+          <label class="tf"><span class="kicker">Start from</span><select class="inp inp--sm" data-fo-template></select></label>
+          <label class="tf"><span class="kicker">Search</span><input class="inp inp--sm" type="search" data-fo-q placeholder="Title, text or tag" autocomplete="off"></label>
+          <label class="tf"><span class="kicker">Tag</span><select class="inp inp--sm" data-fo-tag><option value="">All</option></select></label>
+          <div class="fo-tools__seg" data-fo-sort></div>
+        </div>
+        <p class="note" data-fo-sum></p>
+        <div class="fo-list" data-fo-list></div>
+      </section>
+
+      <!-- Folio: a page -------------------------------------------------------- -->
+      <section class="view" data-view="page" aria-labelledby="page-h" hidden>
+        <div class="fp-top">
+          <a class="link" href="#/pages">&larr; All pages</a>
+          <span class="kicker fp-saved" data-fp-saved role="status"></span>
+          <span class="fp-act"><button class="btn btn--quiet" type="button" data-fp-pin>Pin</button><button class="btn btn--quiet" type="button" data-fp-delete>Delete</button></span>
+        </div>
+        <p class="kicker fp-kicker">Folio &middot; Page</p>
+        <h1 class="vh" id="page-h" tabindex="-1">Folio page</h1>
+        <input class="fp-title" type="text" data-fp-title placeholder="Untitled" aria-label="Title" maxlength="200" autocomplete="off">
+        <div class="fp-meta">
+          <label class="fp-tags"><span class="kicker">Tags</span><input class="inp inp--sm" type="text" data-fp-tags placeholder="nq, fomc, profile" autocomplete="off"></label>
+          <span class="kicker fp-info" data-fp-info></span>
+        </div>
+        <div class="fp-editor" data-fp-editor></div>
+      </section>
+
       <!-- Atlas: How it connects ------------------------------------------- -->
       <section class="view bd" data-view="connects" aria-labelledby="connects-h" hidden>
         <header class="vhead">
@@ -668,7 +733,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.4.1</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.5.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -830,6 +895,18 @@
           </div>
         </div>
 
+        <div class="st__group" role="group" aria-labelledby="st-folio">
+          <h3 class="kicker st__h" id="st-folio">Folio</h3>
+          <div class="st__row">
+            <div class="st__txt"><span class="st__label" id="lbl-folio-hidden">Show hidden marks while writing</span><span class="st__desc">A hidden mark leaves no line on the page; with this on, it shows as a faint dotted line while you write. The Digest gathers it either way.</span></div>
+            <button class="switch" type="button" role="switch" aria-labelledby="lbl-folio-hidden" data-setting="folioShowHidden"><span class="switch__knob"></span></button>
+          </div>
+          <div class="st__row" data-folio-row>
+            <div class="st__txt"><span class="st__label">The Folio file</span><span class="st__desc">Your pages are in one file on this computer, with screenshots in a folder beside it. Copy both somewhere safe to keep a backup.</span></div>
+            <button class="btn btn--quiet" type="button" data-folio-reveal>Show in File Explorer</button>
+          </div>
+        </div>
+
         <div class="st__group" role="group" aria-labelledby="st-backdrop">
           <h3 class="kicker st__h" id="st-backdrop">Atlas</h3>
           <div class="st__row">
@@ -910,6 +987,15 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.5.0</h3><span class="kicker">11 October 2026</span></div>
+        <ul>
+          <li>The Folio, a new part of the menu between Journal and Atlas: pages for research and notes, with headings, bold, italic, underline and strikethrough, text colour, highlights, quotes, lists and screenshots (paste them, drop them in, or choose a file).</li>
+          <li>Select the text that matters and mark it as important, shown on the page as an underline (Ctrl+M) or hidden (Ctrl+Shift+M) so the page stays clean. The Digest gathers every marked line from all your pages, with the page and heading it came from; pressing a line opens it where it was written.</li>
+          <li>Pages take tags and can be pinned; Pages lists them with search and three ways to order them. A page can start blank or from a few headings to fill in: Before the session (with today's scheduled releases and the background from Atlas filled in), After the session, or Research.</li>
+          <li>Add the background from Atlas puts the figures Atlas holds now into a page, each with its source and date, so a page keeps what the background was when it was written.</li>
+          <li>Pages save themselves as you write, to folio.json beside the journal, with the version before kept as a backup. Screenshots are kept in a folder beside it. The Privacy panel says so; nothing in the Folio is sent anywhere.</li>
+          <li>D opens the Digest and P opens Pages.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.4.1</h3><span class="kicker">11 October 2026</span></div>
         <ul>
           <li>The Backdrop is now called Atlas.</li>
@@ -1083,8 +1169,9 @@
         <h3>On this computer</h3>
         <ul>
           <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
+          <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
           <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
@@ -1101,7 +1188,7 @@
           <li>To stop it, switch off "Show activity on Discord" in Settings. The status clears straight away.</li>
           <li><strong>Atlas's requests for public data, while fetching is on. It is on by default.</strong> While one of its pages is open, the app asks official publishers for their published figures: the US Treasury (home.treasury.gov and api.fiscaldata.treasury.gov), the Federal Reserve Bank of New York (markets.newyorkfed.org), the CFTC (publicreporting.cftc.gov), the European Central Bank (www.ecb.europa.eu), the US Energy Information Administration (www.eia.gov) and the Federal Reserve Board (www.federalreserve.gov). Sources, at the foot of every page, lists every address and how often each is asked.</li>
           <li>Those requests say they come from The Curve Terminal, with its version and thecurve.in, and carry nothing about you: no journal, no settings, no identifier. Like any web request, they show each publisher your internet address. To stop them, switch off "Fetch public data" in Settings.</li>
-          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. Your journal is never sent anywhere.</li>
+          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. Your journal and your Folio are never sent anywhere.</li>
           <li>The links to thecurve.in and the Discord community open in your browser, and only when you press them.</li>
         </ul>
         <h3>Removing it</h3>

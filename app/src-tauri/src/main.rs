@@ -6,6 +6,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod backdrop;
+mod folio;
 mod journal;
 mod links;
 mod presence;
@@ -56,6 +57,7 @@ fn main() {
             let handle = app.handle().clone();
             app.manage(journal::Files { testing });
             app.manage(backdrop::Cache { testing });
+            app.manage(folio::Folio { testing });
             app.manage(presence::Presence::spawn(handle.clone(), testing));
 
             let mut window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -98,6 +100,12 @@ fn main() {
             links::open_source,
             backdrop::backdrop_get,
             backdrop::backdrop_clear,
+            folio::folio_read,
+            folio::folio_write,
+            folio::folio_image_save,
+            folio::folio_image_read,
+            folio::folio_images_prune,
+            folio::folio_reveal,
             presence::presence_set,
             startup::startup_get,
             startup::startup_set,

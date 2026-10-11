@@ -1,11 +1,12 @@
 /* Pages, by the address after the #:
      #/home  #/new  #/edit/<id>  #/overview  #/entry/<id>  #/stats  #/calendar  #/accounts
+     the Folio's: #/digest  #/pages  #/page/<id>  #/page/new
      and Atlas's: #/connects  #/rates  #/auctions  #/positioning  #/energy  #/currencies  #/releases  #/wire
    One page shows at a time. The menu marks the current one, the page's
    heading takes focus (so screen readers announce where you are), and the
    page scrolls back to the top. */
 
-const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'connects', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
+const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'digest', 'pages', 'page', 'connects', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
 const handlers = {};
 let current = null;
 
@@ -16,6 +17,7 @@ export function parse(hash = location.hash) {
   const name = parts[0] || 'home';
   if (name === 'edit') return { view: 'new', id: parts[1] || null, route: 'new' };
   if (name === 'entry') return { view: 'entry', id: parts[1] || null, route: 'overview' };
+  if (name === 'page') return { view: 'page', id: parts[1] || null, route: parts[1] === 'new' ? 'pagenew' : 'pages' };
   return VIEWS.includes(name) ? { view: name, id: null, route: name } : { view: 'home', id: null, route: 'home' };
 }
 

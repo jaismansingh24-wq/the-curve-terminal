@@ -2,7 +2,7 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.4.1, 11 October 2026.
+Version 0.5.0, 11 October 2026.
 
 
 WHAT IT IS
@@ -12,6 +12,10 @@ later. New entry records a trade; Overview lists them all; Stats works
 out forty figures from them, each with its sample size and where it
 misleads; the Calendar shows each day; Accounts keeps your prop rules,
 fees and payouts. Charts of your trades come in a later update.
+
+The Folio keeps research pages: headings, colour, highlights, lists and
+screenshots. Mark the lines that matter as important (shown or hidden)
+and the Digest gathers them from every page.
 
 Atlas shows the market's background from official public data:
 Treasury yields and auctions, the New York Fed's overnight rates, the
@@ -35,7 +39,9 @@ Your journal   %LOCALAPPDATA%\in.thecurve.terminal\journal.json
                as journal.bak.json; copy it somewhere safe as a backup)
 Your settings  %LOCALAPPDATA%\in.thecurve.terminal
                (kept on this computer only)
-Backdrop data  %LOCALAPPDATA%\in.thecurve.terminal\backdrop
+Your Folio     %LOCALAPPDATA%\in.thecurve.terminal\folio.json
+               (with folio.bak.json, and screenshots in folio-images)
+Atlas data     %LOCALAPPDATA%\in.thecurve.terminal\backdrop
                (the last copy of each public source, for offline use)
 
 
@@ -67,6 +73,9 @@ N           New entry
 J           Overview
 S           Stats
 A           Accounts
+D           Digest (the Folio's marked lines)
+P           Pages (the Folio)
+Ctrl + M    Mark selected text as important
 Ctrl + S    Save an entry
 Ctrl + ,    Settings
 ?           Shortcuts

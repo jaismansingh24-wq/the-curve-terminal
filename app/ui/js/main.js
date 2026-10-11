@@ -6,7 +6,7 @@ import * as settings from './settings.js';
 import * as presence from './presence.js';
 import * as J from './journal.js';
 import * as router from './router.js';
-import { initTitlebar } from '../shared/js/titlebar.js';
+import { initTitlebar, onBeforeClose } from '../shared/js/titlebar.js';
 import { invoke, isNative, currentWindow, openLink } from '../shared/js/native.js';
 import { get as sget, set as sset } from '../shared/js/store.js';
 import { skyData } from '../shared/js/sky.js';
@@ -24,12 +24,14 @@ import { initCalendar, renderCalendar } from './calendar-view.js';
 import { initAccounts, renderAccounts } from './accounts.js';
 import { initBackdrop, renderBackdrop, VIEWS as BACKDROP } from './backdrop-view.js';
 import { forget as forgetBackdrop } from './backdrop-data.js';
+import * as Folio from './folio.js';
+import { initFolio, renderDigest, renderPages, openPage, leavePage } from './folio-view.js';
 
 const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.4.1';
+let version = '0.5.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -65,11 +67,16 @@ initStats();
 initCalendar();
 initAccounts({ confirm: dialogs.confirm });
 initBackdrop();
+initFolio({ confirm: dialogs.confirm });
+onBeforeClose(() => leavePage());
 
 document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('click', () => openLink(b.dataset.link)));
 document.querySelectorAll('[data-reveal]').forEach((b) => b.addEventListener('click', () => invoke('journal_reveal').catch(() => {})));
 const revealRow = document.querySelector('[data-reveal-row]');
 if (revealRow) revealRow.hidden = !isNative;
+const folioRow = document.querySelector('[data-folio-row]');
+if (folioRow) folioRow.hidden = !isNative;
+document.querySelector('[data-folio-reveal]').addEventListener('click', () => invoke('folio_reveal').catch(() => {}));
 
 /* Settings: remove every simulated entry and account in one go */
 function syncSimRow() {
@@ -133,6 +140,16 @@ router.on('entry', (r) => renderEntry(r.id));
 router.on('stats', () => renderStats());
 router.on('calendar', () => renderCalendar());
 router.on('accounts', () => renderAccounts());
+router.on('digest', () => renderDigest());
+router.on('pages', () => renderPages());
+router.on('page', (r) => openPage(r.id));
+/* leaving a page writes what is waiting */
+let lastView = null;
+window.addEventListener('hashchange', () => {
+  const r = router.parse();
+  if (lastView === 'page' && r.view !== 'page') leavePage();
+  lastView = r.view;
+});
 BACKDROP.forEach((v) => router.on(v, () => renderBackdrop(v)));
 
 /* redraw whatever is showing when the journal or a setting changes */
@@ -159,6 +176,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     const r = router.now();
     if (ready && r && r.view === 'new' && !document.querySelector('dialog[open]')) saveShortcut();
+    if (ready && r && r.view === 'page') leavePage().then(() => openPage(r.id));
     return;
   }
   /* the browser's own shortcuts mean nothing in an app window */
@@ -175,6 +193,8 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'j') router.go('/overview');
   else if (k === 's') router.go('/stats');
   else if (k === 'a') router.go('/accounts');
+  else if (k === 'd') router.go('/digest');
+  else if (k === 'p') router.go('/pages');
   else if (e.key === '?') dialogs.open('keys');
 });
 
@@ -211,6 +231,15 @@ function appInfo() {
 
 /* read the journal file; if a read fails, try twice more before saying so */
 let journalError = null, reading = null;
+/* read the Folio file; Digest and Pages show it once it is in */
+let folioError = null;
+async function loadFolio() {
+  try { await Folio.load(); folioError = null; } catch (e) { folioError = e; }
+  const r = router.now();
+  if (r && r.view === 'digest') renderDigest();
+  if (r && r.view === 'pages') renderPages();
+}
+
 function loadJournal() {
   if (!reading) reading = (async () => {
     for (let i = 0; i < 3; i++) {
@@ -231,6 +260,7 @@ const steps = [
   { id: 'background', label: 'Background', run: prepareBackground },
   { id: 'data', label: 'Data folder', run: appInfo },
   { id: 'journal', label: 'Journal', run: loadJournal, limit: 5000 },
+  { id: 'folio', label: 'Folio', run: loadFolio, limit: 5000 },
   { id: 'discord', label: 'Discord', run: () => presence.configure(settings.get().discord), limit: 2500 },
 ];
 

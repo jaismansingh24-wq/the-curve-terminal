@@ -3806,8 +3806,9 @@ dependencies = [
 
 [[package]]
 name = "the-curve-terminal"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
+ "base64 0.22.1",
  "discord-rich-presence",
  "serde",
  "serde_json",
@@ -3821,7 +3822,7 @@ dependencies = [
 
 [[package]]
 name = "the-curve-terminal-setup"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "mslnk",
  "serde",

@@ -4,6 +4,30 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.5.0 · 11 October 2026
+
+- The Folio, a new part of the menu between Journal and Atlas: pages for
+  research and notes, with headings, bold, italic, underline and
+  strikethrough, text colour, highlights, quotes, lists and screenshots
+  (paste them, drop them in, or choose a file).
+- Select the text that matters and mark it as important, shown on the page
+  as an underline (Ctrl+M) or hidden (Ctrl+Shift+M) so the page stays
+  clean. The Digest gathers every marked line from all your pages, with
+  the page and heading it came from; pressing a line opens it where it was
+  written.
+- Pages take tags and can be pinned; Pages lists them with search and
+  three ways to order them. A page can start blank or from a few headings
+  to fill in: Before the session (with today's scheduled releases and the
+  background from Atlas filled in), After the session, or Research.
+- Add the background from Atlas puts the figures Atlas holds now into a
+  page, each with its source and date, so a page keeps what the background
+  was when it was written.
+- Pages save themselves as you write, to folio.json beside the journal,
+  with the version before kept as a backup. Screenshots are kept in a
+  folder beside it. The Privacy panel says so; nothing in the Folio is
+  sent anywhere.
+- D opens the Digest and P opens Pages.
+
 ## 0.4.1 · 11 October 2026
 
 - The Backdrop is now called Atlas.

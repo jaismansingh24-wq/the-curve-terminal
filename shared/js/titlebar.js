@@ -3,6 +3,10 @@
 
 import { currentWindow } from './native.js';
 
+/* work to finish before the window closes (the Folio's last keystrokes) */
+const beforeClose = [];
+export function onBeforeClose(fn) { beforeClose.push(fn); }
+
 export function initTitlebar(bar) {
   if (!bar) return;
   const w = currentWindow();
@@ -13,7 +17,10 @@ export function initTitlebar(bar) {
   if (!w) return;
 
   if (min) min.addEventListener('click', () => w.minimize());
-  if (close) close.addEventListener('click', () => w.close());
+  if (close) close.addEventListener('click', async () => {
+    await Promise.race([Promise.all(beforeClose.map((fn) => Promise.resolve().then(fn).catch(() => {}))), new Promise((r) => setTimeout(r, 1500))]);
+    w.close();
+  });
   if (max) {
     max.addEventListener('click', () => w.toggleMaximize());
     const sync = async () => {

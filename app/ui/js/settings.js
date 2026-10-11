@@ -26,8 +26,10 @@ export const DEFAULTS = Object.freeze({
   monthlyFees: 0,             /* platform and data fees a month, in dollars */
   entryZone: 'America/New_York',
   showSimulated: true,        /* include simulated (generated) entries everywhere */
-  /* The Backdrop */
-  backdrop: true,             /* fetch official public data while a Backdrop page is open */
+  /* the Folio */
+  folioShowHidden: false,     /* show hidden important marks while writing */
+  /* Atlas (its key keeps the section's first name, so a saved choice carries over) */
+  backdrop: true,             /* fetch official public data while an Atlas page is open */
 });
 const NUMERIC = new Set(['dayStart']);
 
