@@ -615,7 +615,7 @@
         <header class="vhead">
           <p class="kicker">Practice &middot; Replay</p>
           <h1 class="title vhead__title" id="replay-h" tabindex="-1">Replay</h1>
-          <p class="lede vhead__lede">Play your own price history forward bar by bar and practise placing orders against it. Every trade here is practice: worked out from past bars, never sent anywhere, and kept apart from your journal.</p>
+          <p class="lede vhead__lede">Play your own price history forward, bar by bar or trade by trade, on up to four charts, and practise placing orders against it. Every trade here is practice: worked out from past data, never sent anywhere, and kept apart from your journal.</p>
         </header>
         <div class="rp-root" data-rp-root></div>
       </section>
@@ -749,7 +749,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.6.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.7.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1003,6 +1003,20 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.7.0</h3><span class="kicker">12 October 2026</span></div>
+        <ul>
+          <li>Replay now reads files of trades as well as bars: MotiveWave's tick export (Data, Export, with Tick chosen) is read as it is. The replay then moves trade by trade, the clock shows the second, and orders fill at the trade that reaches them rather than on an assumed path through a bar.</li>
+          <li>A tick export only reaches back so far. Add an export to this file joins a later export of the same contract to the one you have, keeping one copy of the trades where the two overlap.</li>
+          <li>One, two (side by side or stacked) or four charts, each with its own timeframe and type, and its own toolbar. All of them follow the same replay.</li>
+          <li>Three chart types. Candles. Footprint: each bar's buys and sells at every price, from a file of trades, its busiest row boxed and its delta under it. TPO: each session's prices by period as letters, regular hours or the full session, with its point of control and value area.</li>
+          <li>Volume and delta: a volume pane, a delta pane (each bar's buys less sells, with a running total that starts again each trading day), and volume and delta profiles of the visible bars or of each session, with the point of control and value area marked.</li>
+          <li>Buys and sells are inferred: a trade at the ask counts as a buy, at the bid as a sell. The exchange does not report the side, so platforms that infer it differently show different deltas from the same trades, and Replay says so on the page. From a file of bars there is no footprint or delta, and a profile spreads each bar's volume evenly over its range.</li>
+          <li>Move a chart in any direction by dragging it. Drag the price axis to stretch prices and the time axis to stretch time; the wheel zooms time, and with Ctrl, prices. A double click returns to the present; on the price axis, it fits the prices again.</li>
+          <li>Style, on each chart: candle colours, the chart's background, the grid, and the colours of volume, profiles, the value area, the point of control, buys and sells, with the value area's share, row sizes and TPO periods. Only the chart changes; the page keeps its own colours.</li>
+          <li>Lines: horizontal lines and trend lines, in a colour you choose, kept with each file. Click a line to select it, drag to move it, Delete to remove it; right-click a chart for a line at that price.</li>
+          <li>Play speeds are now times real time, from 1× to 3,600×, skipping the daily break and weekends. Next trade, Next minute and Next chart bar step forward by hand.</li>
+          <li>Keys in Replay: Space plays and pauses; the Right arrow moves one trade (with a file of bars, one minute), and with Shift, one bar of the first chart; Delete removes the selected line; Escape stops a line half drawn.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.6.0</h3><span class="kicker">12 October 2026</span></div>
         <ul>
           <li>Replay, under a new Practice heading in the menu: load your own export of one-minute bars (MotiveWave's is read as it is) and play it forward bar by bar on a candlestick chart, at five speeds, from any date and time you choose or from a random day.</li>
@@ -1194,9 +1208,9 @@
         <h3>On this computer</h3>
         <ul>
           <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, the file, timeframe, speed, contracts, bracket presets and fill rules last used in Replay, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, in Replay the file last opened, the chart layout, each chart's timeframe, type, panes, profiles and colours, the playing speeds, the colour of new lines, and the contracts, bracket presets and fill rules last used, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
-          <li><strong>Replay</strong>, in the <code>replay</code> folder inside the app's folder: a compact copy of each file of bars you load (the bars only; your original export is not changed), what each file is (its name, instrument and time zone), and the practice log of trades placed while replaying. The bars come from your own data provider and stay on this computer; Replay can remove a file's copy.</li>
+          <li><strong>Replay</strong>, in the <code>replay</code> folder inside the app's folder: a compact copy of each file of bars or trades you load (for bars, their times and prices and volume; for trades, each trade's time, price, size and whether it was at the bid or the ask; your original export is not changed), what each file is (its name, instrument, time zone and the exports joined into it), the lines you draw on each file's charts, and the practice log of trades placed while replaying. The data comes from your own data provider and stays on this computer; Replay can remove a file's copy.</li>
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
           <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>

@@ -17,10 +17,18 @@
    and they only ever reduce the position. Costs are the round-turn cost per
    contract from Settings, taken when a position closes.
 
-   Prices are in ticks throughout; times are UTC minutes (the bar's open). */
+   With a file of trades the replay moves trade by trade and there is no
+   path to assume: an order fills at the first trade that reaches it (a
+   limit at its price once a trade prints through it, or on a touch; a stop
+   at the trade that set it off, plus slippage).
+
+   Prices are in ticks throughout; times are UTC seconds. */
 
 export function createEngine({ data, tickValue, commission = 0, rules = {}, onEvent = () => {} }) {
+  const tickMode = data.kind === 'trades';
   const { o, h, l, c, t } = data;
+  /* bars count minutes, trades seconds; everything here is in seconds */
+  const unit = tickMode ? 1 : 60;
   let cursor = 0, seq = 0, grp = 0;
   let orders = [];
   let pos = { qty: 0, avg: 0, at: null };
@@ -28,8 +36,8 @@ export function createEngine({ data, tickValue, commission = 0, rules = {}, onEv
   let fills = [];
   let rule = { fill: rules.fill || 'through', slip: rules.slip || 0 };
 
-  const now = () => c[cursor];
-  const nowT = () => t[cursor];
+  const now = () => (tickMode ? data.p[cursor] : c[cursor]);
+  const nowT = () => t[cursor] * unit;
   const sgn = (side) => (side === 'buy' ? 1 : -1);
 
   /* ------------------------------------------------------------ the position */
@@ -87,6 +95,7 @@ export function createEngine({ data, tickValue, commission = 0, rules = {}, onEv
   /* ------------------------------------------------------------ fills inside a bar */
 
   function trigger(od, a, b, atOpen) {
+    const stopAt = (side) => (tickMode ? b : od.price) + sgn(side) * rule.slip;
     const through = rule.fill === 'touch' ? 0 : 1;
     if (atOpen) {
       if (od.type === 'limit' && od.side === 'buy' && a <= od.price - through) return { price: Math.min(a, od.price), dist: 0 };
@@ -97,8 +106,8 @@ export function createEngine({ data, tickValue, commission = 0, rules = {}, onEv
     }
     if (od.type === 'limit' && od.side === 'buy') { const lvl = od.price - through; if (b < a && b <= lvl && a > lvl) return { price: od.price, dist: a - lvl }; }
     if (od.type === 'limit' && od.side === 'sell') { const lvl = od.price + through; if (b > a && b >= lvl && a < lvl) return { price: od.price, dist: lvl - a }; }
-    if (od.type === 'stop' && od.side === 'buy' && b > a && b >= od.price && a < od.price) return { price: od.price + rule.slip, dist: od.price - a };
-    if (od.type === 'stop' && od.side === 'sell' && b < a && b <= od.price && a > od.price) return { price: od.price - rule.slip, dist: a - od.price };
+    if (od.type === 'stop' && od.side === 'buy' && b > a && b >= od.price && a < od.price) return { price: stopAt('buy'), dist: od.price - a };
+    if (od.type === 'stop' && od.side === 'sell' && b < a && b <= od.price && a > od.price) return { price: stopAt('sell'), dist: a - od.price };
     return null;
   }
   function sweep(a, b, at, atOpen) {
@@ -109,10 +118,11 @@ export function createEngine({ data, tickValue, commission = 0, rules = {}, onEv
   }
   function run(i) {
     if (!orders.length) return;
-    const O = o[i], H = h[i], L = l[i], C = c[i];
-    sweep(O, O, t[i], true);
+    if (tickMode) { if (i > 0) sweep(data.p[i - 1], data.p[i], t[i], false); return; }
+    const O = o[i], H = h[i], L = l[i], C = c[i], at = t[i] * unit;
+    sweep(O, O, at, true);
     const path = C >= O ? [O, L, H, C] : [O, H, L, C];
-    for (let k = 0; k < 3 && orders.length; k++) sweep(path[k], path[k + 1], t[i], false);
+    for (let k = 0; k < 3 && orders.length; k++) sweep(path[k], path[k + 1], at, false);
   }
 
   /* an order already beyond the last price fills now, at that price */

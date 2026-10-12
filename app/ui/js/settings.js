@@ -27,9 +27,12 @@ export const DEFAULTS = Object.freeze({
   entryZone: 'America/New_York',
   showSimulated: true,        /* include simulated (generated) entries everywhere */
   /* Replay */
-  replayFile: '',             /* the file of bars last opened */
-  replayTf: 1,                /* chart timeframe in minutes, or 'D' */
-  replaySpeed: 5,             /* one-minute bars per second while playing */
+  replayFile: '',             /* the file of bars or trades last opened */
+  replayLayout: '1',          /* one chart, two side by side ('2h'), two stacked ('2v'), or four */
+  replayCharts: [],           /* each chart's timeframe, type, panes, profiles and colours */
+  replaySpeedBars: 300,       /* playing speed, times real time, for a file of bars */
+  replaySpeedTrades: 20,      /* and for a file of trades */
+  replayLineColour: '#edeff2', /* the colour of new lines drawn on the charts */
   replayQty: 1,
   replayFill: 'through',      /* limits fill once traded through, or on a touch */
   replaySlip: 0,              /* ticks of slippage on market and stop orders */

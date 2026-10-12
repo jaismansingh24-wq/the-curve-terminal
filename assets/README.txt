@@ -2,7 +2,7 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.6.0, 12 October 2026.
+Version 0.7.0, 12 October 2026.
 
 
 WHAT IT IS
@@ -13,8 +13,9 @@ out forty figures from them, each with its sample size and where it
 misleads; the Calendar shows each day; Accounts keeps your prop rules,
 fees and payouts. Charts of your trades come in a later update.
 
-Replay plays your own exported bars forward on a candlestick chart, so
-you can practise market, limit and stop orders with bracket presets.
+Replay plays your own exported bars or trades forward on one, two or
+four charts (candles, footprint or TPO, with volume and delta profiles),
+so you can practise market, limit and stop orders with bracket presets.
 Every replay trade is practice, kept apart from the journal.
 
 The Folio keeps research pages: headings, colour, highlights, lists and
@@ -46,8 +47,9 @@ Your settings  %LOCALAPPDATA%\in.thecurve.terminal
 Your Folio     %LOCALAPPDATA%\in.thecurve.terminal\folio.json
                (with folio.bak.json, and screenshots in folio-images)
 Replay files   %LOCALAPPDATA%\in.thecurve.terminal\replay
-               (a compact copy of each file of bars you load, and
-               the practice log)
+               (a compact copy of each file of bars or trades you
+               load, the lines drawn on its charts, and the
+               practice log)
 Atlas data     %LOCALAPPDATA%\in.thecurve.terminal\backdrop
                (the last copy of each public source, for offline use)
 

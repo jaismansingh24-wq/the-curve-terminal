@@ -6,6 +6,11 @@
 //   %LOCALAPPDATA%\in.thecurve.terminal\replay\index.json   what each file is
 //   %LOCALAPPDATA%\in.thecurve.terminal\replay\log.json     practice trades
 //
+//   ...\replay\draw.json    lines drawn on the charts, by file
+//
+// A file is bars (CTRP: one row per minute) or trades (CTRT: one row per
+// trade, with the side it took when the export says so).
+//
 // The bars come from the reader's own export (their platform's data, under
 // their own licence). They are kept on this computer only: never sent, and
 // never part of the app.
@@ -41,6 +46,7 @@ fn json_name(name: &str) -> Result<&'static str, String> {
     match name {
         "index" => Ok("index.json"),
         "log" => Ok("log.json"),
+        "draw" => Ok("draw.json"),
         _ => Err("No replay file by that name.".into()),
     }
 }
@@ -68,7 +74,8 @@ pub fn replay_save_bin(app: AppHandle, request: Request<'_>) -> Result<(), Strin
     let InvokeBody::Raw(bytes) = request.body() else {
         return Err("The replay file arrived in the wrong form.".into());
     };
-    if bytes.len() < 24 || &bytes[0..4] != b"CTRP" || bytes.len() > MAX_BIN {
+    let magic: &[u8] = bytes.get(0..4).unwrap_or_default();
+    if bytes.len() < 24 || (magic != b"CTRP" && magic != b"CTRT") || bytes.len() > MAX_BIN {
         return Err("Only bars prepared by the app are kept.".into());
     }
     write_atomic(&folder(&app)?.join(format!("{id}.bin")), bytes)

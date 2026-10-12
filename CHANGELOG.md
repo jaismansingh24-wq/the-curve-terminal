@@ -4,6 +4,50 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.7.0 · 12 October 2026
+
+- Replay now reads files of trades as well as bars: MotiveWave's tick
+  export (Data, Export, with Tick chosen) is read as it is. The replay
+  then moves trade by trade, the clock shows the second, and orders fill
+  at the trade that reaches them rather than on an assumed path through a
+  bar.
+- A tick export only reaches back so far. Add an export to this file joins
+  a later export of the same contract to the one you have, keeping one
+  copy of the trades where the two overlap.
+- One, two (side by side or stacked) or four charts, each with its own
+  timeframe and type, and its own toolbar. All of them follow the same
+  replay.
+- Three chart types. Candles. Footprint: each bar's buys and sells at
+  every price, from a file of trades, its busiest row boxed and its delta
+  under it. TPO: each session's prices by period as letters, regular hours
+  or the full session, with its point of control and value area.
+- Volume and delta: a volume pane, a delta pane (each bar's buys less
+  sells, with a running total that starts again each trading day), and
+  volume and delta profiles of the visible bars or of each session, with
+  the point of control and value area marked.
+- Buys and sells are inferred: a trade at the ask counts as a buy, at the
+  bid as a sell. The exchange does not report the side, so platforms that
+  infer it differently show different deltas from the same trades, and
+  Replay says so on the page. From a file of bars there is no footprint or
+  delta, and a profile spreads each bar's volume evenly over its range.
+- Move a chart in any direction by dragging it. Drag the price axis to
+  stretch prices and the time axis to stretch time; the wheel zooms time,
+  and with Ctrl, prices. A double click returns to the present; on the
+  price axis, it fits the prices again.
+- Style, on each chart: candle colours, the chart's background, the grid,
+  and the colours of volume, profiles, the value area, the point of
+  control, buys and sells, with the value area's share, row sizes and TPO
+  periods. Only the chart changes; the page keeps its own colours.
+- Lines: horizontal lines and trend lines, in a colour you choose, kept
+  with each file. Click a line to select it, drag to move it, Delete to
+  remove it; right-click a chart for a line at that price.
+- Play speeds are now times real time, from 1× to 3,600×, skipping the
+  daily break and weekends. Next trade, Next minute and Next chart bar
+  step forward by hand.
+- Keys in Replay: Space plays and pauses; the Right arrow moves one trade
+  (with a file of bars, one minute), and with Shift, one bar of the first
+  chart; Delete removes the selected line; Escape stops a line half drawn.
+
 ## 0.6.0 · 12 October 2026
 
 - Replay, under a new Practice heading in the menu: load your own export

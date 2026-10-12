@@ -1,20 +1,22 @@
-/* Replay's bars: read from the reader's own export, kept on this computer.
+/* Replay's data: read from the reader's own exports, kept on this computer.
 
-   Reading a file:
-     - each line is a bar: a date and time, then open, high, low, close and
-       volume. MotiveWave's export ("20250101 000000,21219.75,...") is read
-       as it is; so are dates written 2025-01-01 or 01/01/2025, a separate
-       date and time column, and semicolons or tabs between fields. A first
-       line of headings is skipped.
-     - the times in a file are wall-clock times in some time zone, which the
-       file does not say. CME's equity index futures stop every weekday at
-       5:00 pm ET for an hour, so the zone is found by asking in which zone
-       the file's daily break falls at 5:00 pm ET. The reader sees the
-       result and can change it.
-     - the same break says whether a bar's time is when it opened (the last
-       bar before the break is 4:59 pm) or when it closed (5:00 pm). Bars
-       are kept by the time they opened.
-   Kept as: minutes since 1970 in UTC, and prices in whole ticks. */
+   Two kinds of file:
+     bars    each line a date and time, then open, high, low, close and
+             volume (MotiveWave's bar export, and common variants);
+     trades  each line a date and time, then price, bid, ask and size
+             (MotiveWave's tick export). A trade at or above the ask is
+             counted as a buy, at or below the bid as a sell. That is an
+             inference from the quote beside each trade, not something the
+             exchange reports, and the pages say so.
+   The times in a file are wall-clock times in a zone the file does not
+   name. CME's equity index futures stop every weekday at 5:00 pm ET for an
+   hour, so the zone is the one that puts the file's daily break there; the
+   reader sees the result and can change it.
+
+   Kept as: UTC (minutes for bars, seconds for trades) and prices in whole
+   ticks, in a compact binary copy in the app's folder. Trade files can be
+   joined: exports of the latest N trades overlap, so a later export takes
+   over from its first second onwards. */
 
 import { invoke, invokeRaw, isNative } from '../shared/js/native.js';
 
@@ -32,12 +34,12 @@ export const ZONES = [...new Map([
 
 const FMT = new Map();
 function parts(zone, ms) {
-  if (!FMT.has(zone)) FMT.set(zone, new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', weekday: 'short' }));
+  if (!FMT.has(zone)) FMT.set(zone, new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }));
   const o = {};
   for (const p of FMT.get(zone).formatToParts(new Date(ms))) o[p.type] = p.value;
   return o;
 }
-/* the zone's offset from UTC, in minutes, at a UTC minute; cached by the hour */
+/* the zone's offset from UTC in minutes, at a UTC minute; cached by the hour */
 const OFF = new Map();
 export function offset(zone, utcMin) {
   const hour = Math.floor(utcMin / 60);
@@ -62,27 +64,29 @@ export const toET = (utc) => utc + offset(ET, utc);
 
 /* ------------------------------------------------------------ reading a file */
 
-const pad = (n) => String(n).padStart(2, '0');
-/* the wall-clock minute of a date-and-time field, or NaN */
-function stamp(s) {
+/* the wall-clock second of a date-and-time text, or NaN */
+function stampSec(s) {
   let m = /^(\d{4})(\d{2})(\d{2})[ T](\d{2})(\d{2})(\d{2})?$/.exec(s);
-  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000;
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) / 1000;
   m = /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s);
-  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000;
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) / 1000;
   m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i.exec(s);
   if (m) {
     let h = +m[4];
     if (m[7]) h = (h % 12) + (/pm/i.test(m[7]) ? 12 : 0);
-    return Date.UTC(+m[3], +m[1] - 1, +m[2], h, +m[5]) / 60000;
+    return Date.UTC(+m[3], +m[1] - 1, +m[2], h, +m[5], +(m[6] || 0)) / 1000;
   }
   return NaN;
 }
-
-/* text -> { wall, o, h, l, c, v } (arrays), or throws with a plain reason */
-export function parse(text) {
-  const n0 = (text.match(/\n/g) || []).length + 1;
-  const wall = new Float64Array(n0), o = new Float64Array(n0), h = new Float64Array(n0), l = new Float64Array(n0), c = new Float64Array(n0), v = new Float64Array(n0);
-  let n = 0, start = 0, delim = null, bad = 0, firstBad = '';
+const joined = (f) => /^\d{8}\s\d{4,6}$/.test(f) || /[ T]\d{1,2}:\d{2}/.test(f);
+/* how many leading fields hold the date and time */
+function dateFields(f) {
+  if (joined(f[0])) return 1;
+  if (f.length > 1 && (/^\d{1,2}:\d{2}/.test(f[1]) || (/^\d{4,6}$/.test(f[1]) && /^\d{8}$|^\d{4}[-.]\d{2}[-.]\d{2}$|^\d{1,2}\/\d{1,2}\/\d{4}$/.test(f[0])))) return 2;
+  return 1;
+}
+function lines(text, each) {
+  let start = 0, delim = null;
   while (start < text.length) {
     let end = text.indexOf('\n', start);
     if (end < 0) end = text.length;
@@ -93,25 +97,58 @@ export function parse(text) {
     if (!delim) delim = line.includes(';') ? ';' : line.includes('\t') ? '\t' : ',';
     const f = line.split(delim).map((x) => x.trim());
     if (!/^\d/.test(f[0])) continue; /* a line of headings */
-    let t, k;
-    if (f.length >= 7 && /^\d{1,2}:\d{2}/.test(f[1])) { t = stamp(f[0].replace(/\./g, '-') + ' ' + f[1]); k = 2; }
-    else if (f.length >= 7 && /^\d{4,6}$/.test(f[1])) { t = stamp(f[0] + ' ' + f[1].padStart(6, '0')); k = 2; }
-    else { t = stamp(f[0]); k = 1; }
-    const nums = [f[k], f[k + 1], f[k + 2], f[k + 3], f[k + 4]].map(Number);
-    if (!Number.isFinite(t) || nums.slice(0, 4).some((x) => !Number.isFinite(x))) { bad++; if (!firstBad) firstBad = line.slice(0, 80); continue; }
-    wall[n] = t; o[n] = nums[0]; h[n] = nums[1]; l[n] = nums[2]; c[n] = nums[3]; v[n] = Number.isFinite(nums[4]) ? nums[4] : 0;
-    n++;
+    if (each(f, line) === false) break;
   }
-  if (!n) throw new Error('No bars could be read from this file. Each line should hold a date and time, then open, high, low, close and volume' + (firstBad ? '. The first line that could not be read was: ' + firstBad : '.'));
-  const cut = (a) => a.slice(0, n);
-  const out = { wall: cut(wall), o: cut(o), h: cut(h), l: cut(l), c: cut(c), v: cut(v), n, bad, firstBad };
-  /* oldest first, one bar per minute */
-  for (let i = 1; i < n; i++) if (out.wall[i] < out.wall[i - 1]) { sortBars(out); break; }
-  return out;
 }
-function sortBars(d) {
-  const idx = [...Array(d.n).keys()].sort((a, b) => d.wall[a] - d.wall[b]);
-  for (const k of ['wall', 'o', 'h', 'l', 'c', 'v']) { const src = d[k].slice(); idx.forEach((j, i) => { d[k][i] = src[j]; }); }
+
+/* 'bars' or 'trades', from the first lines */
+export function kindOf(text) {
+  let kind = 'bars';
+  lines(text.slice(0, 20000), (f) => {
+    const k = dateFields(f);
+    kind = f.length - k === 4 ? 'trades' : 'bars';
+    return false;
+  });
+  return kind;
+}
+
+/* text -> wall-clock seconds and the numbers after them, or throws */
+function parseRows(text, cols, what) {
+  const n0 = (text.match(/\n/g) || []).length + 1;
+  const wall = new Float64Array(n0);
+  const out = Array.from({ length: cols }, () => new Float64Array(n0));
+  let n = 0, bad = 0, firstBad = '';
+  lines(text, (f, line) => {
+    const k = dateFields(f);
+    const t = k === 2 ? stampSec(f[0].replace(/\./g, '-') + ' ' + (/^\d{4,6}$/.test(f[1]) ? f[1].padStart(6, '0') : f[1])) : stampSec(f[0]);
+    const nums = [];
+    for (let j = 0; j < cols; j++) nums.push(Number(f[k + j]));
+    if (!Number.isFinite(t) || nums.slice(0, cols - 1).some((x) => !Number.isFinite(x))) { bad++; if (!firstBad) firstBad = line.slice(0, 80); return; }
+    wall[n] = t;
+    for (let j = 0; j < cols; j++) out[j][n] = Number.isFinite(nums[j]) ? nums[j] : 0;
+    n++;
+  });
+  if (!n) throw new Error('No ' + what + ' could be read from this file' + (firstBad ? '. The first line that could not be read was: ' + firstBad : '.'));
+  return { n, bad, firstBad, wall: wall.slice(0, n), cols: out.map((a) => a.slice(0, n)) };
+}
+
+/* bars: { wall (minutes), o, h, l, c, v } */
+export function parse(text) {
+  const r = parseRows(text, 5, 'bars');
+  const d = { kind: 'bars', n: r.n, bad: r.bad, firstBad: r.firstBad, wall: r.wall.map((s) => Math.floor(s / 60)), o: r.cols[0], h: r.cols[1], l: r.cols[2], c: r.cols[3], v: r.cols[4] };
+  for (let i = 1; i < d.n; i++) if (d.wall[i] < d.wall[i - 1]) { sortBy(d, ['wall', 'o', 'h', 'l', 'c', 'v']); break; }
+  return d;
+}
+/* trades: { wall (seconds), p, b, a, s }, kept in file order within a second */
+export function parseTrades(text) {
+  const r = parseRows(text, 4, 'trades');
+  const d = { kind: 'trades', n: r.n, bad: r.bad, firstBad: r.firstBad, wall: r.wall, p: r.cols[0], b: r.cols[1], a: r.cols[2], s: r.cols[3] };
+  for (let i = 1; i < d.n; i++) if (d.wall[i] < d.wall[i - 1]) { sortBy(d, ['wall', 'p', 'b', 'a', 's']); break; }
+  return d;
+}
+function sortBy(d, keys) {
+  const idx = [...Array(d.n).keys()].sort((a, b) => d.wall[a] - d.wall[b] || a - b);
+  for (const k of keys) { const src = d[k].slice(); idx.forEach((j, i) => { d[k][i] = src[j]; }); }
 }
 
 /* the bar length in minutes: the commonest gap between bars */
@@ -123,28 +160,35 @@ export function barMinutes(wall) {
   return best;
 }
 
-/* Which zone puts the daily break at 5:00 pm ET? Returns every candidate's
-   score, best first: { zone, label, hits, of, stamping: 'open' | 'close' }. */
-export function detectZone(wall, base) {
-  const gaps = [];
-  for (let i = 0; i + 1 < wall.length; i++) {
-    const d = wall[i + 1] - wall[i];
-    if (d >= 45 && d <= 300) gaps.push(wall[i] + base);
-  }
-  const of = gaps.length;
+/* Which zone puts the daily break at 5:00 pm ET? Every candidate's score,
+   best first: { zone, label, hits, of, stamping: 'open' | 'close' }.
+   For bars, `ends` are the minute after each last bar before a break; for
+   trades, the minute after each last trade. */
+function score(ends, base) {
+  const of = ends.length;
   return ZONES.map(([zone, label]) => {
     let open = 0, close = 0;
-    for (const g of gaps) {
+    for (const g of ends) {
       const et = toET(wallToUtc(g, zone));
       const mod = ((et % 1440) + 1440) % 1440;
       if (mod === 17 * 60) open++;
-      else if (mod === 17 * 60 + base) close++;
+      else if (base && mod === 17 * 60 + base) close++;
     }
     return { zone, label, hits: Math.max(open, close), of, stamping: close > open ? 'close' : 'open' };
   }).sort((a, b) => b.hits - a.hits);
 }
+export function detectZone(wall, base) {
+  const ends = [];
+  for (let i = 0; i + 1 < wall.length; i++) { const d = wall[i + 1] - wall[i]; if (d >= 45 && d <= 300) ends.push(wall[i] + base); }
+  return score(ends, base);
+}
+export function detectZoneTrades(wall) {
+  const ends = [];
+  for (let i = 0; i + 1 < wall.length; i++) if (wall[i + 1] - wall[i] >= 45 * 60) ends.push(Math.ceil((wall[i] + 1) / 60));
+  return score(ends, 0);
+}
 
-/* the arrays a replay runs on: UTC minutes when each bar opened, and ticks */
+/* bars to run on: UTC minutes when each bar opened, prices in ticks */
 export function build(p, { zone, stamping, base, tick }) {
   const n = p.n;
   const t = new Int32Array(n), o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n), c = new Int32Array(n), v = new Uint32Array(n);
@@ -159,35 +203,81 @@ export function build(p, { zone, stamping, base, tick }) {
     if (l[i] > Math.min(o[i], c[i])) l[i] = Math.min(o[i], c[i]);
   }
   if (off) throw new Error(off + ' prices in this file are not whole ticks of ' + tick + '. Check the instrument chosen for it.');
-  return { n, t, o, h, l, c, v, base, tick };
+  return { kind: 'bars', n, t, o, h, l, c, v, base, tick };
+}
+
+/* trades to run on: UTC seconds, prices in ticks, size, and side (+1 at or
+   above the ask, a buy; -1 at or below the bid, a sell; 0 when unknown) */
+export function buildTrades(p, { zone, tick }) {
+  const n = p.n;
+  const t = new Int32Array(n), pr = new Int32Array(n), s = new Uint32Array(n), side = new Int8Array(n);
+  let off = 0;
+  const q = (x) => { const r = Math.round(x / tick); if (Math.abs(r * tick - x) > tick * 1e-6) off++; return r; };
+  for (let i = 0; i < n; i++) {
+    const w = p.wall[i], m = Math.floor(w / 60);
+    t[i] = wallToUtc(m, zone) * 60 + (w - m * 60);
+    pr[i] = q(p.p[i]);
+    s[i] = Math.max(1, Math.round(p.s[i]));
+    const b = p.b[i] > 0 ? Math.round(p.b[i] / tick) : null, a = p.a[i] > 0 ? Math.round(p.a[i] / tick) : null;
+    side[i] = a !== null && pr[i] >= a ? 1 : b !== null && pr[i] <= b ? -1 : 0;
+  }
+  if (off) throw new Error(off + ' prices in this file are not whole ticks of ' + tick + '. Check the instrument chosen for it.');
+  return { kind: 'trades', n, t, p: pr, s, side, tick };
+}
+
+/* Join two trade sets that may overlap: the earlier set up to and including
+   the later set's first second, then all of the later set. A later export
+   starts with a second that may be cut short, which this leaves to the
+   earlier set. Returns the joined set and what happened. */
+export function joinTrades(A, B) {
+  if (B.t[0] < A.t[0]) [A, B] = [B, A];
+  if (A.t[A.n - 1] >= B.t[B.n - 1]) return { data: A, added: 0, note: 'The second file lies inside the first, so nothing was added.' };
+  const cut = B.t[0];
+  let k = A.n;
+  while (k > 0 && A.t[k - 1] > cut) k--;
+  /* trades of B in that first second that A already has are A's */
+  let j = 0;
+  if (A.t[A.n - 1] >= cut) while (j < B.n && B.t[j] === cut) j++;
+  const n = k + (B.n - j);
+  const out = { kind: 'trades', n, tick: A.tick, t: new Int32Array(n), p: new Int32Array(n), s: new Uint32Array(n), side: new Int8Array(n) };
+  for (const key of ['t', 'p', 's', 'side']) { out[key].set(A[key].subarray(0, k), 0); out[key].set(B[key].subarray(j), k); }
+  const gap = A.t[A.n - 1] < cut;
+  return { data: out, added: n - A.n, note: gap ? 'The files do not overlap: there is a gap between them, which the replay keeps.' : 'The files overlapped; the later one takes over from its first full second.' };
 }
 
 /* ------------------------------------------------------------ the compact copy */
 
+function magic(dv) { return String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3)); }
 export function encode(d) {
-  const buf = new ArrayBuffer(24 + d.n * 24);
+  const trades = d.kind === 'trades';
+  const cols = trades ? ['t', 'p', 's'] : ['t', 'o', 'h', 'l', 'c', 'v'];
+  const extra = trades ? Math.ceil(d.n / 4) * 4 : 0;
+  const buf = new ArrayBuffer(24 + d.n * 4 * cols.length + extra);
   const dv = new DataView(buf);
-  [0x43, 0x54, 0x52, 0x50].forEach((b, i) => dv.setUint8(i, b)); /* "CTRP" */
+  [...(trades ? 'CTRT' : 'CTRP')].forEach((ch, i) => dv.setUint8(i, ch.charCodeAt(0)));
   dv.setUint32(4, 1, true);
   dv.setUint32(8, d.n, true);
-  dv.setUint32(12, d.base, true);
+  dv.setUint32(12, d.base || 0, true);
   dv.setFloat64(16, d.tick, true);
   let at = 24;
-  for (const k of ['t', 'o', 'h', 'l', 'c', 'v']) { new Uint8Array(buf, at, d.n * 4).set(new Uint8Array(d[k].buffer, d[k].byteOffset, d.n * 4)); at += d.n * 4; }
+  for (const k of cols) { new Uint8Array(buf, at, d.n * 4).set(new Uint8Array(d[k].buffer, d[k].byteOffset, d.n * 4)); at += d.n * 4; }
+  if (trades) new Int8Array(buf, at, d.n).set(d.side);
   return buf;
 }
 export function decode(buf) {
   const dv = new DataView(buf);
-  if (String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3)) !== 'CTRP') throw new Error('This replay file is not one the app made.');
+  const m = magic(dv);
+  if (m !== 'CTRP' && m !== 'CTRT') throw new Error('This replay file is not one the app made.');
   const n = dv.getUint32(8, true), base = dv.getUint32(12, true), tick = dv.getFloat64(16, true);
   const at = (k) => 24 + k * n * 4;
-  return { n, base, tick, t: new Int32Array(buf, at(0), n), o: new Int32Array(buf, at(1), n), h: new Int32Array(buf, at(2), n), l: new Int32Array(buf, at(3), n), c: new Int32Array(buf, at(4), n), v: new Uint32Array(buf, at(5), n) };
+  if (m === 'CTRT') return { kind: 'trades', n, tick, t: new Int32Array(buf, at(0), n), p: new Int32Array(buf, at(1), n), s: new Uint32Array(buf, at(2), n), side: new Int8Array(buf, at(3), n) };
+  return { kind: 'bars', n, base, tick, t: new Int32Array(buf, at(0), n), o: new Int32Array(buf, at(1), n), h: new Int32Array(buf, at(2), n), l: new Int32Array(buf, at(3), n), c: new Int32Array(buf, at(4), n), v: new Uint32Array(buf, at(5), n) };
 }
 
 /* ------------------------------------------------------------ the files the reader has loaded */
 
 let index = [];
-const memory = new Map(); /* the design preview keeps bars in memory only */
+const memory = new Map(); /* the design preview keeps files in memory only */
 export async function loadIndex() {
   if (!isNative) return index;
   const text = await invoke('replay_read_json', { name: 'index' });
@@ -198,11 +288,15 @@ export const files = () => index.slice().sort((a, b) => (b.importedAt || '').loc
 async function saveIndex() {
   if (isNative) await invoke('replay_write_json', { name: 'index', json: JSON.stringify({ files: index }, null, 1) });
 }
-export async function keep(meta, data) {
-  const id = crypto.randomUUID();
+const span = (d) => (d.kind === 'trades' ? [Math.floor(d.t[0] / 60), Math.floor(d.t[d.n - 1] / 60)] : [d.t[0], d.t[d.n - 1]]);
+export async function keep(meta, data, replaceId = null) {
+  const id = replaceId || crypto.randomUUID();
   if (isNative) await invokeRaw('replay_save_bin', encode(data), { 'x-replay-id': id });
   else memory.set(id, data);
-  index.push({ ...meta, id, n: data.n, first: data.t[0], last: data.t[data.n - 1], importedAt: new Date().toISOString() });
+  const [first, last] = span(data);
+  const entry = { ...meta, id, kind: data.kind, n: data.n, first, last, importedAt: meta.importedAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+  index = index.filter((f) => f.id !== id);
+  index.push(entry);
   await saveIndex();
   return id;
 }
@@ -218,7 +312,7 @@ export async function forget(id) {
   await saveIndex();
 }
 
-/* ------------------------------------------------------------ bars of a longer timeframe */
+/* ------------------------------------------------------------ bars of any length */
 
 /* the trading day (CME, 6:00 pm ET) a UTC minute belongs to, as a day number */
 export function tradingDayNo(utc) {
@@ -230,38 +324,143 @@ export function tradingDayNo(utc) {
   return day;
 }
 
-/* Bars of tf minutes (or 'D' for the CME trading day) built from the base
-   bars: full arrays, with the base-bar range each one covers, so a replay can
-   show the last one still forming. */
+/* One-minute bars from trades, each with its delta (buys less sells) and
+   the range of trades it holds; `of` maps a trade to its bar. */
+export function barsFromTrades(T) {
+  const n = T.n;
+  const t = new Int32Array(n), o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n), c = new Int32Array(n), v = new Uint32Array(n), dl = new Int32Array(n), from = new Int32Array(n), to = new Int32Array(n), of = new Int32Array(n);
+  let m = -1, last = null;
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(T.t[i] / 60);
+    if (k !== last) { m++; last = k; t[m] = k; o[m] = h[m] = l[m] = T.p[i]; v[m] = 0; dl[m] = 0; from[m] = i; }
+    const p = T.p[i];
+    if (p > h[m]) h[m] = p;
+    if (p < l[m]) l[m] = p;
+    c[m] = p; v[m] += T.s[i]; dl[m] += T.side[i] * T.s[i]; to[m] = i; of[i] = m;
+  }
+  m++;
+  return { kind: 'bars', fromTrades: true, n: m, base: 1, tick: T.tick, t: t.slice(0, m), o: o.slice(0, m), h: h.slice(0, m), l: l.slice(0, m), c: c.slice(0, m), v: v.slice(0, m), dl: dl.slice(0, m), from: from.slice(0, m), to: to.slice(0, m), of };
+}
+
+/* Bars of tf minutes (or 'D' for the CME trading day) from base bars, with
+   the base-bar range each covers. */
 export function aggregate(d, tf) {
   if (tf === d.base) {
     const idx = new Int32Array(d.n).map((_, i) => i);
-    return { ...d, from: idx, to: idx, of: idx };
+    return { ...d, from: idx, to: idx, of: idx, baseFrom: d.from, baseTo: d.to };
   }
   const key = tf === 'D' ? (i) => tradingDayNo(d.t[i])
     : tf >= 240 ? (i) => Math.floor((toET(d.t[i]) - 18 * 60) / tf)
       : (i) => Math.floor(d.t[i] / tf);
   const n = d.n;
-  const t = new Int32Array(n), o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n), c = new Int32Array(n), v = new Uint32Array(n), from = new Int32Array(n), to = new Int32Array(n), of = new Int32Array(n);
+  const t = new Int32Array(n), o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n), c = new Int32Array(n), v = new Uint32Array(n), dl = new Int32Array(n), from = new Int32Array(n), to = new Int32Array(n), of = new Int32Array(n);
   let m = -1, last = null;
   for (let i = 0; i < n; i++) {
     const k = key(i);
-    if (k !== last) { m++; last = k; t[m] = d.t[i]; o[m] = d.o[i]; h[m] = d.h[i]; l[m] = d.l[i]; v[m] = 0; from[m] = i; }
+    if (k !== last) { m++; last = k; t[m] = d.t[i]; o[m] = d.o[i]; h[m] = d.h[i]; l[m] = d.l[i]; v[m] = 0; dl[m] = 0; from[m] = i; }
     if (d.h[i] > h[m]) h[m] = d.h[i];
     if (d.l[i] < l[m]) l[m] = d.l[i];
-    c[m] = d.c[i]; v[m] += d.v[i]; to[m] = i; of[i] = m;
+    c[m] = d.c[i]; v[m] += d.v[i]; if (d.dl) dl[m] += d.dl[i]; to[m] = i; of[i] = m;
   }
   m++;
-  return { n: m, base: d.base, tick: d.tick, t: t.subarray(0, m), o: o.subarray(0, m), h: h.subarray(0, m), l: l.subarray(0, m), c: c.subarray(0, m), v: v.subarray(0, m), from: from.subarray(0, m), to: to.subarray(0, m), of };
+  return { kind: 'bars', n: m, base: d.base, tick: d.tick, t: t.subarray(0, m), o: o.subarray(0, m), h: h.subarray(0, m), l: l.subarray(0, m), c: c.subarray(0, m), v: v.subarray(0, m), dl: d.dl ? dl.subarray(0, m) : null, from: from.subarray(0, m), to: to.subarray(0, m), of };
 }
 
-/* the first base bar at or after a UTC minute */
-export function indexAt(d, utc) {
-  let lo = 0, hi = d.n - 1;
-  if (utc <= d.t[0]) return 0;
-  if (utc > d.t[hi]) return hi;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (d.t[mid] < utc) lo = mid + 1; else hi = mid; }
+/* the first index at or after a value in a sorted array */
+export function lowerBound(arr, n, x) {
+  let lo = 0, hi = n;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < x) lo = mid + 1; else hi = mid; }
   return lo;
 }
+/* the first base bar at or after a UTC minute */
+export function indexAt(d, utc) { return Math.min(d.n - 1, lowerBound(d.t, d.n, utc)); }
 
-export { pad };
+/* ------------------------------------------------------------ volume at price */
+
+/* Volume at each price row (rowTicks ticks to a row) over a range, as
+   { lo (row of the lowest), rows, vol, buy, sell } with arrays by row.
+   From trades the split into buys and sells is the inferred side; from bars
+   there is no split, and a bar's volume is spread evenly over its range,
+   which is an approximation the page states. */
+export function levelsFromTrades(T, i0, i1, rowTicks = 1) {
+  if (i1 < i0) return null;
+  let lo = Infinity, hi = -Infinity;
+  for (let i = i0; i <= i1; i++) { const r = Math.floor(T.p[i] / rowTicks); if (r < lo) lo = r; if (r > hi) hi = r; }
+  const rows = hi - lo + 1;
+  const vol = new Float64Array(rows), buy = new Float64Array(rows), sell = new Float64Array(rows);
+  for (let i = i0; i <= i1; i++) {
+    const r = Math.floor(T.p[i] / rowTicks) - lo, s = T.s[i];
+    vol[r] += s;
+    if (T.side[i] > 0) buy[r] += s; else if (T.side[i] < 0) sell[r] += s;
+  }
+  return { lo, rows, rowTicks, vol, buy, sell, split: true };
+}
+export function levelsFromBars(B, i0, i1, rowTicks = 1, last = null) {
+  if (i1 < i0) return null;
+  const get = (k, i) => (last && i === i1 ? last[k] : B[k][i]);
+  let lo = Infinity, hi = -Infinity;
+  for (let i = i0; i <= i1; i++) { const a = Math.floor(get('l', i) / rowTicks), b = Math.floor(get('h', i) / rowTicks); if (a < lo) lo = a; if (b > hi) hi = b; }
+  const rows = hi - lo + 1;
+  const vol = new Float64Array(rows);
+  for (let i = i0; i <= i1; i++) {
+    const a = Math.floor(get('l', i) / rowTicks) - lo, b = Math.floor(get('h', i) / rowTicks) - lo, v = get('v', i);
+    const each = v / (b - a + 1);
+    for (let r = a; r <= b; r++) vol[r] += each;
+  }
+  return { lo, rows, rowTicks, vol, buy: null, sell: null, split: false };
+}
+
+/* the point of control and the value area (pct of the volume, built out
+   from the point of control a row at a time, the larger side first) */
+export function valueArea(L, pct = 70) {
+  if (!L || !L.rows) return null;
+  let poc = 0, total = 0;
+  for (let r = 0; r < L.rows; r++) { total += L.vol[r]; if (L.vol[r] > L.vol[poc]) poc = r; }
+  let a = poc, b = poc, sum = L.vol[poc];
+  const want = total * pct / 100;
+  while (sum < want && (a > 0 || b < L.rows - 1)) {
+    const down = a > 0 ? L.vol[a - 1] : -1, up = b < L.rows - 1 ? L.vol[b + 1] : -1;
+    if (up >= down) { b++; sum += L.vol[b]; } else { a--; sum += L.vol[a]; }
+  }
+  return { poc, vaLo: a, vaHi: b, total };
+}
+
+/* ------------------------------------------------------------ TPO */
+
+/* Sessions as time-price opportunities: each period (30 minutes by
+   default) a letter, set at every price row the market traded in that
+   period. rth: the 9:30 am to 4:00 pm ET session; otherwise the CME
+   trading day from 6:00 pm ET. Built from one-minute bars, so a period's
+   rows are the bars' ranges. */
+export const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+export function sessionsOf(B, n, { rth = true } = {}) {
+  const out = [];
+  let cur = null;
+  for (let i = 0; i < n; i++) {
+    const et = toET(B.t[i]), mod = ((et % 1440) + 1440) % 1440;
+    if (rth && (mod < 570 || mod >= 960)) { if (cur) { out.push(cur); cur = null; } continue; }
+    const key = rth ? Math.floor(et / 1440) : tradingDayNo(B.t[i]);
+    if (!cur || cur.key !== key) { if (cur) out.push(cur); cur = { key, from: i, to: i, startET: rth ? Math.floor(et / 1440) * 1440 + 570 : (key - 1) * 1440 + 18 * 60 }; }
+    cur.to = i;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+export function tpoOf(B, sess, { period = 30, rowTicks = 20, last = null, lastIndex = -1 } = {}) {
+  const get = (k, i) => (last && i === lastIndex ? last[k] : B[k][i]);
+  let lo = Infinity, hi = -Infinity;
+  const to = lastIndex >= 0 ? Math.min(sess.to, lastIndex) : sess.to;
+  for (let i = sess.from; i <= to; i++) { const a = Math.floor(get('l', i) / rowTicks), b = Math.floor(get('h', i) / rowTicks); if (a < lo) lo = a; if (b > hi) hi = b; }
+  const rows = hi - lo + 1;
+  const marks = Array.from({ length: rows }, () => []);
+  let periods = 0;
+  for (let i = sess.from; i <= to; i++) {
+    const pIdx = Math.floor((toET(B.t[i]) - sess.startET) / period);
+    if (pIdx + 1 > periods) periods = pIdx + 1;
+    const a = Math.floor(get('l', i) / rowTicks) - lo, b = Math.floor(get('h', i) / rowTicks) - lo;
+    for (let r = a; r <= b; r++) { const m = marks[r]; if (m[m.length - 1] !== pIdx) m.push(pIdx); }
+  }
+  const vol = Float64Array.from(marks, (m) => m.length);
+  const va = valueArea({ rows, vol }, 70);
+  return { lo, rows, rowTicks, marks, periods, poc: va ? va.poc : 0, vaLo: va ? va.vaLo : 0, vaHi: va ? va.vaHi : 0, open: get('o', sess.from), close: get('c', to), from: sess.from, to };
+}
