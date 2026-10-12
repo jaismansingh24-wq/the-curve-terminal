@@ -14,6 +14,7 @@ import { createLoader } from './loader.js';
 import { runIntro } from './intro.js';
 import { startClock } from './clock.js';
 import { initDialogs } from './dialogs.js';
+import { initMenu } from './menu.js';
 import { initUnits } from './units.js';
 import { renderHome, renderBoundaries } from './home.js';
 import { initForm, openForm, saveShortcut } from './form.js';
@@ -32,7 +33,7 @@ const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.8.1';
+let version = '0.9.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -52,7 +53,30 @@ const dialogs = initDialogs({
   },
 });
 
-settings.bindPanel(document.getElementById('dlg-settings'));
+const menu = initMenu();
+settings.bindPanel(document.querySelector('.view[data-view="settings"]'));
+
+/* buttons that go to a page (Settings, from the title bar); Discord's mark
+   goes to the Discord switch on it */
+function goTo(path, focus) {
+  const toDiscord = () => {
+    const g = document.getElementById('st-discord-group');
+    if (!g) return;
+    g.scrollIntoView({ block: 'center' });
+    const sw = g.querySelector('.switch');
+    if (sw) sw.focus({ preventScroll: true });
+  };
+  /* once the page has changed (and its heading taken focus), the switch takes it */
+  if (focus === 'discord') {
+    if (location.hash === '#' + path) requestAnimationFrame(toDiscord);
+    else window.addEventListener('hashchange', () => requestAnimationFrame(toDiscord), { once: true });
+  }
+  router.go(path);
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-go]');
+  if (b) goTo(b.dataset.go, b.dataset.focus);
+});
 settings.onChange((s, patch) => {
   if ('discord' in patch) presence.configure(s.discord);
   if ('showSimulated' in patch) { J.setShowSimulated(s.showSimulated); refresh(); syncSimRow(); syncJournalRow(); }
@@ -146,6 +170,7 @@ router.on('digest', () => renderDigest());
 router.on('pages', () => renderPages());
 router.on('page', (r) => openPage(r.id));
 router.on('replay', () => renderReplay());
+router.on('settings', () => syncJournalRow());
 /* leaving a page writes what is waiting */
 let lastView = null;
 window.addEventListener('hashchange', () => {
@@ -169,6 +194,7 @@ function refresh() {
   if (r.view === 'accounts') renderAccounts();
 }
 J.onChange(refresh);
+Folio.onChange(() => { const r = router.now(); if (r && r.view === 'home') renderHome(); });
 
 /* ------------------------------------------------------------ keyboard */
 
@@ -190,8 +216,9 @@ document.addEventListener('keydown', (e) => {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
 
-  if (e.ctrlKey && e.key === ',') { e.preventDefault(); dialogs.open('settings'); return; }
+  if (e.ctrlKey && e.key === ',') { e.preventDefault(); goTo('/settings'); return; }
   if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (k === 'm') { e.preventDefault(); menu.toggle(); return; }
   if (k === 'h') router.go('/home');
   else if (k === 'n') router.go('/new');
   else if (k === 'j') router.go('/overview');

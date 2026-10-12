@@ -4,7 +4,6 @@
 
 const IDS = {
   confirm: 'dlg-confirm',
-  settings: 'dlg-settings',
   keys: 'dlg-keys',
   whatsnew: 'dlg-whatsnew',
   privacy: 'dlg-privacy',
@@ -16,7 +15,7 @@ const IDS = {
 export function initDialogs({ onOpen } = {}) {
   const get = (name) => document.getElementById(IDS[name]);
 
-  function open(name, opts = {}) {
+  function open(name) {
     const dlg = get(name);
     if (!dlg) return;
     document.querySelectorAll('dialog[open]').forEach((d) => { if (d !== dlg) d.close(); });
@@ -25,21 +24,13 @@ export function initDialogs({ onOpen } = {}) {
     const body = dlg.querySelector('.dlg__body');
     if (body) body.scrollTop = 0;
 
-    if (opts.focus === 'discord') {
-      const g = document.getElementById('st-discord-group');
-      if (g) {
-        g.scrollIntoView({ block: 'center' });
-        const sw = g.querySelector('.switch');
-        if (sw) sw.focus();
-      }
-    }
     if (onOpen) onOpen(name);
   }
 
   document.addEventListener('click', (e) => {
     const opener = e.target.closest('[data-open]');
     if (opener) {
-      open(opener.dataset.open, { focus: opener.dataset.focus });
+      open(opener.dataset.open);
       return;
     }
     const closer = e.target.closest('[data-close]');

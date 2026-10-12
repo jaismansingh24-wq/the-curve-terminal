@@ -2,12 +2,13 @@
      #/home  #/new  #/edit/<id>  #/overview  #/entry/<id>  #/stats  #/calendar  #/accounts
      the Folio's: #/digest  #/pages  #/page/<id>  #/page/new
      Practice: #/replay
+     #/settings
      and Atlas's: #/connects  #/rates  #/auctions  #/positioning  #/energy  #/currencies  #/releases  #/wire
    One page shows at a time. The menu marks the current one, the page's
    heading takes focus (so screen readers announce where you are), and the
    page scrolls back to the top. */
 
-const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'digest', 'pages', 'page', 'replay', 'connects', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
+const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'digest', 'pages', 'page', 'replay', 'settings', 'connects', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
 const handlers = {};
 let current = null;
 

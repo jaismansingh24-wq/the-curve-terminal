@@ -4,6 +4,24 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.0 · 12 October 2026
+
+- The menu is now a panel. The button at the top left of the window, or M,
+  opens it; choosing a page, Esc or a click outside closes it, and the
+  arrow keys move through it. Pages use the whole width of the window.
+- Settings is a page of its own, with each group in its own panel: in the
+  menu, from the button at the top right, or with Ctrl+,.
+- Home shows your journal's figures (closed trades, win rate with its
+  likely range, average per trade, profit factor and the largest drawdown,
+  each with what it rests on), your research in the Folio (pages, words,
+  marked lines, tags and the page you edited last), and NQ positioning
+  from the copy of the CFTC's report that Atlas last kept. Home fetches
+  nothing.
+- Discord's status is now its mark beside the shortcuts button: a green
+  dot when connected, a red one when not (switched off, Discord closed or
+  not answering), and an empty ring while it checks. Selecting it opens
+  the Discord switch in Settings.
+
 ## 0.8.1 · 12 October 2026
 
 - TPO single prints from finished sessions are carried to the right as

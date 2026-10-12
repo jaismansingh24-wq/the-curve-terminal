@@ -73,15 +73,23 @@ export async function configure(enabled) {
 
 listen('presence-status', set);
 
+/* the title bar's Discord mark carries a dot: on when connected, off when
+   not (switched off, Discord closed, not set up or not answering), and an
+   empty ring while it is checking; its label says the state in words */
 export function bindUI() {
+  const btn = document.querySelector('[data-presence-btn]');
   const dot = document.querySelector('[data-presence-dot]');
-  const title = document.querySelector('[data-presence-title]');
-  const text = document.querySelector('[data-presence-text]');
   const line = document.querySelector('[data-presence-status]');
   onStatus((s, c) => {
-    if (dot) dot.classList.toggle('is-on', !!c.on);
-    if (title) title.textContent = c.title;
-    if (text) text.textContent = c.text;
+    if (dot) {
+      dot.classList.toggle('is-on', !!c.on);
+      dot.classList.toggle('is-off', !c.on && s !== 'connecting');
+    }
+    if (btn) {
+      const label = 'Discord: ' + c.status + '. Open Discord in Settings';
+      btn.setAttribute('aria-label', label);
+      btn.dataset.tip = 'Discord: ' + c.status;
+    }
     if (line) line.textContent = 'Status: ' + c.status;
   });
 }

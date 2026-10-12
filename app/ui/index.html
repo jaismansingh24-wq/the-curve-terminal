@@ -22,6 +22,9 @@
 
   <!-- The title bar: the window is frameless, so these are its own controls -->
   <header class="tb" data-tauri-drag-region>
+    <button class="ibtn tb__menu" type="button" data-menu-toggle aria-expanded="false" aria-controls="menu" aria-label="Menu" aria-keyshortcuts="M" data-tip="Menu  M">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+    </button>
     <div class="tb__brand" data-tauri-drag-region>
       <svg class="tb__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
         <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.34" stroke-width="2.6"/>
@@ -32,10 +35,14 @@
     </div>
     <div class="tb__drag" data-tauri-drag-region></div>
     <div class="tb__tools">
+      <button class="ibtn tb__discord" type="button" data-go="/settings" data-focus="discord" data-presence-btn aria-label="Discord: checking" data-tip="Discord: checking">
+        <svg class="tb__dlogo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        <span class="tb__dot" data-presence-dot aria-hidden="true"></span>
+      </button>
       <button class="ibtn" type="button" data-open="keys" aria-label="Keyboard shortcuts" data-tip="Shortcuts  ?">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="2"/><path d="M4.5 7h.01M7 7h.01M9.5 7h.01M12 7h.01M5.5 9.75h5"/></svg>
       </button>
-      <button class="ibtn" type="button" data-open="settings" aria-label="Settings" aria-keyshortcuts="Control+Comma" data-tip="Settings  Ctrl+,">
+      <button class="ibtn" type="button" data-go="/settings" aria-label="Settings" aria-keyshortcuts="Control+Comma" data-tip="Settings  Ctrl+,">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6M12 4.5h1.5M2.5 11.5h1.5M7.5 11.5h6"/><circle cx="10.25" cy="4.5" r="1.75"/><circle cx="5.75" cy="11.5" r="1.75"/></svg>
       </button>
     </div>
@@ -53,89 +60,99 @@
     </div>
   </header>
 
-  <!-- The menu, down the left side -->
-  <nav class="side" aria-label="Main">
-    <a class="side__item" href="#/home" data-route="home" aria-keyshortcuts="H">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13a.5.5 0 0 1-.5.5H9.5V10h-3v3.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
-      <span class="side__label">Home</span><kbd aria-hidden="true">H</kbd>
-    </a>
-    <h2 class="side__k">Journal</h2>
-    <a class="side__item" href="#/new" data-route="new" aria-keyshortcuts="N">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-      <span class="side__label">New entry</span><kbd aria-hidden="true">N</kbd>
-    </a>
-    <a class="side__item" href="#/overview" data-route="overview" aria-keyshortcuts="J">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
-      <span class="side__label">Overview</span><kbd aria-hidden="true">J</kbd>
-    </a>
-    <a class="side__item" href="#/stats" data-route="stats" aria-keyshortcuts="S">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V9M6.5 13V5M10 13V7.5M13.5 13V3"/></svg>
-      <span class="side__label">Stats</span><kbd aria-hidden="true">S</kbd>
-    </a>
-    <a class="side__item" href="#/calendar" data-route="calendar">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
-      <span class="side__label">Calendar</span>
-    </a>
-    <a class="side__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
-      <span class="side__label">Accounts</span><kbd aria-hidden="true">A</kbd>
-    </a>
-    <h2 class="side__k">Folio</h2>
-    <a class="side__item" href="#/digest" data-route="digest" aria-keyshortcuts="D">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5h7v11L8 10.5l-3.5 3Z"/></svg>
-      <span class="side__label">Digest</span><kbd aria-hidden="true">D</kbd>
-    </a>
-    <a class="side__item" href="#/pages" data-route="pages" aria-keyshortcuts="P">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8h4M6 10.5h2.5"/></svg>
-      <span class="side__label">Pages</span><kbd aria-hidden="true">P</kbd>
-    </a>
-    <a class="side__item" href="#/page/new" data-route="pagenew">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-      <span class="side__label">New page</span>
-    </a>
-    <h2 class="side__k">Practice</h2>
-    <a class="side__item" href="#/replay" data-route="replay" aria-keyshortcuts="R">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4.5v7M7 3v10M10 5v5M13 4v7M3 4.5h2M3 11.5h2M6 3h2M6 13h2M9 5h2M9 10h2M12 4h2M12 11h2"/></svg>
-      <span class="side__label">Replay</span><kbd aria-hidden="true">R</kbd>
-    </a>
-    <h2 class="side__k">Atlas</h2>
-    <a class="side__item" href="#/connects" data-route="connects">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4.5" r="1.75"/><circle cx="12" cy="4.5" r="1.75"/><circle cx="8" cy="11.5" r="1.75"/><path d="M5.6 5.6 7 9.9M10.4 5.6 9 9.9M5.75 4.5h4.5"/></svg>
-      <span class="side__label">How it connects</span>
-    </a>
-    <a class="side__item" href="#/rates" data-route="rates">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 11.5c3.5-.3 5.5-5.8 11-7"/></svg>
-      <span class="side__label">Rates</span>
-    </a>
-    <a class="side__item" href="#/auctions" data-route="auctions">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8.5h4M6 11h4"/></svg>
-      <span class="side__label">Auctions</span>
-    </a>
-    <a class="side__item" href="#/positioning" data-route="positioning">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M8 5H4.5M8 8h5M8 11H6"/></svg>
-      <span class="side__label">Positioning</span>
-    </a>
-    <a class="side__item" href="#/energy" data-route="energy">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5c2.5 3.2 4 5.3 4 7.2a4 4 0 0 1-8 0c0-1.9 1.5-4 4-7.2Z"/></svg>
-      <span class="side__label">Energy</span>
-    </a>
-    <a class="side__item" href="#/currencies" data-route="currencies">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13"/></svg>
-      <span class="side__label">Currencies</span>
-    </a>
-    <a class="side__item" href="#/releases" data-route="releases">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>
-      <span class="side__label">Releases</span>
-    </a>
-    <a class="side__item" href="#/wire" data-route="wire">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5a9.5 9.5 0 0 1 9.5 9.5M3 7.5a5.5 5.5 0 0 1 5.5 5.5"/><circle cx="3.75" cy="12.25" r="1"/></svg>
-      <span class="side__label">Fed wire</span>
-    </a>
-    <div class="side__foot">
-      <button class="side__item" type="button" data-open="settings">
+
+  <!-- The menu: opened from the button at the top left, or with M -->
+  <nav class="menu glass" id="menu" aria-label="Main" hidden>
+    <div class="menu__cols">
+      <div class="menu__col">
+        <a class="menu__item" href="#/home" data-route="home" aria-keyshortcuts="H">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13a.5.5 0 0 1-.5.5H9.5V10h-3v3.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="menu__label">Home</span><kbd aria-hidden="true">H</kbd>
+        </a>
+        <h2 class="menu__k">Journal</h2>
+        <a class="menu__item" href="#/new" data-route="new" aria-keyshortcuts="N">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          <span class="menu__label">New entry</span><kbd aria-hidden="true">N</kbd>
+        </a>
+        <a class="menu__item" href="#/overview" data-route="overview" aria-keyshortcuts="J">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
+          <span class="menu__label">Overview</span><kbd aria-hidden="true">J</kbd>
+        </a>
+        <a class="menu__item" href="#/stats" data-route="stats" aria-keyshortcuts="S">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V9M6.5 13V5M10 13V7.5M13.5 13V3"/></svg>
+          <span class="menu__label">Stats</span><kbd aria-hidden="true">S</kbd>
+        </a>
+        <a class="menu__item" href="#/calendar" data-route="calendar">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
+          <span class="menu__label">Calendar</span>
+        </a>
+        <a class="menu__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
+          <span class="menu__label">Accounts</span><kbd aria-hidden="true">A</kbd>
+        </a>
+      </div>
+      <div class="menu__col">
+        <h2 class="menu__k">Folio</h2>
+        <a class="menu__item" href="#/digest" data-route="digest" aria-keyshortcuts="D">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5h7v11L8 10.5l-3.5 3Z"/></svg>
+          <span class="menu__label">Digest</span><kbd aria-hidden="true">D</kbd>
+        </a>
+        <a class="menu__item" href="#/pages" data-route="pages" aria-keyshortcuts="P">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8h4M6 10.5h2.5"/></svg>
+          <span class="menu__label">Pages</span><kbd aria-hidden="true">P</kbd>
+        </a>
+        <a class="menu__item" href="#/page/new" data-route="pagenew">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          <span class="menu__label">New page</span>
+        </a>
+        <h2 class="menu__k">Practice</h2>
+        <a class="menu__item" href="#/replay" data-route="replay" aria-keyshortcuts="R">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4.5v7M7 3v10M10 5v5M13 4v7M3 4.5h2M3 11.5h2M6 3h2M6 13h2M9 5h2M9 10h2M12 4h2M12 11h2"/></svg>
+          <span class="menu__label">Replay</span><kbd aria-hidden="true">R</kbd>
+        </a>
+      </div>
+      <div class="menu__col">
+        <h2 class="menu__k">Atlas</h2>
+        <a class="menu__item" href="#/connects" data-route="connects">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4.5" r="1.75"/><circle cx="12" cy="4.5" r="1.75"/><circle cx="8" cy="11.5" r="1.75"/><path d="M5.6 5.6 7 9.9M10.4 5.6 9 9.9M5.75 4.5h4.5"/></svg>
+          <span class="menu__label">How it connects</span>
+        </a>
+        <a class="menu__item" href="#/rates" data-route="rates">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 11.5c3.5-.3 5.5-5.8 11-7"/></svg>
+          <span class="menu__label">Rates</span>
+        </a>
+        <a class="menu__item" href="#/auctions" data-route="auctions">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8.5h4M6 11h4"/></svg>
+          <span class="menu__label">Auctions</span>
+        </a>
+        <a class="menu__item" href="#/positioning" data-route="positioning">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M8 5H4.5M8 8h5M8 11H6"/></svg>
+          <span class="menu__label">Positioning</span>
+        </a>
+        <a class="menu__item" href="#/energy" data-route="energy">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5c2.5 3.2 4 5.3 4 7.2a4 4 0 0 1-8 0c0-1.9 1.5-4 4-7.2Z"/></svg>
+          <span class="menu__label">Energy</span>
+        </a>
+        <a class="menu__item" href="#/currencies" data-route="currencies">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13"/></svg>
+          <span class="menu__label">Currencies</span>
+        </a>
+        <a class="menu__item" href="#/releases" data-route="releases">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>
+          <span class="menu__label">Releases</span>
+        </a>
+        <a class="menu__item" href="#/wire" data-route="wire">
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5a9.5 9.5 0 0 1 9.5 9.5M3 7.5a5.5 5.5 0 0 1 5.5 5.5"/><circle cx="3.75" cy="12.25" r="1"/></svg>
+          <span class="menu__label">Fed wire</span>
+        </a>
+      </div>
+    </div>
+    <div class="menu__foot">
+      <a class="menu__item" href="#/settings" data-route="settings">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6M12 4.5h1.5M2.5 11.5h1.5M7.5 11.5h6"/><circle cx="10.25" cy="4.5" r="1.75"/><circle cx="5.75" cy="11.5" r="1.75"/></svg>
-        <span class="side__label">Settings</span>
-      </button>
+        <span class="menu__label">Settings</span><kbd aria-hidden="true">Ctrl ,</kbd>
+      </a>
+      <p class="menu__hint">M opens and closes this menu. The arrow keys move through it; Esc closes it.</p>
     </div>
   </nav>
 
@@ -196,12 +213,33 @@
               <p class="note" data-boundary></p>
             </section>
 
-            <section class="card glass glass--quiet arrive" aria-labelledby="discord-h">
-              <h2 class="kicker card__k" id="discord-h">Discord status</h2>
-              <p class="card__v"><span class="card__dot" data-presence-dot aria-hidden="true"></span><span data-presence-title>Looking for Discord</span></p>
-              <p class="card__p" data-presence-text>Checking whether the Discord app is open on this computer.</p>
-              <div class="card__act"><button class="link" type="button" data-open="settings" data-focus="discord">Change in settings</button></div>
+            <section class="card glass glass--quiet arrive" aria-labelledby="hj-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="hj-h">Journal</h2>
+                <a class="link" href="#/stats">All stats</a>
+              </div>
+              <div class="tiles" data-home-journal></div>
+              <p class="note" data-home-journal-note></p>
             </section>
+
+            <section class="card glass glass--quiet arrive" aria-labelledby="hr-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="hr-h">Research</h2>
+                <a class="link" href="#/digest">Digest</a>
+              </div>
+              <div class="tiles" data-home-research></div>
+              <p class="note" data-home-research-note></p>
+            </section>
+
+            <section class="card glass glass--quiet arrive" aria-labelledby="hp-h">
+              <div class="panel__head">
+                <h2 class="kicker" id="hp-h">Positioning &middot; NQ</h2>
+                <a class="link" href="#/positioning">Positioning</a>
+              </div>
+              <div class="tiles" data-home-pos></div>
+              <p class="note" data-home-pos-note></p>
+            </section>
+
           </div>
         </div>
       </section>
@@ -737,6 +775,175 @@
         <div class="stats bd-body" data-bd-body></div>
       </section>
 
+      <!-- Settings ---------------------------------------------------------- -->
+      <section class="view st" data-view="settings" aria-labelledby="settings-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Settings</p>
+          <h1 class="title vhead__title" id="settings-h" tabindex="-1">Make it yours</h1>
+          <p class="lede vhead__lede">How the journal counts, how the app looks and moves, and what it may connect to. Every setting is kept on this computer.</p>
+        </header>
+        <div class="st__grid">
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-journal">
+            <h2 class="kicker st__h" id="st-journal">Journal</h2>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-day">Trading day starts</span><span class="st__desc">Which day a trade counts towards. Moving this changes every daily figure.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-day" data-setting="dayStart">
+                <button class="seg__opt" type="button" role="radio" data-value="18">6:00 pm ET (CME)</button>
+                <button class="seg__opt" type="button" role="radio" data-value="0">Midnight ET</button>
+              </div>
+            </div>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-units">Show results in</span><span class="st__desc">Ticks and points are per contract. R needs the initial stop on the entry.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-units" data-setting="units">
+                <button class="seg__opt" type="button" role="radio" data-value="money">Money</button>
+                <button class="seg__opt" type="button" role="radio" data-value="ticks">Ticks</button>
+                <button class="seg__opt" type="button" role="radio" data-value="points">Points</button>
+                <button class="seg__opt" type="button" role="radio" data-value="r">R</button>
+              </div>
+            </div>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-basis">Results are</span><span class="st__desc">Net takes commissions and fees off. It is the default because it is what reaches the account.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-basis" data-setting="basis">
+                <button class="seg__opt" type="button" role="radio" data-value="net">Net of costs</button>
+                <button class="seg__opt" type="button" role="radio" data-value="gross">Gross</button>
+              </div>
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><label class="st__label" for="st-cost">Default costs per contract</label><span class="st__desc">Commission and fees for one contract in and out, in dollars. Used when an entry leaves costs blank.</span></div>
+              <input class="inp inp--num inp--sm st__num" id="st-cost" inputmode="decimal" data-setting-num="costPerContract" placeholder="0.00">
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><label class="st__label" for="st-limit">Your daily loss limit</label><span class="st__desc">Your own limit, in dollars. Stats count the trades taken after a day reached it.</span></div>
+              <input class="inp inp--num inp--sm st__num" id="st-limit" inputmode="decimal" data-setting-num="dailyLimit" placeholder="0.00">
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><label class="st__label" for="st-fees">Monthly platform and data fees</label><span class="st__desc">In dollars a month. Counted in the cost per round turn and per day.</span></div>
+              <input class="inp inp--num inp--sm st__num" id="st-fees" inputmode="decimal" data-setting-num="monthlyFees" placeholder="0.00">
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label">Your journal</span><span class="st__desc" data-journal-desc>Not read yet.</span></div>
+              <button class="btn btn--quiet" type="button" data-retry-journal hidden>Read it again</button>
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label" id="lbl-sim">Show simulated trades</span><span class="st__desc">Entries generated for trying the app out, marked Simulated wherever they show. Off leaves them out of every page and figure; they stay in the journal file until you remove them.</span></div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-sim" data-setting="showSimulated"><span class="switch__knob"></span></button>
+            </div>
+            <div class="st__row" data-sim-row hidden>
+              <div class="st__txt"><span class="st__label">Simulated entries</span><span class="st__desc" data-sim-desc>Entries generated for trying the app out, not real trades.</span></div>
+              <button class="btn btn--quiet" type="button" data-remove-sim>Remove them</button>
+            </div>
+            <div class="st__row" data-reveal-row hidden>
+              <div class="st__txt"><span class="st__label">The journal file</span><span class="st__desc">Everything you write is in one file on this computer. Copy it somewhere safe to keep a backup.</span></div>
+              <button class="btn btn--quiet" type="button" data-reveal>Show in File Explorer</button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-reading">
+            <h2 class="kicker st__h" id="st-reading">Reading</h2>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-text">Text size</span><span class="st__desc">Scales all the text and controls.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-text" data-setting="text">
+                <button class="seg__opt seg__opt--s" type="button" role="radio" data-value="s" aria-label="Small">A</button>
+                <button class="seg__opt seg__opt--m" type="button" role="radio" data-value="m" aria-label="Medium">A</button>
+                <button class="seg__opt seg__opt--l" type="button" role="radio" data-value="l" aria-label="Large">A</button>
+                <button class="seg__opt seg__opt--xl" type="button" role="radio" data-value="xl" aria-label="Extra large">A</button>
+              </div>
+            </div>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><label class="st__label" for="st-contrast">Contrast</label><span class="st__desc">Walks the grey text and the hairlines towards white. 0 is as designed.</span></div>
+              <div class="range">
+                <input id="st-contrast" type="range" min="0" max="100" step="1" data-setting-range="contrast">
+                <output for="st-contrast">0</output>
+              </div>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-motion">
+            <h2 class="kicker st__h" id="st-motion">Motion</h2>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-motion">Movement</span><span class="st__desc">Reduce stills every animation and shows each screen in its final state.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-motion" data-setting="motion">
+                <button class="seg__opt" type="button" role="radio" data-value="system">Follow Windows</button>
+                <button class="seg__opt" type="button" role="radio" data-value="reduce">Reduce</button>
+                <button class="seg__opt" type="button" role="radio" data-value="full">Full</button>
+              </div>
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label" id="lbl-intro">Opening animation</span><span class="st__desc">The tape that prints the curve when the app opens. Off shows the loading bar alone.</span></div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-intro" data-setting="intro"><span class="switch__knob"></span></button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-bg">
+            <h2 class="kicker st__h" id="st-bg">Background</h2>
+            <div class="st__row st__row--wrap">
+              <div class="st__txt"><span class="st__label" id="lbl-bg">Behind everything</span><span class="st__desc">The night sky shows tonight's moon in its real phase, worked out on this computer.</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-bg" data-setting="bg">
+                <button class="seg__opt" type="button" role="radio" data-value="grid">Footprint grid</button>
+                <button class="seg__opt" type="button" role="radio" data-value="sky">Night sky</button>
+                <button class="seg__opt" type="button" role="radio" data-value="plain">Plain</button>
+              </div>
+            </div>
+            <div class="st__row" data-needs="sky">
+              <div class="st__txt"><span class="st__label" id="lbl-stars">Shooting stars</span><span class="st__desc">Now and then, one crosses the night sky. Never with reduced motion.</span></div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-stars" data-setting="stars"><span class="switch__knob"></span></button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-folio">
+            <h2 class="kicker st__h" id="st-folio">Folio</h2>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label" id="lbl-folio-hidden">Show hidden marks while writing</span><span class="st__desc">A hidden mark leaves no line on the page; with this on, it shows as a faint dotted line while you write. The Digest gathers it either way.</span></div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-folio-hidden" data-setting="folioShowHidden"><span class="switch__knob"></span></button>
+            </div>
+            <div class="st__row" data-folio-row>
+              <div class="st__txt"><span class="st__label">The Folio file</span><span class="st__desc">Your pages are in one file on this computer, with screenshots in a folder beside it. Copy both somewhere safe to keep a backup.</span></div>
+              <button class="btn btn--quiet" type="button" data-folio-reveal>Show in File Explorer</button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-backdrop">
+            <h2 class="kicker st__h" id="st-backdrop">Atlas</h2>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label" id="lbl-backdrop">Fetch public data</span><span class="st__desc">While an Atlas page is open, fetches official figures from the US Treasury, the New York Fed, the Federal Reserve Board, the CFTC, the ECB and EIA, when the last copy is 12 or more hours old (24 for the weekly reports). Off shows the last copies and fetches nothing. Sources, at the foot of every page, lists every address.</span></div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-backdrop" data-setting="backdrop"><span class="switch__knob"></span></button>
+            </div>
+            <div class="st__row">
+              <div class="st__txt"><span class="st__label">Downloaded copies</span><span class="st__desc" data-bd-copies>The last copy of each source is kept in the app's folder, so pages open without waiting and still work offline.</span></div>
+              <button class="btn btn--quiet" type="button" data-bd-clear>Delete them</button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-discord" id="st-discord-group">
+            <h2 class="kicker st__h" id="st-discord">Discord</h2>
+            <div class="st__row">
+              <div class="st__txt">
+                <span class="st__label" id="lbl-discord">Show activity on Discord</span>
+                <span class="st__desc">Shows "The Curve Terminal" and a short rotating line, such as "Reading an old trade", on your Discord profile. Never your trades or anything you write.</span>
+                <span class="kicker st__status" data-presence-status>Status: checking</span>
+              </div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-discord" data-setting="discord"><span class="switch__knob"></span></button>
+            </div>
+          </section>
+
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-system">
+            <h2 class="kicker st__h" id="st-system">Windows</h2>
+            <div class="st__row">
+              <div class="st__txt">
+                <span class="st__label" id="lbl-startup">Open when Windows starts</span>
+                <span class="st__desc">Opens The Curve Terminal when you sign in to Windows.</span>
+                <span class="kicker st__status" data-startup-status hidden></span>
+              </div>
+              <button class="switch" type="button" role="switch" aria-labelledby="lbl-startup" data-startup><span class="switch__knob"></span></button>
+            </div>
+          </section>
+        </div>
+        <div class="st__foot">
+          <p class="st__note">Settings are kept on this computer. Reset puts every setting back as it was when the app was installed; your journal, Folio and Replay files are not touched.</p>
+          <button class="btn btn--quiet" type="button" data-reset>Reset settings</button>
+        </div>
+      </section>
+
     </main>
 
     <footer class="foot arrive">
@@ -749,7 +956,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.8.1</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -793,179 +1000,6 @@
     </div>
   </dialog>
 
-  <dialog class="dlg" id="dlg-settings" aria-labelledby="settings-h">
-    <div class="dlg__box glass">
-      <div class="dlg__head">
-        <div>
-          <p class="kicker">Settings</p>
-          <h2 class="title dlg__title" id="settings-h">Make it yours</h2>
-        </div>
-        <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
-      </div>
-      <div class="dlg__body">
-
-        <div class="st__group" role="group" aria-labelledby="st-journal">
-          <h3 class="kicker st__h" id="st-journal">Journal</h3>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-day">Trading day starts</span><span class="st__desc">Which day a trade counts towards. Moving this changes every daily figure.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-day" data-setting="dayStart">
-              <button class="seg__opt" type="button" role="radio" data-value="18">6:00 pm ET (CME)</button>
-              <button class="seg__opt" type="button" role="radio" data-value="0">Midnight ET</button>
-            </div>
-          </div>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-units">Show results in</span><span class="st__desc">Ticks and points are per contract. R needs the initial stop on the entry.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-units" data-setting="units">
-              <button class="seg__opt" type="button" role="radio" data-value="money">Money</button>
-              <button class="seg__opt" type="button" role="radio" data-value="ticks">Ticks</button>
-              <button class="seg__opt" type="button" role="radio" data-value="points">Points</button>
-              <button class="seg__opt" type="button" role="radio" data-value="r">R</button>
-            </div>
-          </div>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-basis">Results are</span><span class="st__desc">Net takes commissions and fees off. It is the default because it is what reaches the account.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-basis" data-setting="basis">
-              <button class="seg__opt" type="button" role="radio" data-value="net">Net of costs</button>
-              <button class="seg__opt" type="button" role="radio" data-value="gross">Gross</button>
-            </div>
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><label class="st__label" for="st-cost">Default costs per contract</label><span class="st__desc">Commission and fees for one contract in and out, in dollars. Used when an entry leaves costs blank.</span></div>
-            <input class="inp inp--num inp--sm st__num" id="st-cost" inputmode="decimal" data-setting-num="costPerContract" placeholder="0.00">
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><label class="st__label" for="st-limit">Your daily loss limit</label><span class="st__desc">Your own limit, in dollars. Stats count the trades taken after a day reached it.</span></div>
-            <input class="inp inp--num inp--sm st__num" id="st-limit" inputmode="decimal" data-setting-num="dailyLimit" placeholder="0.00">
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><label class="st__label" for="st-fees">Monthly platform and data fees</label><span class="st__desc">In dollars a month. Counted in the cost per round turn and per day.</span></div>
-            <input class="inp inp--num inp--sm st__num" id="st-fees" inputmode="decimal" data-setting-num="monthlyFees" placeholder="0.00">
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label">Your journal</span><span class="st__desc" data-journal-desc>Not read yet.</span></div>
-            <button class="btn btn--quiet" type="button" data-retry-journal hidden>Read it again</button>
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label" id="lbl-sim">Show simulated trades</span><span class="st__desc">Entries generated for trying the app out, marked Simulated wherever they show. Off leaves them out of every page and figure; they stay in the journal file until you remove them.</span></div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-sim" data-setting="showSimulated"><span class="switch__knob"></span></button>
-          </div>
-          <div class="st__row" data-sim-row hidden>
-            <div class="st__txt"><span class="st__label">Simulated entries</span><span class="st__desc" data-sim-desc>Entries generated for trying the app out, not real trades.</span></div>
-            <button class="btn btn--quiet" type="button" data-remove-sim>Remove them</button>
-          </div>
-          <div class="st__row" data-reveal-row hidden>
-            <div class="st__txt"><span class="st__label">The journal file</span><span class="st__desc">Everything you write is in one file on this computer. Copy it somewhere safe to keep a backup.</span></div>
-            <button class="btn btn--quiet" type="button" data-reveal>Show in File Explorer</button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-reading">
-          <h3 class="kicker st__h" id="st-reading">Reading</h3>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-text">Text size</span><span class="st__desc">Scales all the text and controls.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-text" data-setting="text">
-              <button class="seg__opt seg__opt--s" type="button" role="radio" data-value="s" aria-label="Small">A</button>
-              <button class="seg__opt seg__opt--m" type="button" role="radio" data-value="m" aria-label="Medium">A</button>
-              <button class="seg__opt seg__opt--l" type="button" role="radio" data-value="l" aria-label="Large">A</button>
-              <button class="seg__opt seg__opt--xl" type="button" role="radio" data-value="xl" aria-label="Extra large">A</button>
-            </div>
-          </div>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><label class="st__label" for="st-contrast">Contrast</label><span class="st__desc">Walks the grey text and the hairlines towards white. 0 is as designed.</span></div>
-            <div class="range">
-              <input id="st-contrast" type="range" min="0" max="100" step="1" data-setting-range="contrast">
-              <output for="st-contrast">0</output>
-            </div>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-motion">
-          <h3 class="kicker st__h" id="st-motion">Motion</h3>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-motion">Movement</span><span class="st__desc">Reduce stills every animation and shows each screen in its final state.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-motion" data-setting="motion">
-              <button class="seg__opt" type="button" role="radio" data-value="system">Follow Windows</button>
-              <button class="seg__opt" type="button" role="radio" data-value="reduce">Reduce</button>
-              <button class="seg__opt" type="button" role="radio" data-value="full">Full</button>
-            </div>
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label" id="lbl-intro">Opening animation</span><span class="st__desc">The tape that prints the curve when the app opens. Off shows the loading bar alone.</span></div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-intro" data-setting="intro"><span class="switch__knob"></span></button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-bg">
-          <h3 class="kicker st__h" id="st-bg">Background</h3>
-          <div class="st__row st__row--wrap">
-            <div class="st__txt"><span class="st__label" id="lbl-bg">Behind everything</span><span class="st__desc">The night sky shows tonight's moon in its real phase, worked out on this computer.</span></div>
-            <div class="seg" role="radiogroup" aria-labelledby="lbl-bg" data-setting="bg">
-              <button class="seg__opt" type="button" role="radio" data-value="grid">Footprint grid</button>
-              <button class="seg__opt" type="button" role="radio" data-value="sky">Night sky</button>
-              <button class="seg__opt" type="button" role="radio" data-value="plain">Plain</button>
-            </div>
-          </div>
-          <div class="st__row" data-needs="sky">
-            <div class="st__txt"><span class="st__label" id="lbl-stars">Shooting stars</span><span class="st__desc">Now and then, one crosses the night sky. Never with reduced motion.</span></div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-stars" data-setting="stars"><span class="switch__knob"></span></button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-folio">
-          <h3 class="kicker st__h" id="st-folio">Folio</h3>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label" id="lbl-folio-hidden">Show hidden marks while writing</span><span class="st__desc">A hidden mark leaves no line on the page; with this on, it shows as a faint dotted line while you write. The Digest gathers it either way.</span></div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-folio-hidden" data-setting="folioShowHidden"><span class="switch__knob"></span></button>
-          </div>
-          <div class="st__row" data-folio-row>
-            <div class="st__txt"><span class="st__label">The Folio file</span><span class="st__desc">Your pages are in one file on this computer, with screenshots in a folder beside it. Copy both somewhere safe to keep a backup.</span></div>
-            <button class="btn btn--quiet" type="button" data-folio-reveal>Show in File Explorer</button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-backdrop">
-          <h3 class="kicker st__h" id="st-backdrop">Atlas</h3>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label" id="lbl-backdrop">Fetch public data</span><span class="st__desc">While an Atlas page is open, fetches official figures from the US Treasury, the New York Fed, the Federal Reserve Board, the CFTC, the ECB and EIA, when the last copy is 12 or more hours old (24 for the weekly reports). Off shows the last copies and fetches nothing. Sources, at the foot of every page, lists every address.</span></div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-backdrop" data-setting="backdrop"><span class="switch__knob"></span></button>
-          </div>
-          <div class="st__row">
-            <div class="st__txt"><span class="st__label">Downloaded copies</span><span class="st__desc" data-bd-copies>The last copy of each source is kept in the app's folder, so pages open without waiting and still work offline.</span></div>
-            <button class="btn btn--quiet" type="button" data-bd-clear>Delete them</button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-discord" id="st-discord-group">
-          <h3 class="kicker st__h" id="st-discord">Discord</h3>
-          <div class="st__row">
-            <div class="st__txt">
-              <span class="st__label" id="lbl-discord">Show activity on Discord</span>
-              <span class="st__desc">Shows "The Curve Terminal" and a short rotating line, such as "Reading an old trade", on your Discord profile. Never your trades or anything you write.</span>
-              <span class="kicker st__status" data-presence-status>Status: checking</span>
-            </div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-discord" data-setting="discord"><span class="switch__knob"></span></button>
-          </div>
-        </div>
-
-        <div class="st__group" role="group" aria-labelledby="st-system">
-          <h3 class="kicker st__h" id="st-system">Windows</h3>
-          <div class="st__row">
-            <div class="st__txt">
-              <span class="st__label" id="lbl-startup">Open when Windows starts</span>
-              <span class="st__desc">Opens The Curve Terminal when you sign in to Windows.</span>
-              <span class="kicker st__status" data-startup-status hidden></span>
-            </div>
-            <button class="switch" type="button" role="switch" aria-labelledby="lbl-startup" data-startup><span class="switch__knob"></span></button>
-          </div>
-        </div>
-
-      </div>
-      <div class="st__foot">
-        <p class="st__note">Settings are kept on this computer.</p>
-        <button class="btn btn--quiet" type="button" data-reset>Reset settings</button>
-      </div>
-    </div>
-  </dialog>
 
   <dialog class="dlg" id="dlg-keys" aria-labelledby="keys-h">
     <div class="dlg__box dlg__box--small glass">
@@ -978,6 +1012,7 @@
       </div>
       <div class="dlg__body">
         <div class="keys">
+          <div class="keys__row"><span>Menu</span><span><kbd>M</kbd></span></div>
           <div class="keys__row"><span>Home</span><span><kbd>H</kbd></span></div>
           <div class="keys__row"><span>New entry</span><span><kbd>N</kbd></span></div>
           <div class="keys__row"><span>Overview</span><span><kbd>J</kbd></span></div>
@@ -1003,6 +1038,13 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.9.0</h3><span class="kicker">12 October 2026</span></div>
+        <ul>
+          <li>The menu is now a panel. The button at the top left of the window, or M, opens it; choosing a page, Esc or a click outside closes it, and the arrow keys move through it. Pages use the whole width of the window.</li>
+          <li>Settings is a page of its own, with each group in its own panel: in the menu, from the button at the top right, or with Ctrl+,.</li>
+          <li>Home shows your journal's figures (closed trades, win rate with its likely range, average per trade, profit factor and the largest drawdown, each with what it rests on), your research in the Folio (pages, words, marked lines, tags and the page you edited last), and NQ positioning from the copy of the CFTC's report that Atlas last kept. Home fetches nothing.</li>
+          <li>Discord's status is now its mark beside the shortcuts button: a green dot when connected, a red one when not (switched off, Discord closed or not answering), and an empty ring while it checks. Selecting it opens the Discord switch in Settings.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.8.1</h3><span class="kicker">12 October 2026</span></div>
         <ul>
           <li>TPO single prints from finished sessions are carried to the right as faint bands until a later period trades into them. The part traded into stops at that session; the rest runs on. Style turns this off.</li>
@@ -1230,7 +1272,7 @@
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
           <li><strong>Replay</strong>, in the <code>replay</code> folder inside the app's folder: a compact copy of each file of bars or trades you load (for bars, their times and prices and volume; for trades, each trade's time, price, size and whether it was at the bid or the ask; your original export is not changed), what each file is (its name, instrument, time zone and the exports joined into it), the lines you draw on each file's charts, and the practice log of trades placed while replaying. The data comes from your own data provider and stays on this computer; Replay can remove a file's copy.</li>
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
-          <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. They hold public figures only. Settings, under Atlas, deletes them.</li>
+          <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. Home shows the latest Commitments of Traders figures for NQ from that copy and fetches nothing itself. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
         </ul>

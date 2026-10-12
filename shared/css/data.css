@@ -2,9 +2,10 @@
    Data colours: the one stylesheet allowed to use bid green and ask red.
    Results (P&L) use them, by the owner's choice, always alongside a + or a
    minus sign so colour is never the only cue. Chart marks for buys and
-   sells (bid and ask) live here too. Chrome never does, with one exception
+   sells (bid and ask) live here too. Chrome never does, with two exceptions
    the owner chose: Replay's practice Buy and Sell buttons, where the side
-   is the thing being chosen, and whose labels say Buy and Sell.
+   is the thing being chosen, and whose labels say Buy and Sell; and the
+   dot on Discord's mark in the title bar.
    ========================================================================== */
 
 .pnl { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
@@ -32,6 +33,12 @@
 .bar-h { display: block; height: 100%; border-radius: 2px; }
 .rp-side--buy, .rp-kv__v.rp-side--buy, .rp-menu__item.rp-side--buy, .tbl td.rp-side--buy { color: var(--bid); }
 .rp-side--sell, .rp-kv__v.rp-side--sell, .rp-menu__item.rp-side--sell, .tbl td.rp-side--sell { color: var(--ask); }
+
+/* Discord's status in the title bar, by the owner's choice: a green dot
+   when connected, red when not (switched off, Discord closed or not
+   answering); the label says which in words */
+.tb__dot.is-on { background-color: var(--bid); border-color: var(--bid); }
+.tb__dot.is-off { background-color: var(--ask); border-color: var(--ask); }
 
 /* Replay's Buy and Sell buttons: filled, dark text on green, light on red,
    for contrast */

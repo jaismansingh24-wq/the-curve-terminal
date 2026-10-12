@@ -61,6 +61,18 @@ export async function get(id, arg = '', { maxAge = DAILY, force = false } = {}) 
 }
 export const forget = () => { memo.clear(); lastForced.clear(); };
 
+/* the copy Atlas last kept, read without fetching (Home uses this): null
+   when there is none */
+export async function lastCopy(id, arg = '') {
+  if (!isNative) return null;
+  try {
+    const got = await invoke('backdrop_get', { id, arg: arg || null, maxAgeHours: 1e9, network: false, force: false });
+    return { text: got.text, fetchedAt: got.fetched_at, id };
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ------------------------------------------------------------ dates */
 
 /* data dates are calendar days with no time zone: keep them as "2026-10-08" */

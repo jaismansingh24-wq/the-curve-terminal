@@ -1,10 +1,16 @@
-/* The home screen's journal parts: recent entries, the last entry, and
-   profit and loss for today's trading day, this week and this month. A
-   period with no closed trades says so, rather than showing a zero. */
+/* The home screen: recent entries, the last entry, and profit and loss for
+   today's trading day, this week and this month; then the journal's main
+   figures, the Folio's research, and NQ positioning from the copy Atlas
+   last kept. A period with no closed trades says so, rather than showing a
+   zero, and a figure that needs more trades says how many it has. Home
+   fetches nothing: positioning is read from the copy on this computer. */
 
 import * as J from './journal.js';
+import * as Folio from './folio.js';
+import * as C from './stats-calc.js';
+import * as D from './backdrop-data.js';
 import * as settings from './settings.js';
-import { money, unit, tone, trades, el, UNIT_LABEL, simTag } from './format.js';
+import { money, unit, tone, trades, el, int, MINUS, UNIT_LABEL, simTag } from './format.js';
 import { shortDateET, timeBoth, boundaryText } from './time.js';
 import { formatPrice } from './instruments.js';
 
@@ -125,11 +131,132 @@ function pl(s) {
   if (sims) box.appendChild(el('p', 'simnote', 'Your journal includes ' + sims + ' simulated ' + (sims === 1 ? 'entry' : 'entries') + ': generated, not real trades.'));
 }
 
+/* ------------------------------------------------------------ the figures */
+
+function tile(label, value, sub, cls = '') {
+  const t = el('div', 'tile');
+  t.append(el('span', 'tile__k', label), el('span', 'tile__v ' + cls, value));
+  if (sub) t.appendChild(el('span', 'tile__s', sub));
+  return t;
+}
+const pct = (x) => Math.round(x * 100) + '%';
+
+/* the journal: closed trades, win rate with its range, average per trade,
+   profit factor and the largest fall from a peak, each on what it rests on */
+function journalFigures(s) {
+  const box = document.querySelector('[data-home-journal]');
+  const note = document.querySelector('[data-home-journal-note]');
+  if (!box) return;
+  box.replaceChildren();
+  const T = C.prepare(J.all(), s);
+  const n = T.length;
+  if (!n) {
+    note.textContent = J.emptyNote() || 'No closed trades yet. The figures here start with your first entry.';
+    return;
+  }
+  const month = J.periods(s).month.count;
+  const days = new Set(T.map((t) => t.day)).size;
+  box.appendChild(tile('Closed trades', int(n), int(days) + (days === 1 ? ' trading day' : ' trading days') + ', ' + int(month) + ' this month'));
+
+  const wins = T.filter((t) => t.win).length;
+  if (n < C.MIN) box.appendChild(tile('Win rate', 'Needs ' + C.MIN + ' trades', 'has ' + n, 'is-wait'));
+  else {
+    const [lo, hi] = C.wilson(wins, n);
+    box.appendChild(tile('Win rate', pct(wins / n), 'likely between ' + pct(lo) + ' and ' + pct(hi) + ', from ' + trades(n)));
+  }
+
+  const vals = T.filter((t) => t.v !== null).map((t) => t.v);
+  if (!vals.length) box.appendChild(tile('Average per trade', 'No result in R', 'no initial stops recorded', 'is-wait'));
+  else {
+    const avg = C.mean(vals);
+    box.appendChild(tile('Average per trade', unit(avg, s.units), (s.basis === 'gross' ? 'gross, ' : 'net, ') + 'from ' + trades(vals.length), tone(avg)));
+  }
+
+  const up = vals.filter((v) => v > 0).reduce((a, b) => a + b, 0), down = -vals.filter((v) => v < 0).reduce((a, b) => a + b, 0);
+  if (n < C.MIN) box.appendChild(tile('Profit factor', 'Needs ' + C.MIN + ' trades', 'has ' + n, 'is-wait'));
+  else box.appendChild(tile('Profit factor', down > 0 ? (up / down).toFixed(2) : 'No losses', down > 0 ? 'gains divided by losses' : 'nothing to divide by yet'));
+
+  let eq = 0, peak = 0, dd = 0;
+  for (const v of vals) { eq += v; if (eq > peak) peak = eq; if (peak - eq > dd) dd = peak - eq; }
+  box.appendChild(tile('Largest drawdown', dd > 0 ? unit(-dd, s.units) : 'None yet', 'closed trades, from a high point to the lowest after it', dd > 0 ? tone(-dd) : ''));
+
+  note.textContent = 'In ' + UNIT_LABEL[s.units].toLowerCase() + (s.units === 'ticks' || s.units === 'points' ? ' per contract' : '') + '. A figure from a few trades moves a lot with the next one; Stats shows each with its range and where it misleads.';
+}
+
+/* the Folio: pages, words, marked lines and tags, and the page last edited */
+const folioCache = new Map();
+function folioCounts(p) {
+  const key = p.id + '|' + (p.updatedAt || '');
+  if (!folioCache.has(key)) {
+    const m = Folio.marks(p);
+    folioCache.set(key, { words: Folio.words(p), shown: m.filter((x) => x.shown).length, hidden: m.filter((x) => !x.shown).length });
+  }
+  return folioCache.get(key);
+}
+function research() {
+  const box = document.querySelector('[data-home-research]');
+  const note = document.querySelector('[data-home-research-note]');
+  if (!box) return;
+  box.replaceChildren();
+  note.replaceChildren();
+  if (!Folio.isLoaded()) { note.textContent = Folio.lastError() ? 'The Folio could not be read. Pages, in the menu, says why.' : 'Reading the Folio.'; return; }
+  const pages = Folio.all();
+  if (!pages.length) {
+    note.append(document.createTextNode('No research pages yet. '));
+    const a = el('a', 'link', 'Start a page');
+    a.href = '#/page/new';
+    note.append(a, document.createTextNode('; lines you mark as important gather in the Digest.'));
+    return;
+  }
+  let words = 0, shown = 0, hidden = 0;
+  for (const p of pages) { const c = folioCounts(p); words += c.words; shown += c.shown; hidden += c.hidden; }
+  const pinned = pages.filter((p) => p.pinned).length, tags = Folio.allTags().length;
+  box.append(
+    tile('Pages', int(pages.length), pinned ? int(pinned) + ' pinned' : ''),
+    tile('Words', int(words), 'across all pages'),
+    tile('Marked lines', int(shown + hidden), int(shown) + ' shown, ' + int(hidden) + ' hidden'),
+    tile('Tags', int(tags), tags ? '' : 'none yet'),
+  );
+  const latest = pages.slice().sort((a, b) => (Date.parse(b.updatedAt || b.createdAt || 0) || 0) - (Date.parse(a.updatedAt || a.createdAt || 0) || 0))[0];
+  note.append(document.createTextNode('Last edited: '));
+  const a = el('a', 'link', latest.title || 'Untitled page');
+  a.href = '#/page/' + latest.id;
+  note.append(a, document.createTextNode(', ' + shortDateET(Date.parse(latest.updatedAt || latest.createdAt)) + '.'));
+}
+
+/* NQ positioning, from the last copy of the CFTC's report Atlas kept */
+let pos = { at: 0, got: null };
+const sint = (v) => (Number.isFinite(v) ? (v > 0 ? '+' : v < 0 ? MINUS : '') + int(Math.abs(v)) : '');
+async function positioning() {
+  const box = document.querySelector('[data-home-pos]');
+  const note = document.querySelector('[data-home-pos-note]');
+  if (!box) return;
+  if (Date.now() - pos.at > 10000) pos = { at: Date.now(), got: await D.lastCopy('cftc-tff', '209742') };
+  box.replaceChildren();
+  note.replaceChildren();
+  let rows = null;
+  try { rows = pos.got ? D.cftc(pos.got.text, 'tff') : null; } catch (e) { rows = null; }
+  if (!rows || rows.length < 2) {
+    note.append(document.createTextNode('No copy of the CFTC\'s report on this computer yet. '));
+    const a = el('a', 'link', 'Open Positioning');
+    a.href = '#/positioning';
+    note.append(a, document.createTextNode(settings.get().backdrop === false ? ' to see it; fetching is switched off in Settings, so switch it on first.' : ' and Atlas fetches it. Home only reads the copy Atlas keeps.'));
+    return;
+  }
+  const last = rows[rows.length - 1], prev = rows[rows.length - 2];
+  const g = (k) => tile(D.GROUPS.tff.find((x) => x[0] === k)[1] + ', net', sint(last.g[k].net), sint(last.g[k].net - prev.g[k].net) + ' on the week');
+  box.append(g('lev'), g('asset'), g('dealer'), tile('Open interest', int(last.oi), sint(last.oi - prev.oi) + ' on the week'));
+  note.textContent = 'Contracts, futures only, CFTC Traders in Financial Futures, positions on ' + D.weekday(last.date) + ' ' + D.longDay(last.date) + ', from the copy Atlas kept on ' + shortDateET(pos.got.fetchedAt) + '. Much of a group\'s position can be one leg of a hedge, so a net short is not necessarily a position that gains from a fall.';
+}
+
 export function renderHome() {
   const s = settings.get();
   recent(s);
   last(s);
   pl(s);
+  journalFigures(s);
+  research();
+  positioning();
 }
 
 export function renderBoundaries() {
