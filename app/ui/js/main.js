@@ -33,12 +33,50 @@ const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.9.0';
+let version = '0.9.1';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
 
 initTitlebar(document.querySelector('.tb'));
+
+/* the name in the title bar, a letter to a span so a slow wave can pass
+   along it (see app.css); screen readers are given the name whole, and
+   every letter stays part of the window's drag area */
+(function letterName() {
+  const name = document.querySelector('.tb__name');
+  if (!name) return;
+  const whole = name.textContent.replace(/\s+/g, ' ').trim();
+  const shown = document.createElement('span');
+  shown.setAttribute('aria-hidden', 'true');
+  shown.setAttribute('data-tauri-drag-region', '');
+  let i = 0;
+  const letters = (text, into) => {
+    for (const ch of text) {
+      if (ch === ' ') { into.appendChild(document.createTextNode(' ')); continue; }
+      const l = document.createElement('span');
+      l.className = 'tb__l';
+      l.setAttribute('data-tauri-drag-region', '');
+      l.style.setProperty('--i', String(i++));
+      l.textContent = ch;
+      into.appendChild(l);
+    }
+  };
+  for (const node of [...name.childNodes]) {
+    if (node.nodeType === 3) letters(node.textContent, shown);
+    else if (node.nodeType === 1) {
+      const part = document.createElement('span');
+      part.className = 'tb__t';
+      part.setAttribute('data-tauri-drag-region', '');
+      letters(node.textContent, part);
+      shown.appendChild(part);
+    }
+  }
+  const sr = document.createElement('span');
+  sr.className = 'sr';
+  sr.textContent = whole;
+  name.replaceChildren(shown, sr);
+})();
 
 startClock({
   et: document.querySelector('[data-clock-et]'),

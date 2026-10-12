@@ -1,5 +1,5 @@
-/* The menu: a panel opened from the button at the top left of the title
-   bar, or with M. It closes when a page is chosen, on Esc, or on a click
+/* The menu: a panel down the left side, opened from the menu button under
+   the title bar, or with M. It closes when a page is chosen, on Esc, or on a click
    or a Tab outside it, and Esc gives focus back to the button. The arrow
    keys, Home and End move through its items; the page you are on is
    marked, and takes focus when the menu opens. */

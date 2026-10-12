@@ -4,6 +4,17 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.1 · 12 October 2026
+
+- The menu is the vertical list again, in a panel down the left side. The
+  menu button, now under the title bar at the left, opens it and closes
+  it; so does M.
+- The mark on Home prints itself again every ten seconds: the curve and
+  its node fade, the three base ticks print one after another while the
+  curve draws from the left, and the node settles at its end. Now and then
+  a slow wave passes along the name in the title bar. Both stay still when
+  movement is reduced.
+
 ## 0.9.0 · 12 October 2026
 
 - The menu is now a panel. The button at the top left of the window, or M,

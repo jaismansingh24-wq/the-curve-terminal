@@ -22,9 +22,6 @@
 
   <!-- The title bar: the window is frameless, so these are its own controls -->
   <header class="tb" data-tauri-drag-region>
-    <button class="ibtn tb__menu" type="button" data-menu-toggle aria-expanded="false" aria-controls="menu" aria-label="Menu" aria-keyshortcuts="M" data-tip="Menu  M">
-      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
-    </button>
     <div class="tb__brand" data-tauri-drag-region>
       <svg class="tb__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
         <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.34" stroke-width="2.6"/>
@@ -61,98 +58,97 @@
   </header>
 
 
-  <!-- The menu: opened from the button at the top left, or with M -->
+  <!-- The menu button, under the title bar at the left -->
+  <button class="menubtn glass" type="button" data-menu-toggle aria-expanded="false" aria-controls="menu" aria-label="Menu" aria-keyshortcuts="M" data-tip="Menu  M">
+    <svg class="icon menubtn__open" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+    <svg class="icon menubtn__close" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+  </button>
+
+  <!-- The menu: down the left side, opened from the menu button or with M -->
   <nav class="menu glass" id="menu" aria-label="Main" hidden>
-    <div class="menu__cols">
-      <div class="menu__col">
-        <a class="menu__item" href="#/home" data-route="home" aria-keyshortcuts="H">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13a.5.5 0 0 1-.5.5H9.5V10h-3v3.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
-          <span class="menu__label">Home</span><kbd aria-hidden="true">H</kbd>
-        </a>
-        <h2 class="menu__k">Journal</h2>
-        <a class="menu__item" href="#/new" data-route="new" aria-keyshortcuts="N">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-          <span class="menu__label">New entry</span><kbd aria-hidden="true">N</kbd>
-        </a>
-        <a class="menu__item" href="#/overview" data-route="overview" aria-keyshortcuts="J">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
-          <span class="menu__label">Overview</span><kbd aria-hidden="true">J</kbd>
-        </a>
-        <a class="menu__item" href="#/stats" data-route="stats" aria-keyshortcuts="S">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V9M6.5 13V5M10 13V7.5M13.5 13V3"/></svg>
-          <span class="menu__label">Stats</span><kbd aria-hidden="true">S</kbd>
-        </a>
-        <a class="menu__item" href="#/calendar" data-route="calendar">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
-          <span class="menu__label">Calendar</span>
-        </a>
-        <a class="menu__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
-          <span class="menu__label">Accounts</span><kbd aria-hidden="true">A</kbd>
-        </a>
-      </div>
-      <div class="menu__col">
-        <h2 class="menu__k">Folio</h2>
-        <a class="menu__item" href="#/digest" data-route="digest" aria-keyshortcuts="D">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5h7v11L8 10.5l-3.5 3Z"/></svg>
-          <span class="menu__label">Digest</span><kbd aria-hidden="true">D</kbd>
-        </a>
-        <a class="menu__item" href="#/pages" data-route="pages" aria-keyshortcuts="P">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8h4M6 10.5h2.5"/></svg>
-          <span class="menu__label">Pages</span><kbd aria-hidden="true">P</kbd>
-        </a>
-        <a class="menu__item" href="#/page/new" data-route="pagenew">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-          <span class="menu__label">New page</span>
-        </a>
-        <h2 class="menu__k">Practice</h2>
-        <a class="menu__item" href="#/replay" data-route="replay" aria-keyshortcuts="R">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4.5v7M7 3v10M10 5v5M13 4v7M3 4.5h2M3 11.5h2M6 3h2M6 13h2M9 5h2M9 10h2M12 4h2M12 11h2"/></svg>
-          <span class="menu__label">Replay</span><kbd aria-hidden="true">R</kbd>
-        </a>
-      </div>
-      <div class="menu__col">
-        <h2 class="menu__k">Atlas</h2>
-        <a class="menu__item" href="#/connects" data-route="connects">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4.5" r="1.75"/><circle cx="12" cy="4.5" r="1.75"/><circle cx="8" cy="11.5" r="1.75"/><path d="M5.6 5.6 7 9.9M10.4 5.6 9 9.9M5.75 4.5h4.5"/></svg>
-          <span class="menu__label">How it connects</span>
-        </a>
-        <a class="menu__item" href="#/rates" data-route="rates">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 11.5c3.5-.3 5.5-5.8 11-7"/></svg>
-          <span class="menu__label">Rates</span>
-        </a>
-        <a class="menu__item" href="#/auctions" data-route="auctions">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8.5h4M6 11h4"/></svg>
-          <span class="menu__label">Auctions</span>
-        </a>
-        <a class="menu__item" href="#/positioning" data-route="positioning">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M8 5H4.5M8 8h5M8 11H6"/></svg>
-          <span class="menu__label">Positioning</span>
-        </a>
-        <a class="menu__item" href="#/energy" data-route="energy">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5c2.5 3.2 4 5.3 4 7.2a4 4 0 0 1-8 0c0-1.9 1.5-4 4-7.2Z"/></svg>
-          <span class="menu__label">Energy</span>
-        </a>
-        <a class="menu__item" href="#/currencies" data-route="currencies">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13"/></svg>
-          <span class="menu__label">Currencies</span>
-        </a>
-        <a class="menu__item" href="#/releases" data-route="releases">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>
-          <span class="menu__label">Releases</span>
-        </a>
-        <a class="menu__item" href="#/wire" data-route="wire">
-          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5a9.5 9.5 0 0 1 9.5 9.5M3 7.5a5.5 5.5 0 0 1 5.5 5.5"/><circle cx="3.75" cy="12.25" r="1"/></svg>
-          <span class="menu__label">Fed wire</span>
-        </a>
-      </div>
+    <div class="menu__list">
+      <a class="menu__item" href="#/home" data-route="home" aria-keyshortcuts="H">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13a.5.5 0 0 1-.5.5H9.5V10h-3v3.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+        <span class="menu__label">Home</span><kbd aria-hidden="true">H</kbd>
+      </a>
+      <h2 class="menu__k">Journal</h2>
+      <a class="menu__item" href="#/new" data-route="new" aria-keyshortcuts="N">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+        <span class="menu__label">New entry</span><kbd aria-hidden="true">N</kbd>
+      </a>
+      <a class="menu__item" href="#/overview" data-route="overview" aria-keyshortcuts="J">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
+        <span class="menu__label">Overview</span><kbd aria-hidden="true">J</kbd>
+      </a>
+      <a class="menu__item" href="#/stats" data-route="stats" aria-keyshortcuts="S">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V9M6.5 13V5M10 13V7.5M13.5 13V3"/></svg>
+        <span class="menu__label">Stats</span><kbd aria-hidden="true">S</kbd>
+      </a>
+      <a class="menu__item" href="#/calendar" data-route="calendar">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>
+        <span class="menu__label">Calendar</span>
+      </a>
+      <a class="menu__item" href="#/accounts" data-route="accounts" aria-keyshortcuts="A">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7h12M5 10.5h2.5"/></svg>
+        <span class="menu__label">Accounts</span><kbd aria-hidden="true">A</kbd>
+      </a>
+      <h2 class="menu__k">Folio</h2>
+      <a class="menu__item" href="#/digest" data-route="digest" aria-keyshortcuts="D">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5h7v11L8 10.5l-3.5 3Z"/></svg>
+        <span class="menu__label">Digest</span><kbd aria-hidden="true">D</kbd>
+      </a>
+      <a class="menu__item" href="#/pages" data-route="pages" aria-keyshortcuts="P">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8h4M6 10.5h2.5"/></svg>
+        <span class="menu__label">Pages</span><kbd aria-hidden="true">P</kbd>
+      </a>
+      <a class="menu__item" href="#/page/new" data-route="pagenew">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+        <span class="menu__label">New page</span>
+      </a>
+      <h2 class="menu__k">Practice</h2>
+      <a class="menu__item" href="#/replay" data-route="replay" aria-keyshortcuts="R">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4.5v7M7 3v10M10 5v5M13 4v7M3 4.5h2M3 11.5h2M6 3h2M6 13h2M9 5h2M9 10h2M12 4h2M12 11h2"/></svg>
+        <span class="menu__label">Replay</span><kbd aria-hidden="true">R</kbd>
+      </a>
+      <h2 class="menu__k">Atlas</h2>
+      <a class="menu__item" href="#/connects" data-route="connects">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4.5" r="1.75"/><circle cx="12" cy="4.5" r="1.75"/><circle cx="8" cy="11.5" r="1.75"/><path d="M5.6 5.6 7 9.9M10.4 5.6 9 9.9M5.75 4.5h4.5"/></svg>
+        <span class="menu__label">How it connects</span>
+      </a>
+      <a class="menu__item" href="#/rates" data-route="rates">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 11.5c3.5-.3 5.5-5.8 11-7"/></svg>
+        <span class="menu__label">Rates</span>
+      </a>
+      <a class="menu__item" href="#/auctions" data-route="auctions">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5.5L12 5v8.5H4ZM9.5 2.5V5H12M6 8.5h4M6 11h4"/></svg>
+        <span class="menu__label">Auctions</span>
+      </a>
+      <a class="menu__item" href="#/positioning" data-route="positioning">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M8 5H4.5M8 8h5M8 11H6"/></svg>
+        <span class="menu__label">Positioning</span>
+      </a>
+      <a class="menu__item" href="#/energy" data-route="energy">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5c2.5 3.2 4 5.3 4 7.2a4 4 0 0 1-8 0c0-1.9 1.5-4 4-7.2Z"/></svg>
+        <span class="menu__label">Energy</span>
+      </a>
+      <a class="menu__item" href="#/currencies" data-route="currencies">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13"/></svg>
+        <span class="menu__label">Currencies</span>
+      </a>
+      <a class="menu__item" href="#/releases" data-route="releases">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>
+        <span class="menu__label">Releases</span>
+      </a>
+      <a class="menu__item" href="#/wire" data-route="wire">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5a9.5 9.5 0 0 1 9.5 9.5M3 7.5a5.5 5.5 0 0 1 5.5 5.5"/><circle cx="3.75" cy="12.25" r="1"/></svg>
+        <span class="menu__label">Fed wire</span>
+      </a>
     </div>
     <div class="menu__foot">
       <a class="menu__item" href="#/settings" data-route="settings">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6M12 4.5h1.5M2.5 11.5h1.5M7.5 11.5h6"/><circle cx="10.25" cy="4.5" r="1.75"/><circle cx="5.75" cy="11.5" r="1.75"/></svg>
         <span class="menu__label">Settings</span><kbd aria-hidden="true">Ctrl ,</kbd>
       </a>
-      <p class="menu__hint">M opens and closes this menu. The arrow keys move through it; Esc closes it.</p>
     </div>
   </nav>
 
@@ -167,10 +163,10 @@
               <svg class="hero__mark arrive" viewBox="0 0 64 64" role="img" aria-label="The Curve">
                 <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-opacity="0.22"/>
                 <circle cx="32" cy="32" r="24.5" fill="none" stroke="currentColor" stroke-opacity="0.10"/>
-                <g stroke="currentColor" stroke-opacity="0.30" stroke-width="1" stroke-linecap="round"><path d="M18 50.5h4M28 50.5h4M38 50.5h4"/></g>
+                <g stroke="currentColor" stroke-width="1" stroke-linecap="round"><path class="hm-tick" stroke-opacity="0.30" d="M18 50.5h4"/><path class="hm-tick hm-tick--2" stroke-opacity="0.30" d="M28 50.5h4"/><path class="hm-tick hm-tick--3" stroke-opacity="0.30" d="M38 50.5h4"/></g>
                 <g stroke="currentColor" stroke-opacity="0.14" stroke-width="1"><path d="M24 16v28M40 16v28"/></g>
-                <path d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                <circle cx="50" cy="14.5" r="3.1" fill="currentColor"/>
+                <path class="hm-curve" pathLength="1" d="M14 43 C 21 42, 25.5 36, 29.5 27.5 C 33.5 19, 40 15.5, 50 14.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                <circle class="hm-node" cx="50" cy="14.5" r="3.1" fill="currentColor"/>
               </svg>
               <p class="kicker hero__kicker arrive"><span>Journal</span><span data-date>Today</span></p>
               <h1 class="title hero__title arrive" id="greet" data-greet>Good evening.</h1>
@@ -956,7 +952,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.1</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1038,6 +1034,11 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.9.1</h3><span class="kicker">12 October 2026</span></div>
+        <ul>
+          <li>The menu is the vertical list again, in a panel down the left side. The menu button, now under the title bar at the left, opens it and closes it; so does M.</li>
+          <li>The mark on Home prints itself again every ten seconds: the curve and its node fade, the three base ticks print one after another while the curve draws from the left, and the node settles at its end. Now and then a slow wave passes along the name in the title bar. Both stay still when movement is reduced.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.9.0</h3><span class="kicker">12 October 2026</span></div>
         <ul>
           <li>The menu is now a panel. The button at the top left of the window, or M, opens it; choosing a page, Esc or a click outside closes it, and the arrow keys move through it. Pages use the whole width of the window.</li>
