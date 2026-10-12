@@ -140,36 +140,40 @@ html.rm .tb__name .tb__l { animation: none !important; }
 .home__lead, .home__dash { display: grid; gap: 22px; align-content: start; min-width: 0; }
 
 .hero { padding-top: clamp(8px, 4vh, 48px); display: grid; justify-items: start; }
-.hero__mark { width: 62px; height: 62px; color: var(--text); margin-bottom: 26px; }
-/* every ten seconds the mark is printed again: it holds whole, the curve and
-   its node fade, the three base ticks print one after another while the
-   curve draws from the left, and the node settles at its end */
-.hero__mark .hm-curve { stroke-dasharray: 1 1; }
-.hero__mark .hm-node { transform-origin: 50px 14.5px; }
-body.is-revealed .hero__mark .hm-curve { animation: hm-curve 10s var(--ease-travel) 3s infinite both; }
-body.is-revealed .hero__mark .hm-node { animation: hm-node 10s var(--ease-travel) 3s infinite both; }
-body.is-revealed .hero__mark .hm-tick { animation: hm-tick 10s ease-out 3s infinite both; }
-body.is-revealed .hero__mark .hm-tick--2 { animation-delay: 3.35s; }
-body.is-revealed .hero__mark .hm-tick--3 { animation-delay: 3.7s; }
-@keyframes hm-curve {
-  0%, 58% { stroke-dashoffset: 0; opacity: 1; }
-  63% { stroke-dashoffset: 0; opacity: 0; }
-  63.5% { stroke-dashoffset: 1; opacity: 0; }
-  64% { stroke-dashoffset: 1; opacity: 1; }
-  88%, 100% { stroke-dashoffset: 0; opacity: 1; }
+/* the Home logo: the mark, unchanged, at the centre of a sphere that turns
+   once every five seconds. The sphere is a wireframe tilted a little: its
+   meridians widen and narrow as it turns, and small collector panels ride
+   its equator and a second, steeper orbit, one way and the other. Greys
+   only, no glow; a dark core keeps the lines off the mark. It sits behind
+   the mark and fades in once the opening has landed. */
+.hero__logo { position: relative; width: 62px; height: 62px; margin: 8px 0 43px; }
+.hero__mark { position: relative; display: block; width: 62px; height: 62px; color: var(--text); }
+.hero__sphere { position: absolute; left: -17px; top: -17px; width: 96px; height: 96px; max-width: none; overflow: visible; color: var(--text); pointer-events: none; }
+.hero__sphere .ds-shell, .hero__sphere .ds-lat, .hero__sphere .ds-mer, .hero__sphere .ds-eq, .hero__sphere .ds-orbit { fill: none; stroke: currentColor; stroke-width: 0.8; }
+.hero__sphere .ds-shell { stroke-opacity: 0.2; }
+.hero__sphere .ds-lat { stroke-opacity: 0.12; }
+.hero__sphere .ds-mer { stroke-opacity: 0.17; transform-box: fill-box; transform-origin: center; vector-effect: non-scaling-stroke; }
+.hero__sphere .ds-eq { stroke-opacity: 0.24; }
+.hero__sphere .ds-orbit { stroke-opacity: 0.12; }
+.hero__sphere .ds-swarm { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-opacity: 0.6; stroke-dasharray: 3 9.5; }
+.hero__sphere .ds-core { fill: var(--ink); }
+html.intro-armed .hero__sphere, body.intro-landing:not(.intro-landed) .hero__sphere { opacity: 0 !important; animation: none !important; }
+body.is-revealed .hero__sphere { animation: ds-in 900ms var(--ease-arrive) 200ms both; }
+body.is-revealed .hero__sphere .ds-mer { animation: ds-turn 5s linear infinite; }
+body.is-revealed .hero__sphere .ds-mer--2 { animation-delay: -1.25s; }
+body.is-revealed .hero__sphere .ds-mer--3 { animation-delay: -2.5s; }
+body.is-revealed .hero__sphere .ds-mer--4 { animation-delay: -3.75s; }
+body.is-revealed .hero__sphere .ds-swarm { animation: ds-orbit 5s linear infinite; }
+body.is-revealed .hero__sphere .ds-swarm--2 { animation-direction: reverse; }
+@keyframes ds-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+/* a meridian's width follows the sine of its turn: wide when it faces you, a line when it is edge on */
+@keyframes ds-turn {
+  0% { transform: scaleX(0.002); animation-timing-function: cubic-bezier(.61, 1, .88, 1); }
+  50% { transform: scaleX(1); animation-timing-function: cubic-bezier(.12, 0, .39, 0); }
+  100% { transform: scaleX(0.002); }
 }
-@keyframes hm-node {
-  0%, 58% { opacity: 1; transform: scale(1); }
-  63%, 87% { opacity: 0; transform: scale(0.5); }
-  92% { opacity: 1; transform: scale(1.12); }
-  96%, 100% { opacity: 1; transform: scale(1); }
-}
-@keyframes hm-tick {
-  0%, 66% { stroke-opacity: 0.30; }
-  69% { stroke-opacity: 0.9; }
-  76%, 100% { stroke-opacity: 0.30; }
-}
-html.rm .hero__mark * { animation: none !important; }
+@keyframes ds-orbit { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -25; } }
+html.rm .hero__sphere, html.rm .hero__sphere * { animation: none !important; }
 .hero__kicker { margin-bottom: 14px; }
 .hero__kicker span + span::before { content: '\00B7'; margin: 0 0.6em; color: var(--text-faint); }
 .hero__title { font-size: clamp(2.3rem, 1.5rem + 2.2vw, 3.4rem); }

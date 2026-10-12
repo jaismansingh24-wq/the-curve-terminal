@@ -4,6 +4,14 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.2 · 12 October 2026
+
+- The mark on Home now sits at the centre of a turning sphere, drawn like
+  a Dyson sphere: a tilted wireframe that turns once every five seconds,
+  with small collector panels riding its equator and a second, steeper
+  orbit. The mark itself is unchanged, and the sphere stays still when
+  movement is reduced.
+
 ## 0.9.1 · 12 October 2026
 
 - The menu is the vertical list again, in a panel down the left side. The
