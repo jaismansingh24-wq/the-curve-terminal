@@ -26,12 +26,13 @@ import { initBackdrop, renderBackdrop, VIEWS as BACKDROP } from './backdrop-view
 import { forget as forgetBackdrop } from './backdrop-data.js';
 import * as Folio from './folio.js';
 import { initFolio, renderDigest, renderPages, openPage, leavePage } from './folio-view.js';
+import { initReplay, renderReplay, leaveReplay } from './replay-view.js';
 
 const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.5.0';
+let version = '0.6.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -68,6 +69,7 @@ initCalendar();
 initAccounts({ confirm: dialogs.confirm });
 initBackdrop();
 initFolio({ confirm: dialogs.confirm });
+initReplay({ confirm: dialogs.confirm });
 onBeforeClose(() => leavePage());
 
 document.querySelectorAll('[data-link]').forEach((b) => b.addEventListener('click', () => openLink(b.dataset.link)));
@@ -143,11 +145,13 @@ router.on('accounts', () => renderAccounts());
 router.on('digest', () => renderDigest());
 router.on('pages', () => renderPages());
 router.on('page', (r) => openPage(r.id));
+router.on('replay', () => renderReplay());
 /* leaving a page writes what is waiting */
 let lastView = null;
 window.addEventListener('hashchange', () => {
   const r = router.parse();
   if (lastView === 'page' && r.view !== 'page') leavePage();
+  if (lastView === 'replay' && r.view !== 'replay') leaveReplay();
   lastView = r.view;
 });
 BACKDROP.forEach((v) => router.on(v, () => renderBackdrop(v)));
@@ -195,6 +199,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'a') router.go('/accounts');
   else if (k === 'd') router.go('/digest');
   else if (k === 'p') router.go('/pages');
+  else if (k === 'r') router.go('/replay');
   else if (e.key === '?') dialogs.open('keys');
 });
 

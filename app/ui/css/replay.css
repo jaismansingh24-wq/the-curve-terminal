@@ -1,0 +1,89 @@
+/* Replay: the chart beside an order panel, in the Terminal's greys. Buy and
+   sell buttons stay grey (the bid and ask colours are for data, not
+   buttons); only order labels and fills on the chart carry them. */
+
+.rp-root { display: grid; gap: 14px; margin-top: 8px; }
+.rp-p { font-size: 0.9rem; line-height: 1.6; color: var(--text-dim); max-width: 66em; }
+.rp-note { font-size: 0.8rem; color: var(--text-faint); }
+.rp-field { min-width: 0; }
+.rp-inline { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rp-inline .inp { width: auto; }
+.rp-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
+
+/* loading a file */
+.rp-load { display: grid; gap: 12px; justify-items: start; padding: 22px 24px; max-width: 980px; }
+.rp-load__h { font-size: 1.25rem; }
+.rp-file { display: none; }
+.rp-status { color: var(--text); }
+.rp-load__next { display: grid; gap: 12px; justify-items: start; width: 100%; }
+.rp-load__next .inp { width: auto; max-width: 100%; }
+
+/* the bars above the chart */
+.rp-bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.rp-bar .inp { width: auto; }
+.rp-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
+.rp-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border: 1px solid var(--hairline-soft); border-radius: var(--r-panel); background-color: var(--ink-raised); }
+.rp-ctl .rp-field { display: flex; align-items: center; gap: 8px; }
+.rp-play { min-width: 6.5em; }
+.rp-clock { margin-left: auto; font-family: var(--mono); font-size: 0.8rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.rp-tag { flex: none; }
+.rp-say { margin-top: -4px; min-height: 1.4em; color: var(--text-dim); }
+
+/* the chart and the panel */
+.rp-work { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.rp-left { min-width: 0; display: grid; gap: 6px; }
+.rp-chart { position: relative; height: min(68vh, 660px); min-height: 360px; border: 1px solid var(--hairline-soft); border-radius: var(--r-panel); background-color: var(--ink-raised); overflow: hidden; }
+.rp-canvas { display: block; cursor: crosshair; touch-action: none; }
+.rp-canvas.is-panning { cursor: grabbing; }
+.rp-canvas.is-over-order, .rp-canvas.is-dragging-order { cursor: ns-resize; }
+.rp-canvas.is-over-cancel { cursor: pointer; }
+.rp-read { min-height: 1.4em; font-family: var(--mono); font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+.rp-menu { position: absolute; z-index: 10; display: grid; min-width: 220px; padding: 6px; border-radius: 12px; }
+.rp-menu[hidden] { display: none; }
+.rp-menu__h { padding: 4px 8px 6px; }
+.rp-menu__item { padding: 8px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); font-family: var(--display); font-size: 0.88rem; text-align: left; cursor: pointer; }
+.rp-menu__item:hover, .rp-menu__item:focus-visible { background-color: var(--glass-2); }
+
+.rp-side { display: grid; gap: 12px; }
+.rp-box { padding: 14px 16px; display: grid; gap: 10px; }
+.rp-box__h { margin: 0; }
+.rp-ticket { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; }
+.rp-ticket .inp { width: 100%; }
+.rp-span { grid-column: 1 / -1; margin-top: 4px; }
+.rp-ticket .btn { width: 100%; justify-content: center; }
+.rp-qty { font-family: var(--mono); }
+
+.rp-presets summary, .rp-rules summary { cursor: pointer; font-size: 0.82rem; color: var(--text-dim); }
+.rp-presets { display: grid; gap: 8px; }
+.rp-presets[open] summary { margin-bottom: 4px; }
+.rp-presets__list { display: grid; gap: 4px; }
+.rp-presets__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.84rem; color: var(--text); }
+.rp-presets__add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: end; }
+.rp-presets__add .inp { width: 100%; }
+
+.rp-pos { display: grid; gap: 4px; }
+.rp-kv { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; }
+.rp-kv__k { color: var(--text-dim); }
+.rp-kv__v { font-family: var(--mono); font-size: 0.82rem; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.rp-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rp-orders { display: grid; gap: 4px; }
+.rp-order { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.78rem; }
+.rp-order__p { color: var(--text); font-variant-numeric: tabular-nums; }
+.rp-rules[open] { gap: 10px; }
+.rp-rules .rp-field { display: grid; gap: 6px; }
+
+/* trades and the log */
+.rp-trades, .rp-log { display: grid; gap: 10px; margin-top: 8px; }
+.rp-tbl td.r, .rp-tbl td.num { white-space: nowrap; }
+.rp-loglist { list-style: none; margin: 0; padding: 0; display: grid; max-width: 900px; }
+.rp-logrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 6px 16px; padding: 9px 0; border-top: 1px solid var(--hairline-soft); }
+.rp-logrow:first-child { border-top: 0; }
+.rp-logrow__k { color: var(--text); font-size: 0.9rem; }
+.rp-roll { max-width: 70em; }
+
+@media (max-width: 1180px) {
+  .rp-work { grid-template-columns: minmax(0, 1fr); }
+  .rp-side { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .rp-clock { margin-left: 0; width: 100%; }
+}

@@ -28,5 +28,7 @@
 .heat--down-4 { background-color: rgb(196 69 60 / 0.40); border-color: rgb(196 69 60 / 0.55); }
 
 .bar-h { display: block; height: 100%; border-radius: 2px; }
+.rp-side--buy { color: var(--bid); }
+.rp-side--sell { color: var(--ask); }
 .bar-h--up { background-color: var(--bid); }
 .bar-h--down { background-color: var(--ask); }

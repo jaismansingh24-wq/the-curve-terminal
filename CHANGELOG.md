@@ -4,6 +4,32 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.6.0 · 12 October 2026
+
+- Replay, under a new Practice heading in the menu: load your own export
+  of one-minute bars (MotiveWave's is read as it is) and play it forward
+  bar by bar on a candlestick chart, at five speeds, from any date and
+  time you choose or from a random day.
+- Practise orders against it: market, limit and stop orders, from the
+  order panel or by right-clicking the chart at a price, with bracket
+  presets that place a limit exit and a stop exit when an entry fills, one
+  cancelling the other. Drag an order's line to move it; its × cancels it.
+  Flatten closes everything at the last price.
+- Timeframes from one minute to a day, built from the file's own bars, the
+  last one forming as the replay moves. The wheel zooms, dragging pans, a
+  double click returns to the present. Times are New York time, with yours
+  beside them where it matters.
+- How fills are worked out is set out on the page: a one-minute bar's high
+  and low are taken in an assumed order, limits fill once price trades
+  through by a tick unless you choose a touch, and slippage on market and
+  stop orders is yours to set. Costs per contract come from Settings.
+- Every replay trade is practice: labelled so, kept in Replay's own log
+  apart from the journal, and never sent anywhere. A file's time zone is
+  found from CME's daily 5:00 pm ET break and shown for you to confirm.
+  Files stay on this computer; the Privacy panel lists what Replay keeps.
+- R opens Replay. In Replay, Space plays and pauses and the Right arrow
+  moves one bar (with Shift, one chart bar).
+
 ## 0.5.0 · 11 October 2026
 
 - The Folio, a new part of the menu between Journal and Atlas: pages for

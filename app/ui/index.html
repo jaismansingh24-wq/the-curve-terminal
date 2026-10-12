@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/stats.css">
   <link rel="stylesheet" href="css/backdrop.css">
   <link rel="stylesheet" href="css/folio.css">
+  <link rel="stylesheet" href="css/replay.css">
   <script src="js/boot.js"></script>
   <script type="module" src="js/main.js"></script>
 </head>
@@ -91,6 +92,11 @@
     <a class="side__item" href="#/page/new" data-route="pagenew">
       <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
       <span class="side__label">New page</span>
+    </a>
+    <h2 class="side__k">Practice</h2>
+    <a class="side__item" href="#/replay" data-route="replay" aria-keyshortcuts="R">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4.5v7M7 3v10M10 5v5M13 4v7M3 4.5h2M3 11.5h2M6 3h2M6 13h2M9 5h2M9 10h2M12 4h2M12 11h2"/></svg>
+      <span class="side__label">Replay</span><kbd aria-hidden="true">R</kbd>
     </a>
     <h2 class="side__k">Atlas</h2>
     <a class="side__item" href="#/connects" data-route="connects">
@@ -604,6 +610,16 @@
         <div class="fp-editor" data-fp-editor></div>
       </section>
 
+      <!-- Practice: Replay ----------------------------------------------------- -->
+      <section class="view rp" data-view="replay" aria-labelledby="replay-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Practice &middot; Replay</p>
+          <h1 class="title vhead__title" id="replay-h" tabindex="-1">Replay</h1>
+          <p class="lede vhead__lede">Play your own price history forward bar by bar and practise placing orders against it. Every trade here is practice: worked out from past bars, never sent anywhere, and kept apart from your journal.</p>
+        </header>
+        <div class="rp-root" data-rp-root></div>
+      </section>
+
       <!-- Atlas: How it connects ------------------------------------------- -->
       <section class="view bd" data-view="connects" aria-labelledby="connects-h" hidden>
         <header class="vhead">
@@ -733,7 +749,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.5.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.6.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -987,6 +1003,15 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.6.0</h3><span class="kicker">12 October 2026</span></div>
+        <ul>
+          <li>Replay, under a new Practice heading in the menu: load your own export of one-minute bars (MotiveWave's is read as it is) and play it forward bar by bar on a candlestick chart, at five speeds, from any date and time you choose or from a random day.</li>
+          <li>Practise orders against it: market, limit and stop orders, from the order panel or by right-clicking the chart at a price, with bracket presets that place a limit exit and a stop exit when an entry fills, one cancelling the other. Drag an order's line to move it; its × cancels it. Flatten closes everything at the last price.</li>
+          <li>Timeframes from one minute to a day, built from the file's own bars, the last one forming as the replay moves. The wheel zooms, dragging pans, a double click returns to the present. Times are New York time, with yours beside them where it matters.</li>
+          <li>How fills are worked out is set out on the page: a one-minute bar's high and low are taken in an assumed order, limits fill once price trades through by a tick unless you choose a touch, and slippage on market and stop orders is yours to set. Costs per contract come from Settings.</li>
+          <li>Every replay trade is practice: labelled so, kept in Replay's own log apart from the journal, and never sent anywhere. A file's time zone is found from CME's daily 5:00 pm ET break and shown for you to confirm. Files stay on this computer; the Privacy panel lists what Replay keeps.</li>
+          <li>R opens Replay. In Replay, Space plays and pauses and the Right arrow moves one bar (with Shift, one chart bar).</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.5.0</h3><span class="kicker">11 October 2026</span></div>
         <ul>
           <li>The Folio, a new part of the menu between Journal and Atlas: pages for research and notes, with headings, bold, italic, underline and strikethrough, text colour, highlights, quotes, lists and screenshots (paste them, drop them in, or choose a file).</li>
@@ -1169,8 +1194,9 @@
         <h3>On this computer</h3>
         <ul>
           <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, the file, timeframe, speed, contracts, bracket presets and fill rules last used in Replay, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
+          <li><strong>Replay</strong>, in the <code>replay</code> folder inside the app's folder: a compact copy of each file of bars you load (the bars only; your original export is not changed), what each file is (its name, instrument and time zone), and the practice log of trades placed while replaying. The bars come from your own data provider and stay on this computer; Replay can remove a file's copy.</li>
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
           <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
@@ -1188,7 +1214,7 @@
           <li>To stop it, switch off "Show activity on Discord" in Settings. The status clears straight away.</li>
           <li><strong>Atlas's requests for public data, while fetching is on. It is on by default.</strong> While one of its pages is open, the app asks official publishers for their published figures: the US Treasury (home.treasury.gov and api.fiscaldata.treasury.gov), the Federal Reserve Bank of New York (markets.newyorkfed.org), the CFTC (publicreporting.cftc.gov), the European Central Bank (www.ecb.europa.eu), the US Energy Information Administration (www.eia.gov) and the Federal Reserve Board (www.federalreserve.gov). Sources, at the foot of every page, lists every address and how often each is asked.</li>
           <li>Those requests say they come from The Curve Terminal, with its version and thecurve.in, and carry nothing about you: no journal, no settings, no identifier. Like any web request, they show each publisher your internet address. To stop them, switch off "Fetch public data" in Settings.</li>
-          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. Your journal and your Folio are never sent anywhere.</li>
+          <li>Nothing else. No analytics, no tracking, no advertising, no accounts and no update checks. Your journal, your Folio and your Replay files are never sent anywhere.</li>
           <li>The links to thecurve.in and the Discord community open in your browser, and only when you press them.</li>
         </ul>
         <h3>Removing it</h3>

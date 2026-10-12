@@ -29,3 +29,10 @@ export function openLink(which) {
   if (PREVIEW[which]) window.open(PREVIEW[which], '_blank', 'noopener');
   return Promise.resolve();
 }
+
+/* Raw bytes both ways (Replay's bars): the body goes as an ArrayBuffer with
+   headers, and a command that answers with bytes gives an ArrayBuffer. */
+export function invokeRaw(cmd, bytes, headers = {}) {
+  if (!isNative) return Promise.reject(new Error('preview'));
+  return T.core.invoke(cmd, bytes, { headers });
+}

@@ -10,6 +10,7 @@ mod folio;
 mod journal;
 mod links;
 mod presence;
+mod replay;
 mod startup;
 
 use std::time::Duration;
@@ -58,6 +59,7 @@ fn main() {
             app.manage(journal::Files { testing });
             app.manage(backdrop::Cache { testing });
             app.manage(folio::Folio { testing });
+            app.manage(replay::Replay { testing });
             app.manage(presence::Presence::spawn(handle.clone(), testing));
 
             let mut window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -106,6 +108,11 @@ fn main() {
             folio::folio_image_read,
             folio::folio_images_prune,
             folio::folio_reveal,
+            replay::replay_save_bin,
+            replay::replay_load_bin,
+            replay::replay_delete,
+            replay::replay_read_json,
+            replay::replay_write_json,
             presence::presence_set,
             startup::startup_get,
             startup::startup_set,

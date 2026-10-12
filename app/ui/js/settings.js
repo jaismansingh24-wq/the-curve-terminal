@@ -26,6 +26,14 @@ export const DEFAULTS = Object.freeze({
   monthlyFees: 0,             /* platform and data fees a month, in dollars */
   entryZone: 'America/New_York',
   showSimulated: true,        /* include simulated (generated) entries everywhere */
+  /* Replay */
+  replayFile: '',             /* the file of bars last opened */
+  replayTf: 1,                /* chart timeframe in minutes, or 'D' */
+  replaySpeed: 5,             /* one-minute bars per second while playing */
+  replayQty: 1,
+  replayFill: 'through',      /* limits fill once traded through, or on a touch */
+  replaySlip: 0,              /* ticks of slippage on market and stop orders */
+  replayBrackets: [{ limit: 40, stop: 20 }, { limit: 80, stop: 40 }],
   /* the Folio */
   folioShowHidden: false,     /* show hidden important marks while writing */
   /* Atlas (its key keeps the section's first name, so a saved choice carries over) */
