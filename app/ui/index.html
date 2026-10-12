@@ -749,7 +749,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.7.0</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.8.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1003,6 +1003,18 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.8.0</h3><span class="kicker">12 October 2026</span></div>
+        <ul>
+          <li>Replay's order panel in colour: the Buy buttons green and the Sell buttons red, a long position green and a short one red, and the same in the right-click menu and the table of trades.</li>
+          <li>Charts start in new colours: white candles up, black candles down, white borders and wicks, on a plain black chart. Style changes the borders and wicks too, as well as everything else.</li>
+          <li>Drag a chart past the latest bar to leave room to its right.</li>
+          <li>A footprint keeps its latest bar in the middle of the chart, both ways, as the replay moves. Drag that bar out of view and the chart stays where you left it; Fit or a double click brings it back.</li>
+          <li>Footprint buys and sells as a full fill, shaded by size as before, or as a histogram, in Style.</li>
+          <li>Volume and delta profiles each choose their own range: the visible bars, each day, or each regular session. Thin lines mark each volume profile's point of control and the top and bottom of its value area; Style turns them off.</li>
+          <li>TPO shows the overnight session and regular hours apart. When a replay starts, the overnight session (from the 4:00 pm ET close to the 9:30 am open, in lower-case letters) is already built, and the regular session builds as you play. Single prints (runs of two or more rows where only one period traded) are marked, and so is the initial balance (the range of the regular session's first hour).</li>
+          <li>TPO in Style: the sessions (overnight and regular hours, regular hours only, or the full trading day), letters or blocks, the period, rows and value area, shading by period, single prints, the value area, the initial balance and the open each on or off, and the colour of each.</li>
+          <li>Indicators, on each chart: VWAP, starting again each trading day, regular session or week, with bands at 0.5, 2 and 2.5 standard deviations to begin with, which you can change. From a file of trades it is worked out from every trade; from a file of bars, from each bar's typical price, so it can differ a little from another platform's.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.7.0</h3><span class="kicker">12 October 2026</span></div>
         <ul>
           <li>Replay now reads files of trades as well as bars: MotiveWave's tick export (Data, Export, with Tick chosen) is read as it is. The replay then moves trade by trade, the clock shows the second, and orders fill at the trade that reaches them rather than on an assumed path through a bar.</li>
@@ -1208,7 +1220,7 @@
         <h3>On this computer</h3>
         <ul>
           <li><strong>Your journal</strong>, in <code>journal.json</code> in the app's folder at <code>%LOCALAPPDATA%\in.thecurve.terminal</code>: every entry you save, with everything you typed into it, and your accounts with their rules, fees and payouts. The version before your last change is kept beside it as <code>journal.bak.json</code>. Settings, under Journal, can show you the file.</li>
-          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, in Replay the file last opened, the chart layout, each chart's timeframe, type, panes, profiles and colours, the playing speeds, the colour of new lines, and the contracts, bracket presets and fill rules last used, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
+          <li><code>thecurve.terminal.settings</code>: your settings. Text size, contrast, movement, background, shooting stars, the opening animation, whether Discord status is on, whether Atlas fetches public data, whether hidden marks show while you write in the Folio, in Replay the file last opened, the chart layout, each chart's timeframe, type, panes, profiles, indicators, TPO settings and colours, the playing speeds, the colour of new lines, and the contracts, bracket presets and fill rules last used, whether simulated trades are shown, when the trading day starts, how results are shown, your default costs, your daily loss limit, your monthly fees, and the time zone you last typed times in.</li>
           <li>The stats are worked out on this computer each time you open them. Nothing about them is stored or sent.</li>
           <li><strong>Replay</strong>, in the <code>replay</code> folder inside the app's folder: a compact copy of each file of bars or trades you load (for bars, their times and prices and volume; for trades, each trade's time, price, size and whether it was at the bid or the ask; your original export is not changed), what each file is (its name, instrument, time zone and the exports joined into it), the lines you draw on each file's charts, and the practice log of trades placed while replaying. The data comes from your own data provider and stays on this computer; Replay can remove a file's copy.</li>
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>

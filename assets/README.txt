@@ -2,7 +2,7 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.7.0, 12 October 2026.
+Version 0.8.0, 12 October 2026.
 
 
 WHAT IT IS
@@ -14,8 +14,9 @@ misleads; the Calendar shows each day; Accounts keeps your prop rules,
 fees and payouts. Charts of your trades come in a later update.
 
 Replay plays your own exported bars or trades forward on one, two or
-four charts (candles, footprint or TPO, with volume and delta profiles),
-so you can practise market, limit and stop orders with bracket presets.
+four charts (candles, footprint or TPO, with volume and delta profiles
+and VWAP), so you can practise market, limit and stop orders with
+bracket presets.
 Every replay trade is practice, kept apart from the journal.
 
 The Folio keeps research pages: headings, colour, highlights, lists and

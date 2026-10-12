@@ -9,7 +9,7 @@
 
 import * as R from './replay-data.js';
 import { createEngine } from './replay-engine.js';
-import { ReplayChart, DEFAULT_SPEC } from './replay-chart.js';
+import { ReplayChart, DEFAULT_SPEC, LOOK_DEFAULTS, VWAP_DEFAULTS } from './replay-chart.js';
 import { INSTRUMENTS, get as instrument } from './instruments.js';
 import * as settings from './settings.js';
 import { invoke, isNative } from '../shared/js/native.js';
@@ -25,7 +25,7 @@ const S = () => settings.get();
 
 const st = {
   root: null, meta: null, data: null, base: null, ins: null, engine: null,
-  charts: [], aggs: new Map(), cache: new Map(), tpoCache: new Map(),
+  charts: [], aggs: new Map(), cache: new Map(), sessions: new Map(), vw: null,
   playing: false, raf: 0, simT: 0, lastT: 0,
   session: null, menu: null, log: { sessions: [] }, logLoaded: false,
   tool: 'cursor', colour: '', draw: { files: {} }, drawLoaded: false, selected: null,
@@ -195,7 +195,7 @@ async function openFile(id, message = '') {
   st.meta = meta;
   st.ins = instrument(meta.instrument) || { code: meta.instrument, tick: meta.tick, tickValue: 1, decimals: 2, name: meta.instrument };
   st.base = trades() ? R.barsFromTrades(st.data) : st.data;
-  st.aggs.clear(); st.cache.clear(); st.tpoCache.clear();
+  st.aggs.clear(); st.cache.clear(); st.sessions.clear(); st.vw = null;
   settings.update({ replayFile: id });
   st.engine = createEngine({
     data: st.data, tickValue: st.ins.tickValue, commission: Number(S().costPerContract) || 0,
@@ -242,9 +242,13 @@ function randomStart() {
 function chartSpecs() {
   const saved = Array.isArray(S().replayCharts) ? S().replayCharts : [];
   return [0, 1, 2, 3].map((k) => {
-    const def = { ...DEFAULT_SPEC, tf: [1, 5, 15, 'D'][k], look: { ...DEFAULT_SPEC.look } };
-    const s = saved[k] || {};
-    return { ...def, ...s, look: { ...def.look, ...(s.look || {}) } };
+    const def = { ...JSON.parse(JSON.stringify(DEFAULT_SPEC)), tf: [1, 5, 15, 'D'][k] };
+    const s = { ...(saved[k] || {}) };
+    /* from 0.7.0: one setting for both profiles, and regular hours or the full day for TPO */
+    if (s.profileMode && !s.vpMode) s.vpMode = s.dpMode = s.profileMode === 'session' ? 'day' : 'visible';
+    if (s.tpoRth !== undefined && !s.tpoSession) s.tpoSession = s.tpoRth === false ? 'day' : 'split';
+    delete s.profileMode; delete s.tpoRth;
+    return { ...def, ...s, look: { ...def.look, ...(s.look || {}) }, indicators: Array.isArray(s.indicators) ? s.indicators : [] };
   });
 }
 let specTimer = null;
@@ -370,6 +374,7 @@ function makeChart(k, spec) {
   TYPES.forEach(([v, t]) => type.appendChild(new Option(t, v)));
   type.value = spec.type;
   type.addEventListener('change', () => {
+    closePopover(c);
     /* a footprint needs wide bars to show its rows; candles and TPO start narrow */
     c.chart.barPx = type.value === 'footprint' ? 72 : 9;
     set({ type: type.value });
@@ -386,6 +391,7 @@ function makeChart(k, spec) {
   type.addEventListener('change', syncTogs);
   syncTogs();
   bar.append(el('span', 'kicker rp-pane__n', 'Chart ' + (k + 1)), tf, type, ...togs,
+    btn('Indicators', 'rp-pane__btn', () => openIndicators(c), 'Indicators on chart ' + (k + 1)),
     btn('Style', 'rp-pane__btn', () => openStyle(c), 'Colours and settings of chart ' + (k + 1)),
     btn('Fit', 'rp-pane__btn', () => c.chart.toPresent(), 'Back to the present, prices fitted'));
   c.chart = new ReplayChart(host, {
@@ -405,57 +411,132 @@ function makeChart(k, spec) {
   return c;
 }
 
-/* the style of one chart: profile and TPO settings, and its colours */
-function openStyle(c) {
+/* a chart's panel, its style or its indicators: one at a time */
+function popover(c, kind, label) {
   const old = c.el.querySelector('.rp-style');
-  if (old) { old.remove(); return; }
+  if (old) { const same = old.dataset.kind === kind; old.rpClose(); if (same) return null; }
   const dlg = el('div', 'rp-style glass');
+  dlg.dataset.kind = kind;
   dlg.setAttribute('role', 'dialog');
-  dlg.setAttribute('aria-label', 'Style of chart ' + (c.k + 1));
+  dlg.setAttribute('aria-label', label);
+  const esc = (e) => { if (e.key === 'Escape') dlg.rpClose(); };
+  dlg.rpClose = () => { dlg.remove(); document.removeEventListener('keydown', esc); };
+  document.addEventListener('keydown', esc);
+  c.el.appendChild(dlg);
+  return dlg;
+}
+function closePopover(c) { const old = c.el.querySelector('.rp-style'); if (old) old.rpClose(); }
+const pHead = (text) => el('h3', 'kicker rp-style__h', text);
+function pRow(...nodes) { const r = el('div', 'rp-style__row'); r.append(...nodes); return r; }
+function pCols(...nodes) { const g = el('div', 'rp-style__cols'); g.append(...nodes); return g; }
+function pNum(v, min, max, run) {
+  const i = el('input', 'inp inp--xs'); i.type = 'number'; i.min = min; i.max = max; i.value = v;
+  i.addEventListener('change', () => { const x = Math.max(min, Math.min(max, Math.floor(+i.value || 0))); i.value = x; run(x); });
+  return i;
+}
+/* a colour's default, for the colour inputs (buys and sells from the bid and ask tokens) */
+function lookDefault(key) {
+  if (key === 'buy' || key === 'sell') {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(key === 'buy' ? '--bid' : '--ask').trim();
+    return /^#[0-9a-f]{6}$/i.test(v) ? v : '#888888';
+  }
+  return LOOK_DEFAULTS[key] || '#888888';
+}
+const PROFILE_OF = [['visible', 'Visible range'], ['day', 'Each day'], ['rth', 'Regular hours']];
+
+/* the style of one chart: its colours, and its footprint, profile and TPO settings */
+function openStyle(c) {
+  const dlg = popover(c, 'style', 'Style of chart ' + (c.k + 1));
+  if (!dlg) return;
   const s = c.spec, L = s.look;
   const set = (patch) => { Object.assign(s, patch); saveSpecs(); refresh(); };
   const setLook = (patch) => { Object.assign(L, patch); saveSpecs(); refresh(); };
-  const num = (v, min, max, run) => { const i = el('input', 'inp inp--xs'); i.type = 'number'; i.min = min; i.max = max; i.value = v; i.addEventListener('change', () => run(Math.max(min, Math.min(max, Math.floor(+i.value || 0))))); return i; };
-  const col = (key, label, fallback) => {
-    const i = el('input', 'rp-colour'); i.type = 'color'; i.value = L[key] || fallback;
+  const col = (key, label) => {
+    const i = el('input', 'rp-colour'); i.type = 'color'; i.value = L[key] || lookDefault(key);
     i.addEventListener('input', () => setLook({ [key]: i.value }));
     const f = field(label, i);
-    const reset = btn('Default', 'rp-mini', () => { setLook({ [key]: '' }); i.value = fallback; });
-    f.appendChild(reset);
+    f.appendChild(btn('Default', 'rp-mini', () => { setLook({ [key]: '' }); i.value = lookDefault(key); }, label + ': back to the default'));
     return f;
   };
-  const tokens = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888888';
-  const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v) ? v : '#888888');
-  const prof = el('div', 'rp-style__row');
-  prof.append(field('Value area, %', num(s.vaPct, 50, 95, (v) => set({ vaPct: v }))), field('Rows, ticks (0 fits the zoom)', num(s.profileRow, 0, 400, (v) => set({ profileRow: v }))));
-  const tpo = el('div', 'rp-style__row');
-  tpo.append(field('Rows, ticks', num(s.tpoRow, 1, 400, (v) => set({ tpoRow: v }))));
-  const cols = el('div', 'rp-style__cols');
-  dlg.append(
-    el('h3', 'kicker rp-style__h', 'Chart ' + (c.k + 1) + ' · profiles'),
-    group('Profiles show', seg('Profiles', [['visible', 'The visible bars'], ['session', 'Each session']], s.profileMode, (v) => set({ profileMode: v }))),
-    prof,
-    el('h3', 'kicker rp-style__h', 'TPO'),
-    group('Session', seg('TPO session', [[true, 'Regular hours'], [false, 'Full session']], s.tpoRth !== false, (v) => set({ tpoRth: v === true || v === 'true' }))),
-    group('A letter every', seg('TPO period', [[15, '15 min'], [30, '30 min'], [60, '60 min']], s.tpoPeriod, (v) => set({ tpoPeriod: +v }))),
-    tpo,
-    el('h3', 'kicker rp-style__h', 'Colours'),
-    cols,
-  );
-  cols.append(
-    col('up', 'Candles, up', hex(tokens('--text'))), col('down', 'Candles, down', hex(tokens('--text-dim'))), col('bg', 'Chart background', hex(tokens('--ink-raised'))),
-    col('vol', 'Volume', '#ffffff'), col('prof', 'Profile', hex(tokens('--text-faint'))), col('va', 'Value area', hex(tokens('--text-dim'))), col('poc', 'Point of control', hex(tokens('--text'))),
-    col('buy', 'Buys', hex(tokens('--bid'))), col('sell', 'Sells', hex(tokens('--ask'))),
-    group('Grid', seg('Grid', [[true, 'On'], [false, 'Off']], L.grid !== false, (v) => setLook({ grid: v === true || v === 'true' }))),
-  );
-  const closeBtn = btn('Close', 'btn--primary', () => close());
+  const onOff = (label, key) => group(label, seg(label, [[true, 'On'], [false, 'Off']], s[key] !== false, (v) => set({ [key]: v === true || v === 'true' })));
+  dlg.appendChild(pHead('Chart ' + (c.k + 1) + ' · ' + (s.type === 'tpo' ? 'TPO' : s.type === 'footprint' ? 'footprint' : 'candles')));
+  if (s.type !== 'tpo') dlg.appendChild(pCols(col('up', 'Candles, up'), col('down', 'Candles, down'), col('border', 'Candles, border'), col('wick', 'Candles, wicks')));
+  if (s.type === 'footprint') {
+    dlg.append(pHead('Footprint'),
+      pRow(group('Buys and sells as', seg('Footprint style', [['fill', 'A full fill'], ['histogram', 'A histogram']], s.fpStyle || 'fill', (v) => set({ fpStyle: v })))),
+      pCols(col('buy', 'Buys'), col('sell', 'Sells')));
+  }
+  if (s.type !== 'tpo') {
+    dlg.append(pHead('Profiles'),
+      pRow(group('Volume profile of', seg('Volume profile of', PROFILE_OF, s.vpMode || 'visible', (v) => set({ vpMode: v })))),
+      pRow(group('Delta profile of', seg('Delta profile of', PROFILE_OF, s.dpMode || 'visible', (v) => set({ dpMode: v })))),
+      pRow(field('Value area, %', pNum(s.vaPct, 50, 95, (v) => set({ vaPct: v }))), field('Rows, ticks (0 fits the zoom)', pNum(s.profileRow, 0, 400, (v) => set({ profileRow: v }))), onOff('Lines at POC, VAH and VAL', 'vpLines')),
+      pCols(col('prof', 'Profile'), col('va', 'Value area'), col('poc', 'Point of control'), col('vol', 'Volume')));
+    if (s.type !== 'footprint') dlg.appendChild(pCols(col('buy', 'Buys (delta)'), col('sell', 'Sells (delta)')));
+  }
+  if (s.type === 'tpo') {
+    dlg.append(
+      pRow(group('Sessions', seg('TPO sessions', [['split', 'Overnight and regular hours'], ['rth', 'Regular hours'], ['day', 'Full trading day']], s.tpoSession || 'split', (v) => set({ tpoSession: v })))),
+      pRow(group('A period every', seg('TPO period', [[15, '15 min'], [30, '30 min'], [60, '60 min']], s.tpoPeriod, (v) => set({ tpoPeriod: +v }))),
+        group('Show as', seg('Show TPOs as', [['letters', 'Letters'], ['blocks', 'Blocks']], s.tpoShow || 'letters', (v) => set({ tpoShow: v })))),
+      pRow(field('Rows, ticks', pNum(s.tpoRow, 1, 400, (v) => set({ tpoRow: v }))), field('Value area, %', pNum(s.tpoVa || 70, 50, 95, (v) => set({ tpoVa: v })))),
+      pRow(onOff('Shade by period', 'tpoShade'), onOff('Single prints', 'tpoSingles'), onOff('Value area', 'tpoVaOn'), onOff('Initial balance', 'tpoIb'), onOff('Open', 'tpoOpen')),
+      pCols(col('tpoLetter', 'Letters'), col('tpoPoc', 'Point of control'), col('tpoVa', 'Value area'), col('tpoSingle', 'Single prints'), col('tpoIb', 'Initial balance')),
+      el('p', 'rp-p rp-note', 'The overnight session runs from the 4:00 pm ET close to the next 9:30 am open, across the daily break (and a weekend), in lower-case letters. Single prints are runs of two or more rows where only one period traded; the initial balance is the range of the regular session\'s first hour. Both are read as signs of how the auction went; neither says what comes next.'));
+  }
+  dlg.append(pHead('Chart'), pCols(col('bg', 'Background'), group('Grid', seg('Grid', [[true, 'On'], [false, 'Off']], L.grid !== false, (v) => setLook({ grid: v === true || v === 'true' })))));
   const acts = el('div', 'rp-style__acts');
-  acts.append(btn('Reset this chart\'s style', '', () => { Object.assign(s, { ...DEFAULT_SPEC, tf: s.tf, type: s.type, look: { ...DEFAULT_SPEC.look } }); saveSpecs(); refresh(); close(); }), closeBtn);
+  const closeBtn = btn('Close', 'btn--primary', () => dlg.rpClose());
+  acts.append(btn('Reset this chart\'s style', '', () => {
+    const keep = { tf: s.tf, type: s.type, volume: s.volume, delta: s.delta, vp: s.vp, dp: s.dp, indicators: s.indicators };
+    Object.assign(s, JSON.parse(JSON.stringify(DEFAULT_SPEC)), keep);
+    saveSpecs(); refresh(); dlg.rpClose();
+  }), closeBtn);
   dlg.appendChild(acts);
-  const close = () => { dlg.remove(); document.removeEventListener('keydown', esc); };
-  const esc = (e) => { if (e.key === 'Escape') close(); };
-  document.addEventListener('keydown', esc);
-  c.el.appendChild(dlg);
+  closeBtn.focus();
+}
+
+/* a chart's indicators: VWAP, with its bands, as many as four */
+function openIndicators(c) {
+  const dlg = popover(c, 'ind', 'Indicators on chart ' + (c.k + 1));
+  if (!dlg) return;
+  const s = c.spec;
+  const list = () => (Array.isArray(s.indicators) ? s.indicators : (s.indicators = []));
+  const save = () => { saveSpecs(); refresh(); };
+  const body = el('div', 'rp-inds');
+  const addBtn = btn('Add VWAP', '', () => { list().push(JSON.parse(JSON.stringify(VWAP_DEFAULTS))); save(); draw(); });
+  const draw = () => {
+    body.replaceChildren();
+    if (!list().length) body.appendChild(el('p', 'rp-p rp-note', 'None on this chart yet.'));
+    list().forEach((ind, k) => {
+      const box = el('div', 'rp-ind');
+      const head = el('div', 'rp-ind__head');
+      head.append(el('span', 'rp-ind__name', 'VWAP'), btn('Remove', 'rp-mini', () => { s.indicators = list().filter((_, j) => j !== k); save(); draw(); }, 'Remove this VWAP'));
+      const bands = el('input', 'inp inp--xs rp-ind__bands');
+      bands.value = (ind.bands || []).join(', ');
+      bands.placeholder = 'None';
+      bands.addEventListener('change', () => {
+        const v = [...new Set(bands.value.split(/[\s,;]+/).map(Number).filter((x) => Number.isFinite(x) && x > 0 && x <= 5).map((x) => Math.round(x * 100) / 100))].sort((a, b) => a - b).slice(0, 6);
+        ind.bands = v; bands.value = v.join(', '); save();
+      });
+      const colour = (key, label) => {
+        const i = el('input', 'rp-colour'); i.type = 'color'; i.value = ind[key] || VWAP_DEFAULTS[key];
+        i.addEventListener('input', () => { ind[key] = i.value; save(); });
+        return field(label, i);
+      };
+      box.append(head,
+        group('Starts again each', seg('VWAP starts again each', [['day', 'Trading day'], ['rth', 'Regular session'], ['week', 'Week']], ind.anchor || 'day', (v) => { ind.anchor = v; save(); })),
+        pRow(field('Bands, standard deviations', bands), colour('colour', 'Line'), colour('bandColour', 'Bands')));
+      body.appendChild(box);
+    });
+    addBtn.disabled = list().length >= 4;
+  };
+  draw();
+  const closeBtn = btn('Close', 'btn--primary', () => dlg.rpClose());
+  const acts = el('div', 'rp-style__acts');
+  acts.append(addBtn, closeBtn);
+  dlg.append(pHead('Chart ' + (c.k + 1) + ' · indicators'), body, acts,
+    el('p', 'rp-p rp-note', 'VWAP is the average price of every trade since it started (each trading day at 6:00 pm ET, each regular session at 9:30 am ET, or each week), weighted by size. Its bands sit that many standard deviations of those prices, also weighted by size, either side. It is often read as the session\'s fair price and the outer bands as stretched; it describes where trading has happened, not where it goes next. From a file of bars, each bar counts at its typical price (its high, low and close averaged), so the line can differ a little from a VWAP of trades, and from another platform\'s.'));
   closeBtn.focus();
 }
 
@@ -485,12 +566,12 @@ function ticket() {
   grid.append(
     field('Contracts', qty), field('Bracket', brSel),
     el('span', 'rp-span kicker', 'At the last price'),
-    btn('Buy market', '', () => place({ side: 'buy', type: 'market', qty: q(), bracket: br() })),
-    btn('Sell market', '', () => place({ side: 'sell', type: 'market', qty: q(), bracket: br() })),
+    btn('Buy market', 'rp-buy', () => place({ side: 'buy', type: 'market', qty: q(), bracket: br() })),
+    btn('Sell market', 'rp-sell', () => place({ side: 'sell', type: 'market', qty: q(), bracket: br() })),
     el('span', 'rp-span kicker', 'At a price'),
     field('Type', kind), field('Price', priceIn),
-    btn('Buy', '', () => placeAt('buy')),
-    btn('Sell', '', () => placeAt('sell')),
+    btn('Buy', 'rp-buy', () => placeAt('buy')),
+    btn('Sell', 'rp-sell', () => placeAt('sell')),
   );
   box.append(grid, presetEditor(brSel));
   return box;
@@ -585,7 +666,7 @@ function openMenu({ price: p, x, y, drawing }) {
   const items = p === s.price ? [] : p < s.price ? [['Buy limit', 'buy', 'limit'], ['Sell stop', 'sell', 'stop']] : [['Sell limit', 'sell', 'limit'], ['Buy stop', 'buy', 'stop']];
   m.replaceChildren(el('p', 'kicker rp-menu__h', price(p) + (br ? ' · with a bracket' : '')));
   items.forEach(([text, side, type]) => {
-    const b = el('button', 'rp-menu__item', text + ' ' + qty + ' at ' + price(p));
+    const b = el('button', 'rp-menu__item rp-side--' + side, text + ' ' + qty + ' at ' + price(p));
     b.type = 'button'; b.setAttribute('role', 'menuitem');
     b.addEventListener('click', () => { closeMenu(); place({ side, type, price: p, qty, bracket: br }); });
     m.appendChild(b);
@@ -785,43 +866,140 @@ function frameFor(c, N) {
   const spec = c.spec, tf = spec.tf;
   const { A, m, bars } = barsFor(tf, N);
   const tr = trades();
-  const levels = (i0, i1, rowTicks) => {
-    /* completed bars are kept; the bar forming now is added each time */
-    if (tr) {
-      const done = i1 >= m ? i1 - 1 : i1;
-      const full = done >= i0 ? cached('p' + tf + ':' + i0 + ':' + done + ':' + rowTicks, () => { const [t0, t1] = tradeRange(A, i0, done, N); return R.levelsFromTrades(st.data, t0, t1, rowTicks); }) : null;
-      if (i1 < m) return full;
-      const [t0, t1] = tradeRange(A, m, m, N);
-      return plus(full, R.levelsFromTrades(st.data, t0, t1, rowTicks));
-    }
-    const b0 = A.from[i0], b1 = Math.min(A.to[i1], N.curBase);
-    const done = b1 - 1;
-    const full = done >= b0 ? cached('b' + b0 + ':' + done + ':' + rowTicks, () => R.levelsFromBars(st.base, b0, done, rowTicks)) : null;
-    return plus(full, R.levelsFromBars(st.base, b1, b1, rowTicks));
-  };
   return {
     bars, tick: st.meta.tick, decimals: st.ins.decimals, canDelta: tr,
-    footprint: tr ? (i, rowTicks) => (i < m ? cached('f' + tf + ':' + i + ':' + rowTicks, () => { const [t0, t1] = tradeRange(A, i, i, N); return R.levelsFromTrades(st.data, t0, t1, rowTicks); }) : (() => { const [t0, t1] = tradeRange(A, i, i, N); return R.levelsFromTrades(st.data, t0, t1, rowTicks); })()) : null,
-    profile: levels,
+    footprint: tr ? (i, rowTicks) => {
+      const make = () => { const [t0, t1] = tradeRange(A, i, i, N); return R.levelsFromTrades(st.data, t0, t1, rowTicks); };
+      return i < m ? cached('f' + tf + ':' + i + ':' + rowTicks, make) : make();
+    } : null,
+    profile: (i0, i1, rowTicks) => levelsBase(A.from[i0], Math.min(A.to[i1], N.curBase), rowTicks, N),
+    sessions: (mode, i0, i1) => sessionsIn(mode, A, i0, i1, N),
+    levelsBase: (b0, b1, rowTicks) => levelsBase(b0, b1, rowTicks, N),
     tpo: (sp) => tpoFor(sp, N),
+    vwap: (ind, i0, i1) => vwapOf(ind, A, i0, i1, N),
   };
 }
+/* volume at price over a run of base bars up to now: the finished bars
+   are kept, the bar forming now is added each time */
+function levelsBase(b0, b1, rowTicks, N) {
+  if (b1 < b0) return null;
+  const tr = trades(), B = st.base;
+  const done = Math.min(b1, N.curBase - 1);
+  const full = done >= b0 ? cached('L' + b0 + ':' + done + ':' + rowTicks, () => (tr ? R.levelsFromTrades(st.data, B.from[b0], B.to[done], rowTicks) : R.levelsFromBars(B, b0, done, rowTicks))) : null;
+  if (b1 < N.curBase) return full;
+  const cur = tr ? R.levelsFromTrades(st.data, B.from[N.curBase], N.s.cursor, rowTicks) : R.levelsFromBars(B, N.curBase, N.curBase, rowTicks);
+  return plus(full, cur);
+}
+function sessionList(mode) {
+  if (!st.sessions.has(mode)) st.sessions.set(mode, R.sessionsOf(st.base, st.base.n, { mode }));
+  return st.sessions.get(mode);
+}
+/* the days (or regular sessions) a run of chart bars touches, up to now */
+function sessionsIn(mode, A, i0, i1, N) {
+  const all = sessionList(mode === 'rth' ? 'rth' : 'day');
+  const bLo = A.from[i0], bHi = Math.min(A.to[i1], N.curBase);
+  let lo = 0, hi = all.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (all[mid].to < bLo) lo = mid + 1; else hi = mid; }
+  const out = [];
+  for (let k = lo; k < all.length && all[k].from <= bHi; k++) {
+    const s = all[k], b1 = Math.min(s.to, N.curBase);
+    out.push({ b0: s.from, b1, c0: A.of[s.from], c1: A.of[b1] });
+  }
+  return out;
+}
+
+/* VWAP's running sums over the base bars, measured from the file's first
+   price so the numbers stay small: size, size times price, size times
+   price squared. From trades they are exact; from bars each bar counts at
+   its typical price. */
+function vwapBase() {
+  if (st.vw) return st.vw;
+  const B = st.base, n = B.n;
+  const cv = new Float64Array(n + 1), cpv = new Float64Array(n + 1), cp2v = new Float64Array(n + 1);
+  let ref;
+  if (trades()) {
+    const T = st.data;
+    ref = T.p[0];
+    for (let m = 0; m < n; m++) {
+      let v = 0, pv = 0, p2v = 0;
+      for (let i = B.from[m]; i <= B.to[m]; i++) { const sz = T.s[i], x = T.p[i] - ref; v += sz; pv += sz * x; p2v += sz * x * x; }
+      cv[m + 1] = cv[m] + v; cpv[m + 1] = cpv[m] + pv; cp2v[m + 1] = cp2v[m] + p2v;
+    }
+  } else {
+    ref = B.c[0];
+    for (let m = 0; m < n; m++) {
+      const v = B.v[m], x = (B.h[m] + B.l[m] + B.c[m]) / 3 - ref;
+      cv[m + 1] = cv[m] + v; cpv[m + 1] = cpv[m] + v * x; cp2v[m + 1] = cp2v[m] + v * x * x;
+    }
+  }
+  st.vw = { ref, cv, cpv, cp2v, anchors: {} };
+  return st.vw;
+}
+/* for each base bar, the first bar of its VWAP's period: the trading day,
+   the regular session (none outside it) or the week */
+function anchorStarts(kind) {
+  const W = vwapBase();
+  if (W.anchors[kind]) return W.anchors[kind];
+  const B = st.base, out = new Int32Array(B.n);
+  let start = 0, last = null;
+  for (let i = 0; i < B.n; i++) {
+    let key;
+    if (kind === 'rth') {
+      const et = R.toET(B.t[i]), mod = ((et % 1440) + 1440) % 1440;
+      if (mod < 570 || mod >= 960) { out[i] = -1; last = null; continue; }
+      key = Math.floor(et / 1440);
+    } else if (kind === 'week') key = Math.floor((R.tradingDayNo(B.t[i]) + 3) / 7);
+    else key = R.tradingDayNo(B.t[i]);
+    if (key !== last) { start = i; last = key; }
+    out[i] = start;
+  }
+  W.anchors[kind] = out;
+  return out;
+}
+/* VWAP and its standard deviation at the close of each chart bar */
+function vwapOf(ind, A, i0, i1, N) {
+  const n = i1 - i0 + 1;
+  if (n <= 0) return null;
+  const W = vwapBase(), S = anchorStarts(ind.anchor || 'day');
+  if (N.part && !N.vsum) {
+    const T = st.data;
+    let v = 0, pv = 0, p2v = 0;
+    for (let i = st.base.from[N.curBase]; i <= N.s.cursor; i++) { const sz = T.s[i], x = T.p[i] - W.ref; v += sz; pv += sz * x; p2v += sz * x * x; }
+    N.vsum = { v, pv, p2v };
+  }
+  const v = new Float64Array(n).fill(NaN), sd = new Float64Array(n), brk = new Uint8Array(n);
+  let prev = -2;
+  for (let i = i0; i <= i1; i++) {
+    const e = Math.min(A.to[i], N.curBase), s0 = S[e], j = i - i0;
+    if (s0 < 0) { prev = -2; continue; }
+    let V, PV, P2V;
+    if (N.vsum && e === N.curBase) { V = W.cv[e] - W.cv[s0] + N.vsum.v; PV = W.cpv[e] - W.cpv[s0] + N.vsum.pv; P2V = W.cp2v[e] - W.cp2v[s0] + N.vsum.p2v; }
+    else { V = W.cv[e + 1] - W.cv[s0]; PV = W.cpv[e + 1] - W.cpv[s0]; P2V = W.cp2v[e + 1] - W.cp2v[s0]; }
+    if (!(V > 0)) continue;
+    const mean = PV / V;
+    v[j] = mean + W.ref;
+    sd[j] = Math.sqrt(Math.max(0, P2V / V - mean * mean));
+    brk[j] = s0 !== prev ? 1 : 0;
+    prev = s0;
+  }
+  return { v, sd, brk };
+}
+
+/* TPO: the sessions found once for the whole file, each worked out only
+   when the chart asks; finished sessions are kept */
 function tpoFor(sp, N) {
-  const B = st.base, rth = sp.tpoRth !== false;
-  if (!st.tpoCache.has(rth)) st.tpoCache.set(rth, R.sessionsOf(B, B.n, { rth }));
-  const all = st.tpoCache.get(rth);
-  /* the sessions that have begun by now */
+  const B = st.base, mode = sp.tpoSession || 'split';
+  const all = sessionList(mode);
   let lo = 0, hi = all.length;
   while (lo < hi) { const mid = (lo + hi) >> 1; if (all[mid].from <= N.curBase) lo = mid + 1; else hi = mid; }
-  const n = lo;
   const lastBar = N.part ? { o: N.part.o, h: N.part.h, l: N.part.l, c: N.part.c } : null;
-  const opts = (open) => ({ period: sp.tpoPeriod || 30, rowTicks: sp.tpoRow || 20, last: open ? lastBar : null, lastIndex: open ? N.curBase : -1 });
+  const opts = (open) => ({ period: sp.tpoPeriod || 30, rowTicks: sp.tpoRow || 20, vaPct: sp.tpoVa || 70, last: open ? lastBar : null, lastIndex: open ? N.curBase : -1 });
   return {
-    n,
+    n: lo,
     at(k) {
       const s = all[k], open = s.to >= N.curBase;
-      const make = () => ({ ...R.tpoOf(B, s, opts(open)), dayET: rth ? s.startET : s.key * 1440 });
-      return open ? make() : cached('tpo' + rth + ':' + sp.tpoPeriod + ':' + sp.tpoRow + ':' + s.key, make);
+      const make = () => R.tpoOf(B, s, opts(open));
+      return open ? make() : cached('tpo' + mode + ':' + sp.tpoPeriod + ':' + sp.tpoRow + ':' + sp.tpoVa + ':' + s.key, make);
     },
   };
 }
@@ -866,7 +1044,7 @@ function panel() {
   if (pb) {
     pb.replaceChildren();
     const row = (k, v, cls) => { const r = el('p', 'rp-kv'); r.append(el('span', 'rp-kv__k', k), el('span', 'rp-kv__v ' + (cls || ''), v)); pb.appendChild(r); };
-    row('Position', pos.qty ? (pos.qty > 0 ? 'Long ' : 'Short ') + Math.abs(pos.qty) + ' at ' + price(pos.avg) : 'Flat');
+    row('Position', pos.qty ? (pos.qty > 0 ? 'Long ' : 'Short ') + Math.abs(pos.qty) + ' at ' + price(pos.avg) : 'Flat', pos.qty > 0 ? 'rp-side--buy' : pos.qty < 0 ? 'rp-side--sell' : '');
     if (pos.qty) row('Open', signedTicks(s.open.ticks) + ' · ' + money(s.open.money), tone(s.open.money));
     row('Closed this session', money(s.realised.money) + ' · ' + count(s.trades.length, 'trade', 'trades'), tone(s.realised.money));
     if (s.realised.costs) row('Costs in that', money(-s.realised.costs));
@@ -908,7 +1086,7 @@ function tradesTable(s) {
   s.trades.slice().reverse().forEach((x, k) => {
     const tr = el('tr');
     [String(s.trades.length - k), x.side === 'long' ? 'Long' : 'Short', String(x.qty), whenET(x.entryAt), price(x.entry), whenET(x.exitAt), price(x.exit), signedTicks(x.ticks), money(x.money)]
-      .forEach((v, j) => tr.appendChild(el('td', (j >= 2 && j !== 3 && j !== 5 ? 'r num ' : '') + (j >= 7 ? tone(x.money) : ''), v)));
+      .forEach((v, j) => tr.appendChild(el('td', (j >= 2 && j !== 3 && j !== 5 ? 'r num ' : '') + (j >= 7 ? tone(x.money) : '') + (j === 1 ? (x.side === 'long' ? 'rp-side--buy' : 'rp-side--sell') : ''), v)));
     tb.appendChild(tr);
   });
   t.append(thead, tb);

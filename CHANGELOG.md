@@ -4,6 +4,40 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.8.0 · 12 October 2026
+
+- Replay's order panel in colour: the Buy buttons green and the Sell
+  buttons red, a long position green and a short one red, and the same in
+  the right-click menu and the table of trades.
+- Charts start in new colours: white candles up, black candles down, white
+  borders and wicks, on a plain black chart. Style changes the borders and
+  wicks too, as well as everything else.
+- Drag a chart past the latest bar to leave room to its right.
+- A footprint keeps its latest bar in the middle of the chart, both ways,
+  as the replay moves. Drag that bar out of view and the chart stays where
+  you left it; Fit or a double click brings it back.
+- Footprint buys and sells as a full fill, shaded by size as before, or as
+  a histogram, in Style.
+- Volume and delta profiles each choose their own range: the visible bars,
+  each day, or each regular session. Thin lines mark each volume profile's
+  point of control and the top and bottom of its value area; Style turns
+  them off.
+- TPO shows the overnight session and regular hours apart. When a replay
+  starts, the overnight session (from the 4:00 pm ET close to the 9:30 am
+  open, in lower-case letters) is already built, and the regular session
+  builds as you play. Single prints (runs of two or more rows where only
+  one period traded) are marked, and so is the initial balance (the range
+  of the regular session's first hour).
+- TPO in Style: the sessions (overnight and regular hours, regular hours
+  only, or the full trading day), letters or blocks, the period, rows and
+  value area, shading by period, single prints, the value area, the
+  initial balance and the open each on or off, and the colour of each.
+- Indicators, on each chart: VWAP, starting again each trading day,
+  regular session or week, with bands at 0.5, 2 and 2.5 standard
+  deviations to begin with, which you can change. From a file of trades it
+  is worked out from every trade; from a file of bars, from each bar's
+  typical price, so it can differ a little from another platform's.
+
 ## 0.7.0 · 12 October 2026
 
 - Replay now reads files of trades as well as bars: MotiveWave's tick

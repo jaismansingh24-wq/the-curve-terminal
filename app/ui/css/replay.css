@@ -77,6 +77,15 @@
 .rp-mini { min-height: 26px; padding: 2px 9px; font-size: 0.72rem; }
 .rp-style__acts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 4px; }
 .inp--xs { min-height: 28px; font-size: 0.8rem; border-radius: 8px; }
+.rp-style .seg { flex-wrap: wrap; }
+
+/* a chart's indicators */
+.rp-inds { display: grid; gap: 10px; }
+.rp-ind { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--hairline-soft); border-radius: 10px; }
+.rp-ind__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rp-ind__name { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em; color: var(--text); }
+.rp-ind .rp-ind__bands { width: 11em; font-family: var(--mono); }
+.rp-ind .rp-style__row .rp-field:not(:first-child) { display: flex; align-items: center; gap: 8px; }
 .rp-read { min-height: 1.4em; font-family: var(--mono); font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 .rp-menu { position: absolute; z-index: 10; display: grid; min-width: 220px; padding: 6px; border-radius: 12px; }

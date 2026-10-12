@@ -1,21 +1,27 @@
-/* A Replay chart, drawn on a canvas in the Terminal's way: greys and
-   hairlines and mono labels by default, the bid and ask colours only for
-   buying and selling (orders, fills, footprint, delta). The reader can
-   change the candle, background and profile colours for each chart.
+/* A Replay chart, drawn on a canvas. By default: white candles up, black
+   candles down, white borders and wicks, on plain black, with hairline
+   grids and mono labels; the bid and ask colours only for buying and
+   selling (orders, fills, footprint, delta). The reader can change the
+   colours of each chart.
 
    Types: candles; footprint (buys and sells at each price inside each bar,
-   from a file of trades); TPO (a session's prices by half hour, as
-   letters). Panes: volume, and delta (each bar's buys less sells, with a
-   running total that starts again each session). Profiles: volume and
-   delta at price, over the visible bars or for each session; the point of
-   control in the main text colour, the value area mid grey, the rest faint.
+   from a file of trades, as a full fill or a histogram); TPO (a session's
+   prices by period, as letters or blocks, overnight and regular hours
+   apart or together). Panes: volume, and delta (each bar's buys less
+   sells, with a running total that starts again each session). Profiles:
+   volume and delta at price, over the visible bars, each day or each
+   regular session, with lines at the point of control and the value
+   area's edges. Indicators: VWAP with deviation bands.
 
-   Moving: drag the chart in any direction; drag the price axis to stretch
-   prices, the time axis to stretch time; the wheel zooms time (with Ctrl,
-   prices); a double click on the chart returns to the present, on the
-   price axis fits the prices again. Lines: the page chooses a tool; a
-   click places a horizontal line, two clicks a trend line; a line can be
-   selected, dragged, and removed. Order lines can be dragged or cancelled.
+   Moving: drag the chart in any direction, past the latest bar too; drag
+   the price axis to stretch prices, the time axis to stretch time; the
+   wheel zooms time (with Ctrl, prices); a double click on the chart
+   returns to the present, on the price axis fits the prices again. A
+   footprint keeps its latest bar in the middle of the chart as the replay
+   moves, unless that bar has been moved out of view. Lines: the page
+   chooses a tool; a click places a horizontal line, two clicks a trend
+   line; a line can be selected, dragged, and removed. Order lines can be
+   dragged or cancelled.
 
    The chart shows the replay up to its present and never past it. Times
    are New York time. */
@@ -26,6 +32,7 @@ const css = (name) => getComputedStyle(document.documentElement).getPropertyValu
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MINUS = '−';
+const INK = '#0a0c10';
 const hm = (et) => { const m = ((et % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
 const dateOf = (et) => { const d = new Date(Math.floor(et / 1440) * 864e5); return { wd: DAY[d.getUTCDay()], d: d.getUTCDate(), m: MON[d.getUTCMonth()], y: d.getUTCFullYear() }; };
 const NICE = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 400, 1000];
@@ -39,10 +46,21 @@ function rgba(hex, a) {
 }
 
 export const DEFAULT_SPEC = {
-  tf: 1, type: 'candles', volume: true, delta: false, vp: false, dp: false, profileMode: 'visible', vaPct: 70, profileRow: 0,
-  tpoRth: true, tpoRow: 20, tpoPeriod: 30,
-  look: { up: '', down: '', bg: '', grid: true, vol: '', prof: '', va: '', poc: '', buy: '', sell: '' },
+  tf: 1, type: 'candles', volume: true, delta: false,
+  vp: false, dp: false, vpMode: 'visible', dpMode: 'visible', vaPct: 70, profileRow: 0, vpLines: true,
+  fpStyle: 'fill',
+  tpoSession: 'split', tpoPeriod: 30, tpoRow: 20, tpoVa: 70, tpoShow: 'letters', tpoShade: true, tpoSingles: true, tpoVaOn: true, tpoIb: true, tpoOpen: true,
+  indicators: [],
+  look: { up: '', down: '', border: '', wick: '', bg: '', grid: true, vol: '', prof: '', va: '', poc: '', buy: '', sell: '', tpoLetter: '', tpoPoc: '', tpoVa: '', tpoSingle: '', tpoIb: '' },
 };
+/* the colours a chart uses when the reader has not chosen one (buys and
+   sells come from the bid and ask tokens) */
+export const LOOK_DEFAULTS = {
+  up: '#ffffff', down: '#000000', border: '#ffffff', wick: '#ffffff', bg: '#000000', vol: '#ffffff',
+  prof: '#6b727c', va: '#98a0aa', poc: '#edeff2',
+  tpoLetter: '#98a0aa', tpoPoc: '#ffffff', tpoVa: '#98a0aa', tpoSingle: '#edeff2', tpoIb: '#edeff2',
+};
+export const VWAP_DEFAULTS = { kind: 'vwap', anchor: 'day', bands: [0.5, 2, 2.5], colour: '#98a0aa', bandColour: '#6b727c' };
 
 export class ReplayChart {
   constructor(host, cb = {}) {
@@ -69,14 +87,22 @@ export class ReplayChart {
 
   /* ------------------------------------------------------------ input */
 
-  setFrame(frame) { this.frame = frame; this.draw(); }
+  setFrame(frame) {
+    this.frame = frame;
+    if (this.spec.type === 'footprint' && !this.drag) this.centre(false);
+    this.draw();
+  }
   setSpec(spec) { this.spec = spec; this.draw(); }
   setOverlay({ orders, position, markers }) {
     if (orders) this.orders = orders;
     if (position !== undefined) this.position = position;
     if (markers) this.markers = markers;
   }
-  toPresent() { this.offset = 0; this.tpoOffset = 0; this.yAuto = true; this.draw(); }
+  toPresent() {
+    this.offset = 0; this.tpoOffset = 0; this.yAuto = true;
+    if (this.spec.type === 'footprint') this.centre(true);
+    this.draw();
+  }
   fitPrices() { this.yAuto = true; this.draw(); }
 
   size() {
@@ -93,15 +119,16 @@ export class ReplayChart {
   }
 
   colours() {
-    const L = this.spec.look || {};
+    const L = this.spec.look || {}, D = LOOK_DEFAULTS;
     const text = css('--text') || '#edeff2', dim = css('--text-dim') || '#98a0aa', faint = css('--text-faint') || '#6b727c';
     return {
       text, dim, faint,
-      up: L.up || text, down: L.down || dim, bg: L.bg || css('--ink-raised') || '#0e1116',
-      grid: L.grid === false ? null : 'rgba(255,255,255,0.05)', axis: 'rgba(255,255,255,0.10)',
-      vol: L.vol ? rgba(L.vol, 0.55) : 'rgba(255,255,255,0.13)',
-      prof: L.prof || faint, va: L.va || dim, poc: L.poc || text,
+      up: L.up || D.up, down: L.down || D.down, border: L.border || D.border, wick: L.wick || D.wick, bg: L.bg || D.bg,
+      grid: L.grid === false ? null : 'rgba(255,255,255,0.06)', axis: 'rgba(255,255,255,0.12)',
+      vol: L.vol ? rgba(L.vol, 0.55) : 'rgba(255,255,255,0.16)',
+      prof: L.prof || D.prof, va: L.va || D.va, poc: L.poc || D.poc,
       buy: L.buy || css('--bid'), sell: L.sell || css('--ask'),
+      tLetter: L.tpoLetter || D.tpoLetter, tPoc: L.tpoPoc || D.tpoPoc, tVa: L.tpoVa || D.tpoVa, tSingle: L.tpoSingle || D.tpoSingle, tIb: L.tpoIb || D.tpoIb,
     };
   }
 
@@ -117,22 +144,59 @@ export class ReplayChart {
     const dH = showDelta ? Math.round(all * 0.17) : 0;
     const gaps = (showVol ? 6 : 0) + (showDelta ? 6 : 0);
     const priceH = all - volH - dH - gaps;
-    /* profiles of the visible bars get their own strip at the right, so they never cover the latest bars */
-    const profW = (s.vp || s.dp) && s.profileMode !== 'session' && s.type !== 'tpo' ? Math.round(Math.min(240, Math.max(110, plotW * 0.24))) : 0;
+    /* a profile of the visible bars gets its own strip at the right, so it never covers the latest bars */
+    const strip = s.type !== 'tpo' && ((s.vp && (s.vpMode || 'visible') === 'visible') || (s.dp && (s.dpMode || 'visible') === 'visible'));
+    const profW = strip ? Math.round(Math.min(240, Math.max(110, plotW * 0.24))) : 0;
     return { axisW, timeH, top, plotW, barsW: plotW - profW, profW, priceH, priceB: top + priceH, volTop: top + priceH + (showVol ? 6 : 0), volH, dTop: top + priceH + (showVol ? 6 + volH : 0) + (showDelta ? 6 : 0), dH, showVol, showDelta };
+  }
+  /* which bars show. The offset counts bars back from the latest; below
+     zero it leaves that much empty room after the latest bar. */
+  basePad(F) {
+    const count = Math.max(2, Math.floor(F.barsW / this.barPx));
+    return { count, pad: Math.max(1, Math.min(6, Math.floor(count * 0.12))) };
   }
   visible(F) {
     const b = this.frame && this.frame.bars;
     if (!b || !b.n) return null;
-    const count = Math.max(2, Math.floor(F.barsW / this.barPx));
-    /* a little room after the latest bar: up to six bars, less when zoomed in */
-    const pad = Math.max(1, Math.min(6, Math.floor(count * 0.12)));
-    const last = Math.max(0, Math.min(b.n - 1, b.n - 1 - Math.round(this.offset)));
-    const first = Math.max(0, Math.min(last, last - count + pad));
+    const { count, pad: base } = this.basePad(F);
+    const o = this.offset;
+    const last = o >= 0 ? Math.max(0, Math.min(b.n - 1, b.n - 1 - Math.round(o))) : b.n - 1;
+    const pad = o >= 0 ? base : base - o;
+    const first = Math.max(0, Math.min(last, Math.floor(last + pad - count)));
     return { first, last, pad };
   }
   xOf(i, F, V) { return F.barsW - (V.last - i + V.pad) * this.barPx - this.barPx / 2; }
   iAt(x, F, V) { return V.last + V.pad - (F.barsW - x - this.barPx / 2) / this.barPx; }
+  clampOffset(o, F) {
+    const { count } = this.basePad(F);
+    return Math.max(-Math.floor(count * 0.9), Math.min(this.frame.bars.n - 3, o));
+  }
+  /* the latest bar in the middle, both ways: the footprint's follow */
+  centre(force) {
+    const f = this.frame;
+    if (!f || !f.bars || !f.bars.n) return;
+    const F = this.layout(), b = f.bars, n = b.n, lastP = b.c[n - 1];
+    if (!force) {
+      const V = this.visible(F);
+      const x = this.xOf(n - 1, F, V);
+      if (x < 0 || x > F.barsW) return;
+      if (!this.yAuto) {
+        const y = F.top + (1 - (lastP - this.yLo) / (this.yHi - this.yLo)) * F.priceH;
+        if (!(y > F.top && y < F.priceB)) return;
+      }
+    }
+    const { pad } = this.basePad(F);
+    this.offset = Math.min(0, pad - (F.barsW / (2 * this.barPx) - 0.5));
+    let span = this.yHi - this.yLo;
+    if (this.yAuto || !(span > 0)) {
+      const V = this.visible(F);
+      let lo = Infinity, hi = -Infinity;
+      for (let i = V.first; i <= V.last; i++) { if (b.l[i] < lo) lo = b.l[i]; if (b.h[i] > hi) hi = b.h[i]; }
+      span = Math.max(40, Number.isFinite(hi - lo) ? (hi - lo) * 1.25 : 40);
+    }
+    this.yLo = lastP - span / 2; this.yHi = lastP + span / 2;
+    this.yAuto = false;
+  }
   /* a time (UTC seconds) as a fractional bar index, and back */
   idxOfTime(sec) {
     const b = this.frame.bars, m = sec / 60;
@@ -168,7 +232,7 @@ export class ReplayChart {
     const V = this.visible(F);
     this.V = V;
     const b = f.bars;
-    /* the price range: fitted to the visible bars, or as the reader left it */
+    /* the price range: fitted to the visible bars, or as the reader (or the footprint's follow) left it */
     let lo = Infinity, hi = -Infinity;
     for (let i = V.first; i <= V.last; i++) { if (b.l[i] < lo) lo = b.l[i]; if (b.h[i] > hi) hi = b.h[i]; }
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) { lo = hi = b.c[b.n - 1]; }
@@ -179,6 +243,7 @@ export class ReplayChart {
     this.P = (y) => this.yLo + (1 - (y - F.top) / F.priceH) * (this.yHi - this.yLo);
 
     this.rowNote = '';
+    this.indTags = [];
     ctx.save();
     ctx.beginPath(); ctx.rect(0, F.top, F.plotW, F.priceH); ctx.clip();
     this.priceGrid(F, C, Y);
@@ -188,6 +253,7 @@ export class ReplayChart {
     if (this.spec.vp || this.spec.dp) this.profiles(F, V, C, Y);
     if (footOK && this.barPx >= 10) this.footprint(F, V, C, Y);
     else this.candles(F, V, C, Y);
+    this.indicators(F, V, C, Y);
     this.drawingsLayer(F, Y);
     this.fills(F, V, C, Y);
     ctx.restore();
@@ -198,8 +264,9 @@ export class ReplayChart {
     if (F.showVol) this.volumePane(F, V, C);
     if (F.showDelta) this.deltaPane(F, V, C);
 
-    /* the last price, the position and working orders */
-    this.tag(F, Y(b.c[b.n - 1]), this.fmt(b.c[b.n - 1]), C.text, '#0a0c10');
+    /* the last price, indicators, the position and working orders */
+    for (const [v, colour] of this.indTags) this.tag(F, Y(v), this.fmt(Math.round(v)), colour, INK);
+    this.tag(F, Y(b.c[b.n - 1]), this.fmt(b.c[b.n - 1]), C.text, INK);
     if (this.position && this.position.qty) this.line(F, Y, this.position.avg, this.position.qty > 0 ? C.buy : C.sell, this.position.label, true, null);
     for (const o of this.orders) {
       const price = this.drag && this.drag.kind === 'order' && this.drag.id === o.id ? this.drag.price : o.price;
@@ -268,26 +335,40 @@ export class ReplayChart {
     }
     ctx.setLineDash([]);
   }
+  /* bodies filled up or down, outlined in the border colour; wicks apart */
   candles(F, V, C, Y) {
     const ctx = this.ctx, b = this.frame.bars;
     const bw = Math.max(1, Math.floor(this.barPx * 0.7));
+    ctx.lineWidth = 1;
     for (let i = V.first; i <= V.last; i++) {
       const x = Math.round(this.xOf(i, F, V)) + 0.5;
-      const colr = b.c[i] >= b.o[i] ? C.up : C.down;
-      ctx.strokeStyle = colr; ctx.fillStyle = colr;
-      ctx.beginPath(); ctx.moveTo(x, Y(b.h[i])); ctx.lineTo(x, Y(b.l[i])); ctx.stroke();
-      if (bw >= 3) { const y1 = Y(Math.max(b.o[i], b.c[i])), y2 = Y(Math.min(b.o[i], b.c[i])); ctx.fillRect(Math.round(x - bw / 2), y1, bw, Math.max(1, y2 - y1)); }
+      const up = b.c[i] >= b.o[i];
+      const yH = Y(b.h[i]), yL = Y(b.l[i]), y1 = Y(Math.max(b.o[i], b.c[i])), y2 = Y(Math.min(b.o[i], b.c[i]));
+      if (bw < 3) {
+        ctx.strokeStyle = C.border;
+        ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
+        continue;
+      }
+      ctx.strokeStyle = C.wick;
+      ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, Math.round(y1)); ctx.moveTo(x, Math.round(y2)); ctx.lineTo(x, yL); ctx.stroke();
+      const left = Math.round(x - bw / 2) + 0.5, top = Math.round(y1) + 0.5, h = Math.max(1, Math.round(y2) - Math.round(y1));
+      ctx.fillStyle = up ? C.up : C.down;
+      ctx.fillRect(left, top, bw - 1, h);
+      ctx.strokeStyle = C.border;
+      ctx.strokeRect(left, top, bw - 1, h);
     }
   }
 
-  /* each bar's sells (left) and buys (right) at every row, shaded in four
-     flat steps of the sell and buy colours, the bar's busiest row boxed */
+  /* each bar's sells (left) and buys (right) at every row: as a full fill
+     in four flat steps of the sell and buy colours, or as a histogram out
+     from the middle; the bar's busiest row boxed */
   footprint(F, V, C, Y) {
     const ctx = this.ctx, f = this.frame, b = f.bars;
     const pxTick = F.priceH / (this.yHi - this.yLo);
     const showText = this.barPx >= 64;
     const rowTicks = nice(Math.max(1, Math.ceil((showText ? 13 : 3) / pxTick)));
     this.rowNote = 'ROW ' + rowTicks + (rowTicks === 1 ? ' TICK' : ' TICKS');
+    const hist = this.spec.fpStyle === 'histogram';
     const cells = [];
     let max = 1;
     for (let i = V.first; i <= V.last; i++) {
@@ -298,7 +379,7 @@ export class ReplayChart {
     }
     const step = (v) => (v <= 0 ? 0 : Math.min(4, 1 + Math.floor((v / max) * 4)));
     const alpha = [0, 0.10, 0.18, 0.28, 0.40];
-    const w = Math.max(4, this.barPx - 4);
+    const w = Math.max(4, this.barPx - 8);
     ctx.font = (this.barPx >= 90 ? 11 : 10) + 'px "JetBrains Mono", monospace';
     ctx.textBaseline = 'middle';
     for (const [i, L] of cells) {
@@ -307,9 +388,17 @@ export class ReplayChart {
       for (let r = 0; r < L.rows; r++) if (L.vol[r] > L.vol[poc]) poc = r;
       for (let r = 0; r < L.rows; r++) {
         const pLo = (L.lo + r) * rowTicks, yTop = Y(pLo + rowTicks), yBot = Y(pLo), hgt = Math.max(1, yBot - yTop - 1);
-        const s = step(L.sell[r]), u = step(L.buy[r]);
-        if (s) { ctx.fillStyle = rgba(C.sell, alpha[s]) || C.sell; ctx.fillRect(x0, yTop, half - 1, hgt); }
-        if (u) { ctx.fillStyle = rgba(C.buy, alpha[u]) || C.buy; ctx.fillRect(x0 + half, yTop, w - half, hgt); }
+        if (hist) {
+          const ls = (L.sell[r] / max) * (half - 1), lb = (L.buy[r] / max) * (w - half - 1);
+          ctx.fillStyle = rgba(C.sell, 0.6) || C.sell;
+          if (ls > 0) ctx.fillRect(x0 + half - 1 - ls, yTop, ls, hgt);
+          ctx.fillStyle = rgba(C.buy, 0.6) || C.buy;
+          if (lb > 0) ctx.fillRect(x0 + half, yTop, lb, hgt);
+        } else {
+          const s = step(L.sell[r]), u = step(L.buy[r]);
+          if (s) { ctx.fillStyle = rgba(C.sell, alpha[s]) || C.sell; ctx.fillRect(x0, yTop, half - 1, hgt); }
+          if (u) { ctx.fillStyle = rgba(C.buy, alpha[u]) || C.buy; ctx.fillRect(x0 + half, yTop, w - half, hgt); }
+        }
         if (showText && hgt >= 10) {
           ctx.fillStyle = L.vol[r] ? C.text : C.faint;
           const sv = short(L.sell[r]), bv = short(L.buy[r]);
@@ -318,9 +407,13 @@ export class ReplayChart {
         }
         if (r === poc) { ctx.strokeStyle = C.text; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, Math.round(yTop) + 0.5, w - 1, Math.max(1, Math.round(hgt) - 1)); }
       }
-      /* the open-to-close line at the bar's left edge, and its delta below */
+      /* a thin candle at the bar's left edge, and the bar's delta below */
+      const yH = Y(b.h[i]), yL = Y(b.l[i]), y1 = Y(Math.max(b.o[i], b.c[i])), y2 = Y(Math.min(b.o[i], b.c[i]));
+      const cx = x0 - 3.5;
+      ctx.strokeStyle = C.wick; ctx.beginPath(); ctx.moveTo(cx, yH); ctx.lineTo(cx, yL); ctx.stroke();
       ctx.fillStyle = b.c[i] >= b.o[i] ? C.up : C.down;
-      ctx.fillRect(x0 - 3, Y(Math.max(b.o[i], b.c[i])), 2, Math.max(1, Y(Math.min(b.o[i], b.c[i])) - Y(Math.max(b.o[i], b.c[i]))));
+      ctx.fillRect(cx - 1.5, y1, 3, Math.max(1, y2 - y1));
+      ctx.strokeStyle = C.border; ctx.strokeRect(cx - 1.5, y1, 3, Math.max(1, y2 - y1));
       if (this.barPx >= 36 && b.dl) {
         const dv = b.dl[i];
         ctx.fillStyle = dv > 0 ? C.buy : dv < 0 ? C.sell : C.faint;
@@ -330,70 +423,124 @@ export class ReplayChart {
     }
   }
 
-  /* volume and delta at price: over the visible bars at the right edge, or
-     for each session in place */
+  /* volume and delta at price: over the visible bars in the strip at the
+     right, or each day or regular session in place */
   profiles(F, V, C, Y) {
-    const f = this.frame;
+    const f = this.frame, s = this.spec;
     const pxTick = F.priceH / (this.yHi - this.yLo);
-    const rowTicks = this.spec.profileRow > 0 ? this.spec.profileRow : nice(Math.max(1, Math.ceil(3 / pxTick)));
+    const rowTicks = s.profileRow > 0 ? s.profileRow : nice(Math.max(1, Math.ceil(3 / pxTick)));
     if (!this.rowNote) this.rowNote = 'ROW ' + rowTicks + (rowTicks === 1 ? ' TICK' : ' TICKS');
-    const ranges = [];
-    if (this.spec.profileMode === 'session') {
-      const b = f.bars;
-      let s = V.first, day = tradingDayNo(b.t[V.first]);
-      for (let i = V.first; i <= V.last + 1; i++) {
-        const d = i <= V.last ? tradingDayNo(b.t[i]) : null;
-        if (d !== day) {
-          let s0 = s; while (s0 > 0 && tradingDayNo(b.t[s0 - 1]) === day) s0--;
-          ranges.push({ i0: s0, i1: i - 1, x0: this.xOf(s, F, V) - this.barPx / 2, x1: this.xOf(i - 1, F, V) + this.barPx / 2 });
-          s = i; day = d;
-        }
-      }
-    } else {
-      ranges.push({ i0: V.first, i1: V.last, x0: F.barsW + 8, x1: F.plotW - 4, right: true });
+    const vpMode = s.vpMode || 'visible', dpMode = s.dpMode || 'visible';
+    const vp = s.vp, dp = s.dp && f.canDelta;
+    if (F.profW) {
       this.ctx.fillStyle = C.axis;
       this.ctx.fillRect(F.barsW, F.top, 1, F.priceH);
+      const L = f.profile(V.first, V.last, rowTicks);
+      if (L) {
+        const x0 = F.barsW + 8, x1 = F.plotW - 4, w = x1 - x0;
+        const showVp = vp && vpMode === 'visible', showDp = dp && dpMode === 'visible' && L.split;
+        if (showVp) this.vpBars(L, rowTicks, showDp ? x1 - w * 0.58 : x0, x1, 'right', C, Y, x0, x1, true);
+        if (showDp) this.dpBars(L, rowTicks, x0, showVp ? x0 + w * 0.42 - 6 : x1, C, Y);
+      }
     }
-    for (const R of ranges) {
-      const L = f.profile(R.i0, R.i1, rowTicks);
-      if (!L) continue;
-      const va = this.spec.vp ? valueAreaOf(L, this.spec.vaPct || 70) : null;
-      const width = R.x1 - R.x0;
-      const vpW = R.right ? width * (this.spec.dp && L.split ? 0.58 : 1) : width * 0.4;
-      let max = 1, dmax = 1;
-      for (let r = 0; r < L.rows; r++) { if (L.vol[r] > max) max = L.vol[r]; if (L.split) dmax = Math.max(dmax, Math.abs(L.buy[r] - L.sell[r])); }
-      const ctx = this.ctx;
-      for (let r = 0; r < L.rows; r++) {
-        const pLo = (L.lo + r) * rowTicks, yTop = Y(pLo + rowTicks), hgt = Math.max(1, Y(pLo) - yTop - (pxTick * rowTicks > 4 ? 1 : 0));
-        if (this.spec.vp) {
-          const len = (L.vol[r] / max) * vpW;
-          ctx.fillStyle = va && r === va.poc ? C.poc : va && r >= va.vaLo && r <= va.vaHi ? C.va : C.prof;
-          ctx.globalAlpha = va && r === va.poc ? 0.95 : 0.55;
-          if (R.right) ctx.fillRect(R.x1 - len, yTop, len, hgt); else ctx.fillRect(R.x0, yTop, len, hgt);
+    if (!f.sessions) return;
+    for (const kind of ['vp', 'dp']) {
+      const on = kind === 'vp' ? vp : dp, mode = kind === 'vp' ? vpMode : dpMode;
+      if (!on || mode === 'visible') continue;
+      for (const S of f.sessions(mode, V.first, V.last)) {
+        const x0 = this.xOf(S.c0, F, V) - this.barPx / 2, x1 = this.xOf(S.c1, F, V) + this.barPx / 2;
+        if (x1 < 0 || x0 > F.barsW) continue;
+        const L = f.levelsBase(S.b0, S.b1, rowTicks);
+        if (!L) continue;
+        const ax = Math.max(x0, 0);
+        if (kind === 'vp') this.vpBars(L, rowTicks, ax, ax + Math.max(24, (x1 - ax) * 0.4), 'left', C, Y, ax, Math.max(x1, ax + 24), false);
+        else if (L.split) { const w = Math.max(20, (x1 - x0) * 0.25); this.dpBars(L, rowTicks, x1 - w, x1, C, Y); }
+      }
+    }
+  }
+  /* a volume profile's rows between a and b, growing from one edge; lines
+     at the point of control and the value area's edges across la to lb */
+  vpBars(L, rowTicks, a, b, from, C, Y, la, lb, labels) {
+    const ctx = this.ctx, w = b - a, pxTick = this.F.priceH / (this.yHi - this.yLo);
+    const va = valueAreaOf(L, this.spec.vaPct || 70);
+    let max = 1;
+    for (let r = 0; r < L.rows; r++) if (L.vol[r] > max) max = L.vol[r];
+    for (let r = 0; r < L.rows; r++) {
+      const pLo = (L.lo + r) * rowTicks, yTop = Y(pLo + rowTicks), hgt = Math.max(1, Y(pLo) - yTop - (pxTick * rowTicks > 4 ? 1 : 0));
+      const len = (L.vol[r] / max) * w;
+      ctx.fillStyle = r === va.poc ? C.poc : r >= va.vaLo && r <= va.vaHi ? C.va : C.prof;
+      ctx.globalAlpha = r === va.poc ? 0.95 : 0.55;
+      if (from === 'left') ctx.fillRect(a, yTop, len, hgt); else ctx.fillRect(b - len, yTop, len, hgt);
+    }
+    ctx.globalAlpha = 1;
+    const yPoc = Y((L.lo + va.poc) * rowTicks + rowTicks / 2), yH = Y((L.lo + va.vaHi + 1) * rowTicks), yL = Y((L.lo + va.vaLo) * rowTicks);
+    if (this.spec.vpLines !== false) {
+      const hl = (y, colour) => { ctx.fillStyle = colour; ctx.fillRect(la, Math.round(y), lb - la, 1); };
+      hl(yH, C.va); hl(yL, C.va); hl(yPoc, C.poc);
+    }
+    if (labels) {
+      ctx.font = '10px "JetBrains Mono", monospace'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.dim;
+      const lx = la - 30;
+      ctx.fillText('POC', lx, yPoc);
+      if (yPoc - yH >= 13) ctx.fillText('VAH', lx, yH);
+      if (yL - yPoc >= 13) ctx.fillText('VAL', lx, yL);
+    }
+  }
+  /* a delta profile between a and b: each row's buys less sells out from a zero line */
+  dpBars(L, rowTicks, a, b, C, Y) {
+    const ctx = this.ctx, pxTick = this.F.priceH / (this.yHi - this.yLo);
+    const mid = Math.round((a + b) / 2), half = (b - a) / 2 - 2;
+    let dmax = 1;
+    for (let r = 0; r < L.rows; r++) dmax = Math.max(dmax, Math.abs(L.buy[r] - L.sell[r]));
+    ctx.fillStyle = C.axis;
+    ctx.fillRect(mid, Y((L.lo + L.rows) * rowTicks), 1, Y(L.lo * rowTicks) - Y((L.lo + L.rows) * rowTicks));
+    ctx.globalAlpha = 0.8;
+    for (let r = 0; r < L.rows; r++) {
+      const dv = L.buy[r] - L.sell[r];
+      if (!dv) continue;
+      const pLo = (L.lo + r) * rowTicks, yTop = Y(pLo + rowTicks), hgt = Math.max(1, Y(pLo) - yTop - (pxTick * rowTicks > 4 ? 1 : 0));
+      const len = (Math.abs(dv) / dmax) * half;
+      ctx.fillStyle = dv > 0 ? C.buy : C.sell;
+      ctx.fillRect(dv > 0 ? mid + 1 : mid - len, yTop, len, hgt);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* VWAP and its bands, each starting again at its anchor */
+  indicators(F, V, C, Y) {
+    const f = this.frame, list = this.spec.indicators || [];
+    if (!f.vwap || !list.length) return;
+    const ctx = this.ctx;
+    for (const ind of list) {
+      if (ind.kind !== 'vwap') continue;
+      const r = f.vwap(ind, V.first, V.last);
+      if (!r) continue;
+      const lc = ind.colour || VWAP_DEFAULTS.colour, bc = ind.bandColour || VWAP_DEFAULTS.bandColour;
+      const trace = (k, colour, width, dash) => {
+        ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.setLineDash(dash);
+        ctx.beginPath();
+        let on = false, end = null;
+        for (let i = V.first; i <= V.last; i++) {
+          const j = i - V.first, v = r.v[j];
+          if (!Number.isFinite(v)) { on = false; continue; }
+          const x = this.xOf(i, F, V), y = Y(v + k * r.sd[j]);
+          if (!on || r.brk[j]) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          on = true; end = [x, y];
         }
-        if (this.spec.dp && L.split) {
-          const dv = L.buy[r] - L.sell[r];
-          ctx.globalAlpha = 0.75;
-          ctx.fillStyle = dv >= 0 ? C.buy : C.sell;
-          if (R.right) {
-            const mid = R.x0 + (width - vpW) / 2 - 6, len = (Math.abs(dv) / dmax) * ((width - vpW) / 2 - 8);
-            if (r === 0) { ctx.globalAlpha = 1; ctx.fillStyle = C.axis; ctx.fillRect(Math.round(mid), Y((L.lo + L.rows) * rowTicks), 1, Y(L.lo * rowTicks) - Y((L.lo + L.rows) * rowTicks)); ctx.globalAlpha = 0.75; ctx.fillStyle = dv >= 0 ? C.buy : C.sell; }
-            ctx.fillRect(dv >= 0 ? mid : mid - len, yTop, len, hgt);
-          } else {
-            const len = (Math.abs(dv) / dmax) * width * 0.25;
-            ctx.fillRect(R.x1 - len, yTop, len, hgt);
-          }
+        ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+        return end;
+      };
+      ctx.font = '9px "JetBrains Mono", monospace'; ctx.textBaseline = 'middle';
+      for (const k of ind.bands || []) {
+        for (const sgn of [1, -1]) {
+          const end = trace(sgn * k, bc, 1, [4, 3]);
+          if (end) { ctx.fillStyle = bc; ctx.fillText((sgn > 0 ? '+' : MINUS) + k + 'σ', end[0] + 5, end[1]); }
         }
       }
-      ctx.globalAlpha = 1;
-      if (va && R.right) {
-        ctx.font = '10px "JetBrains Mono", monospace'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.dim;
-        const yPoc = Y((L.lo + va.poc) * rowTicks + rowTicks / 2), yH = Y((L.lo + va.vaHi + 1) * rowTicks), yL = Y((L.lo + va.vaLo) * rowTicks);
-        const lx = R.x0 - 30;
-        ctx.fillText('POC', lx, yPoc);
-        if (yPoc - yH >= 13) ctx.fillText('VAH', lx, yH);
-        if (yL - yPoc >= 13) ctx.fillText('VAL', lx, yL);
-      }
+      const end = trace(0, lc, 1.6, []);
+      if (end) { ctx.fillStyle = lc; ctx.fillText('VWAP', end[0] + 5, end[1]); }
+      const j = V.last - V.first;
+      if (V.last === f.bars.n - 1 && Number.isFinite(r.v[j])) this.indTags.push([r.v[j], lc]);
     }
   }
 
@@ -518,7 +665,7 @@ export class ReplayChart {
       this.hits.push({ kind: 'cancel', id: order.id, x0: cx - 8, x1: cx + 8, y0: yy - 10, y1: yy + 10 });
       this.hits.push({ kind: 'order', id: order.id, x0: 0, x1: x0 + w - 18, y0: yy - 5, y1: yy + 5, pinned: !!pin });
     }
-    this.tag(F, yy, this.fmt(price), colour, '#0a0c10');
+    this.tag(F, yy, this.fmt(price), colour, INK);
   }
 
   /* ------------------------------------------------------------ lines the reader draws */
@@ -555,78 +702,99 @@ export class ReplayChart {
   /* ------------------------------------------------------------ TPO */
 
   drawTPO(F, C) {
-    const ctx = this.ctx, f = this.frame;
-    const T = f.tpo ? f.tpo(this.spec) : { n: 0 };
-    if (!T.n) { this.note(this.spec.tpoRth ? 'No regular-hours session yet in this replay.' : 'No session yet.'); return; }
+    const ctx = this.ctx, f = this.frame, s = this.spec;
+    const T = f.tpo ? f.tpo(s) : { n: 0 };
+    const mode = s.tpoSession || 'split';
+    if (!T.n) { this.note(mode === 'rth' ? 'No regular-hours session yet in this replay.' : 'No session yet.'); return; }
     const L = this.barPx;
     /* columns from the right: the latest session at the present */
     const cols = [];
     let xr = F.plotW - 12 + this.tpoOffset;
     for (let k = T.n - 1; k >= 0 && xr > -400; k--) {
-      const s = T.at(k);
+      const S = T.at(k);
       let most = 1;
-      for (const m of s.marks) if (m.length > most) most = m.length;
-      const w = (most + 2) * L;
-      cols.push({ s, x0: xr - w, w });
+      for (const m of S.marks) if (m.length > most) most = m.length;
+      const w = (most + 2) * L + 10;
+      cols.push({ S, x0: xr - w, w, most });
       xr -= w + Math.max(10, L);
     }
     let lo = Infinity, hi = -Infinity;
-    for (const c of cols) { if (c.x0 + c.w < 0 || c.x0 > F.plotW) continue; lo = Math.min(lo, c.s.lo * c.s.rowTicks); hi = Math.max(hi, (c.s.lo + c.s.rows) * c.s.rowTicks); }
-    if (!Number.isFinite(lo)) { lo = cols[0].s.lo * cols[0].s.rowTicks; hi = (cols[0].s.lo + cols[0].s.rows) * cols[0].s.rowTicks; }
+    for (const c of cols) { if (c.x0 + c.w < 0 || c.x0 > F.plotW) continue; lo = Math.min(lo, c.S.lo * c.S.rowTicks); hi = Math.max(hi, (c.S.lo + c.S.rows) * c.S.rowTicks); }
+    if (!Number.isFinite(lo)) { lo = cols[0].S.lo * cols[0].S.rowTicks; hi = (cols[0].S.lo + cols[0].S.rows) * cols[0].S.rowTicks; }
     if (this.yAuto) { const pad = (hi - lo) * 0.05; this.yLo = lo - pad; this.yHi = hi + pad; }
     const Y = (p) => F.top + (1 - (p - this.yLo) / (this.yHi - this.yLo)) * F.priceH;
     this.Y = Y; this.P = (y) => this.yLo + (1 - (y - F.top) / F.priceH) * (this.yHi - this.yLo);
     ctx.save();
     ctx.beginPath(); ctx.rect(0, F.top, F.plotW, F.priceH + F.volH + F.dH + 12); ctx.clip();
     this.priceGrid(F, C, Y);
-    const steps = [C.faint, rgba(C.dim, 0.75) || C.dim, C.dim, C.text];
-    for (const { s, x0 } of cols) {
-      if (x0 > F.plotW || x0 + 400 < 0) continue;
-      const rowPx = (F.priceH / (this.yHi - this.yLo)) * s.rowTicks;
-      const letters = rowPx >= 8 && L >= 6;
+    const shades = s.tpoShade === false ? [1, 1, 1, 1] : [0.5, 0.66, 0.83, 1];
+    const blocks = s.tpoShow === 'blocks';
+    for (const { S, x0, w, most } of cols) {
+      if (x0 > F.plotW || x0 + w < 0) continue;
+      const rt = S.rowTicks, rowPx = (F.priceH / (this.yHi - this.yLo)) * rt;
+      const letters = !blocks && rowPx >= 8 && L >= 6;
+      const lx = x0 + 10;
+      const rowTop = (r) => Y((S.lo + r + 1) * rt), rowBot = (r) => Y((S.lo + r) * rt);
       ctx.font = Math.max(7, Math.min(13, Math.min(rowPx - 1, L * 1.25))) + 'px "JetBrains Mono", monospace';
       ctx.textBaseline = 'middle';
-      /* the value area as a bar at the column's left, the point of control as a band */
-      ctx.fillStyle = C.va; ctx.globalAlpha = 0.6;
-      ctx.fillRect(x0, Y((s.lo + s.vaHi + 1) * s.rowTicks), 2, Y((s.lo + s.vaLo) * s.rowTicks) - Y((s.lo + s.vaHi + 1) * s.rowTicks));
-      ctx.globalAlpha = 1;
-      const yP = Y((s.lo + s.poc + 1) * s.rowTicks), hP = Y((s.lo + s.poc) * s.rowTicks) - yP;
-      ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x0 + 4, yP, (s.marks[s.poc].length + 1) * L, hP);
-      for (let r = 0; r < s.rows; r++) {
-        const y = Y((s.lo + r) * s.rowTicks + s.rowTicks / 2);
+      /* the initial balance and the value area as bars at the column's left */
+      if (s.tpoIb !== false && S.ib) { ctx.fillStyle = C.tIb; ctx.fillRect(x0, rowTop(S.ib.hi), 2, rowBot(S.ib.lo) - rowTop(S.ib.hi)); }
+      if (s.tpoVaOn !== false) { ctx.fillStyle = C.tVa; ctx.globalAlpha = 0.7; ctx.fillRect(x0 + 4, rowTop(S.vaHi), 2, rowBot(S.vaLo) - rowTop(S.vaHi)); ctx.globalAlpha = 1; }
+      /* single prints: a faint band behind them */
+      const single = new Uint8Array(S.rows);
+      if (s.tpoSingles !== false) {
+        for (const [a, b] of S.singles) {
+          for (let r = a; r <= b; r++) single[r] = 1;
+          ctx.fillStyle = rgba(C.tSingle, 0.16) || C.tSingle;
+          ctx.fillRect(lx - 2, rowTop(b), Math.min(most, 3) * L + 4, rowBot(a) - rowTop(b));
+        }
+      }
+      /* the point of control as a band */
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(lx - 2, rowTop(S.poc), (S.marks[S.poc].length + 0.5) * L + 4, rowBot(S.poc) - rowTop(S.poc));
+      const base = S.kind === 'on' ? 26 : 0;
+      for (let r = 0; r < S.rows; r++) {
+        const y = Y((S.lo + r) * rt + rt / 2);
         if (y < F.top - 10 || y > F.priceB + 10) continue;
-        s.marks[r].forEach((p, k) => {
-          const stepIdx = Math.min(3, Math.floor((p * 4) / Math.max(1, s.periods)));
-          ctx.fillStyle = r === s.poc ? C.poc : steps[stepIdx];
-          const x = x0 + 6 + k * L;
-          if (letters) ctx.fillText(LETTERS[p % LETTERS.length], x, y);
+        const colour = r === S.poc ? C.tPoc : single[r] ? C.tSingle : C.tLetter;
+        S.marks[r].forEach((p, k) => {
+          ctx.globalAlpha = r === S.poc || single[r] ? 1 : shades[Math.min(3, Math.floor((p * 4) / Math.max(1, S.periods)))];
+          ctx.fillStyle = colour;
+          const x = lx + k * L;
+          if (letters) ctx.fillText(LETTERS[(base + p) % LETTERS.length], x, y);
           else ctx.fillRect(x, y - Math.max(1, rowPx / 2 - 0.5), Math.max(1, L - 1), Math.max(1, rowPx - 1));
         });
       }
-      /* the open, and the date under the column */
-      ctx.fillStyle = C.text;
-      const yo = Y(s.open + 0.5);
-      ctx.beginPath(); ctx.moveTo(x0 - 1, yo); ctx.lineTo(x0 + 4, yo - 3); ctx.lineTo(x0 + 4, yo + 3); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      /* the open */
+      if (s.tpoOpen !== false) {
+        ctx.fillStyle = C.text;
+        const yo = Y(S.open + 0.5);
+        ctx.beginPath(); ctx.moveTo(lx - 7, yo); ctx.lineTo(lx - 2, yo - 3); ctx.lineTo(lx - 2, yo + 3); ctx.closePath(); ctx.fill();
+      }
     }
     this.drawingsLayer(F, Y);
     ctx.restore();
     this.priceLabels(F, C, Y);
     ctx.fillStyle = C.bg; ctx.fillRect(0, this.H - F.timeH, F.plotW, F.timeH);
     ctx.font = '11px "JetBrains Mono", monospace'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = C.faint;
-    for (const { s, x0 } of cols) {
-      if (x0 > F.plotW || x0 < -200) continue;
-      const dd = dateOf(s.dayET);
-      ctx.fillText(dd.wd + ' ' + dd.d + ' ' + dd.m, Math.max(2, x0), this.H - 7);
-    }
+    cols.forEach(({ S, x0, w }, k) => {
+      if (x0 > F.plotW || x0 + w < 0) return;
+      const dd = dateOf(S.dayET), tail = mode === 'split' ? (S.kind === 'on' ? ' · ON' : ' · RTH') : '';
+      const room = (k > 0 ? cols[k - 1].x0 : F.plotW) - Math.max(2, x0) - 8;
+      const label = [dd.wd + ' ' + dd.d + ' ' + dd.m + tail, dd.d + ' ' + dd.m + tail, tail ? tail.slice(3) : dd.d + ' ' + dd.m].find((t) => ctx.measureText(t).width <= room);
+      if (label) ctx.fillText(label, Math.max(2, x0), this.H - 7);
+    });
     const f2 = this.frame.bars;
-    this.tag(F, Y(f2.c[f2.n - 1]), this.fmt(f2.c[f2.n - 1]), C.text, '#0a0c10');
+    this.tag(F, Y(f2.c[f2.n - 1]), this.fmt(f2.c[f2.n - 1]), C.text, INK);
     if (this.position && this.position.qty) this.line(F, Y, this.position.avg, this.position.qty > 0 ? C.buy : C.sell, this.position.label, true, null);
     for (const o of this.orders) this.line(F, Y, this.drag && this.drag.kind === 'order' && this.drag.id === o.id ? this.drag.price : o.price, o.side === 'buy' ? C.buy : C.sell, o.label, false, o);
-    this.badge(F, (this.spec.tpoRth ? 'Regular hours' : 'Full session') + ', ' + (this.spec.tpoPeriod || 30) + '-minute letters, rows of ' + (this.spec.tpoRow || 20) + ' ticks');
+    const what = mode === 'split' ? 'Overnight (from the 4:00 pm ET close) and regular hours' : mode === 'rth' ? 'Regular hours' : 'Full trading day';
+    this.badge(F, what + ', ' + (s.tpoPeriod || 30) + '-minute periods, rows of ' + (s.tpoRow || 20) + ' ticks');
     if (this.mouse && this.mouse.x < F.plotW && this.mouse.y > F.top && this.mouse.y < F.priceB) {
       ctx.strokeStyle = 'rgba(237,239,242,0.35)'; ctx.setLineDash([3, 3]);
       ctx.beginPath(); ctx.moveTo(0, Math.round(this.mouse.y) + 0.5); ctx.lineTo(F.plotW, Math.round(this.mouse.y) + 0.5); ctx.stroke(); ctx.setLineDash([]);
-      this.tag(F, this.mouse.y, this.fmt(Math.round(this.P(this.mouse.y))), C.dim, '#0a0c10');
+      this.tag(F, this.mouse.y, this.fmt(Math.round(this.P(this.mouse.y))), C.dim, INK);
     }
   }
 
@@ -638,13 +806,13 @@ export class ReplayChart {
     ctx.beginPath(); ctx.moveTo(cx, F.top); ctx.lineTo(cx, this.H - F.timeH); ctx.stroke();
     if (y < F.priceB) { ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(F.plotW, Math.round(y) + 0.5); ctx.stroke(); }
     ctx.setLineDash([]);
-    if (y < F.priceB) this.tag(F, y, this.fmt(Math.round(this.P(y))), C.dim, '#0a0c10');
+    if (y < F.priceB) this.tag(F, y, this.fmt(Math.round(this.P(y))), C.dim, INK);
     const et = toET(b.t[i]), dd = dateOf(et);
     const tl = dd.wd + ' ' + dd.d + ' ' + dd.m + ' ' + dd.y + (this.spec.tf === 'D' ? '' : ', ' + hm(et) + ' ET');
     ctx.font = '11px "JetBrains Mono", monospace';
     const w = ctx.measureText(tl).width + 12, lx = Math.max(0, Math.min(F.plotW - w, cx - w / 2));
     ctx.fillStyle = C.dim; ctx.fillRect(lx, this.H - F.timeH + 2, w, F.timeH - 4);
-    ctx.fillStyle = '#0a0c10'; ctx.textBaseline = 'middle'; ctx.fillText(tl, lx + 6, this.H - F.timeH / 2);
+    ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(tl, lx + 6, this.H - F.timeH / 2);
     if (this.cb.onHover) this.cb.onHover(i, this);
   }
 
@@ -660,13 +828,12 @@ export class ReplayChart {
     const cv = this.cv;
     const pos = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     const hitAt = (p) => (this.hits || []).find((h) => (h.test ? h.test(p) : p.x >= h.x0 && p.x <= h.x1 && p.y >= h.y0 && p.y <= h.y1));
-    const manualY = () => { if (this.yAuto) { this.yAuto = false; } };
     cv.addEventListener('wheel', (e) => {
       if (!this.frame) return;
       e.preventDefault();
       const p = pos(e), F = this.layout();
       if (e.ctrlKey || this.where(p) === 'price') {
-        manualY();
+        this.yAuto = false;
         const at = this.P ? this.P(p.y) : (this.yLo + this.yHi) / 2, k = e.deltaY < 0 ? 0.88 : 1 / 0.88;
         this.yLo = at - (at - this.yLo) * k; this.yHi = at + (this.yHi - at) * k;
       } else if (this.spec.type === 'tpo') {
@@ -677,7 +844,7 @@ export class ReplayChart {
         const anchor = this.iAt(Math.min(p.x, F.barsW), F, V);
         this.barPx = Math.max(2, Math.min(160, this.barPx * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
         const now = this.iAt(Math.min(p.x, F.barsW), F, this.visible(F));
-        this.offset = Math.max(0, Math.min(this.frame.bars.n - 3, this.offset + (now - anchor)));
+        this.offset = this.clampOffset(this.offset + (now - anchor), F);
       }
       this.draw();
     }, { passive: false });
@@ -687,7 +854,7 @@ export class ReplayChart {
       if (e.button !== 0) return;
       try { cv.setPointerCapture(e.pointerId); } catch (err) { /* a pointer the page did not see start */ }
       const zone = this.where(p);
-      if (zone === 'price') { manualY(); this.drag = { kind: 'yscale', y: p.y, lo: this.yLo, hi: this.yHi }; return; }
+      if (zone === 'price') { this.yAuto = false; this.drag = { kind: 'yscale', y: p.y, lo: this.yLo, hi: this.yHi }; return; }
       if (zone === 'time') { this.drag = { kind: 'xscale', x: p.x, px: this.barPx }; return; }
       const tool = this.cb.tool ? this.cb.tool() : 'cursor';
       if (tool === 'h') { this.cb.addDrawing && this.cb.addDrawing({ kind: 'h', price: Math.round(this.P(p.y)) }); return; }
@@ -720,9 +887,9 @@ export class ReplayChart {
       const d = this.drag, F = this.F;
       if (d && d.kind === 'pan') {
         if (this.spec.type === 'tpo') this.tpoOffset = d.tpo + (p.x - d.x);
-        else this.offset = Math.max(0, Math.min(this.frame.bars.n - 3, d.offset + (p.x - d.x) / this.barPx));
+        else this.offset = this.clampOffset(d.offset + (p.x - d.x) / this.barPx, F);
         if (Math.abs(p.y - d.y) > 3 || !d.auto) {
-          if (this.yAuto) { this.yAuto = false; }
+          this.yAuto = false;
           const per = (d.hi - d.lo) / F.priceH;
           this.yLo = d.lo + (p.y - d.y) * per; this.yHi = d.hi + (p.y - d.y) * per;
         }
