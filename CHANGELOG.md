@@ -4,6 +4,19 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.8.1 · 12 October 2026
+
+- TPO single prints from finished sessions are carried to the right as
+  faint bands until a later period trades into them. The part traded into
+  stops at that session; the rest runs on. Style turns this off.
+- Volume and delta profiles of each day or regular session now sit against
+  the right end of that day, at a fixed width, so they no longer grow as
+  you move or zoom the chart. Style sets both widths in pixels, and they
+  size the visible-range strip too.
+- A footprint now puts its latest bar back in the middle only when the
+  replay carries the price out of view. While the price stays in view, the
+  chart stays where it is.
+
 ## 0.8.0 · 12 October 2026
 
 - Replay's order panel in colour: the Buy buttons green and the Sell

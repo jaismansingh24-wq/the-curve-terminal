@@ -9,16 +9,19 @@
    prices by period, as letters or blocks, overnight and regular hours
    apart or together). Panes: volume, and delta (each bar's buys less
    sells, with a running total that starts again each session). Profiles:
-   volume and delta at price, over the visible bars, each day or each
-   regular session, with lines at the point of control and the value
-   area's edges. Indicators: VWAP with deviation bands.
+   volume and delta at price, over the visible bars (in a strip at the
+   right), or each day or regular session (against the right end of that
+   day), at widths the reader sets, with lines at the point of control and
+   the value area's edges. Indicators: VWAP with deviation bands.
 
    Moving: drag the chart in any direction, past the latest bar too; drag
    the price axis to stretch prices, the time axis to stretch time; the
    wheel zooms time (with Ctrl, prices); a double click on the chart
    returns to the present, on the price axis fits the prices again. A
-   footprint keeps its latest bar in the middle of the chart as the replay
-   moves, unless that bar has been moved out of view. Lines: the page
+   footprint puts its latest bar back in the middle of the chart when the
+   replay carries the price out of view, but not when the reader has moved
+   it out of view. TPO single prints extend to the right until a later
+   period trades back into them. Lines: the page
    chooses a tool; a click places a horizontal line, two clicks a trend
    line; a line can be selected, dragged, and removed. Order lines can be
    dragged or cancelled.
@@ -47,9 +50,9 @@ function rgba(hex, a) {
 
 export const DEFAULT_SPEC = {
   tf: 1, type: 'candles', volume: true, delta: false,
-  vp: false, dp: false, vpMode: 'visible', dpMode: 'visible', vaPct: 70, profileRow: 0, vpLines: true,
+  vp: false, dp: false, vpMode: 'visible', dpMode: 'visible', vaPct: 70, profileRow: 0, vpLines: true, profileWidth: 120, dpWidth: 60,
   fpStyle: 'fill',
-  tpoSession: 'split', tpoPeriod: 30, tpoRow: 20, tpoVa: 70, tpoShow: 'letters', tpoShade: true, tpoSingles: true, tpoVaOn: true, tpoIb: true, tpoOpen: true,
+  tpoSession: 'split', tpoPeriod: 30, tpoRow: 20, tpoVa: 70, tpoShow: 'letters', tpoShade: true, tpoSingles: true, tpoExtend: true, tpoVaOn: true, tpoIb: true, tpoOpen: true,
   indicators: [],
   look: { up: '', down: '', border: '', wick: '', bg: '', grid: true, vol: '', prof: '', va: '', poc: '', buy: '', sell: '', tpoLetter: '', tpoPoc: '', tpoVa: '', tpoSingle: '', tpoIb: '' },
 };
@@ -89,7 +92,7 @@ export class ReplayChart {
 
   setFrame(frame) {
     this.frame = frame;
-    if (this.spec.type === 'footprint' && !this.drag) this.centre(false);
+    if (this.spec.type === 'footprint' && !this.drag && this.wasInView && !this.latestInView()) this.centre();
     this.draw();
   }
   setSpec(spec) { this.spec = spec; this.draw(); }
@@ -100,7 +103,7 @@ export class ReplayChart {
   }
   toPresent() {
     this.offset = 0; this.tpoOffset = 0; this.yAuto = true;
-    if (this.spec.type === 'footprint') this.centre(true);
+    if (this.spec.type === 'footprint') this.centre();
     this.draw();
   }
   fitPrices() { this.yAuto = true; this.draw(); }
@@ -146,7 +149,8 @@ export class ReplayChart {
     const priceH = all - volH - dH - gaps;
     /* a profile of the visible bars gets its own strip at the right, so it never covers the latest bars */
     const strip = s.type !== 'tpo' && ((s.vp && (s.vpMode || 'visible') === 'visible') || (s.dp && (s.dpMode || 'visible') === 'visible'));
-    const profW = strip ? Math.round(Math.min(240, Math.max(110, plotW * 0.24))) : 0;
+    const vpOn = s.vp && (s.vpMode || 'visible') === 'visible', dpOn = s.dp && (s.dpMode || 'visible') === 'visible' && f && f.canDelta;
+    const profW = strip ? Math.round(Math.min(plotW * 0.5, (vpOn ? s.profileWidth || 120 : 0) + (dpOn ? (s.dpWidth || 60) + (vpOn ? 10 : 0) : 0) + 14)) : 0;
     return { axisW, timeH, top, plotW, barsW: plotW - profW, profW, priceH, priceB: top + priceH, volTop: top + priceH + (showVol ? 6 : 0), volH, dTop: top + priceH + (showVol ? 6 + volH : 0) + (showDelta ? 6 : 0), dH, showVol, showDelta };
   }
   /* which bars show. The offset counts bars back from the latest; below
@@ -171,20 +175,22 @@ export class ReplayChart {
     const { count } = this.basePad(F);
     return Math.max(-Math.floor(count * 0.9), Math.min(this.frame.bars.n - 3, o));
   }
-  /* the latest bar in the middle, both ways: the footprint's follow */
-  centre(force) {
+  /* is the latest bar, at the last price, inside the chart as it stands? */
+  latestInView() {
+    const f = this.frame;
+    if (!f || !f.bars || !f.bars.n) return false;
+    const F = this.layout(), b = f.bars, n = b.n, V = this.visible(F);
+    const x = this.xOf(n - 1, F, V);
+    if (x < 0 || x > F.barsW) return false;
+    if (this.yAuto) return true;
+    const y = F.top + (1 - (b.c[n - 1] - this.yLo) / (this.yHi - this.yLo)) * F.priceH;
+    return y > F.top && y < F.priceB;
+  }
+  /* the latest bar in the middle, both ways */
+  centre() {
     const f = this.frame;
     if (!f || !f.bars || !f.bars.n) return;
     const F = this.layout(), b = f.bars, n = b.n, lastP = b.c[n - 1];
-    if (!force) {
-      const V = this.visible(F);
-      const x = this.xOf(n - 1, F, V);
-      if (x < 0 || x > F.barsW) return;
-      if (!this.yAuto) {
-        const y = F.top + (1 - (lastP - this.yLo) / (this.yHi - this.yLo)) * F.priceH;
-        if (!(y > F.top && y < F.priceB)) return;
-      }
-    }
     const { pad } = this.basePad(F);
     this.offset = Math.min(0, pad - (F.barsW / (2 * this.barPx) - 0.5));
     let span = this.yHi - this.yLo;
@@ -276,6 +282,7 @@ export class ReplayChart {
     else if (wantFoot && this.barPx < 10) this.badge(F, 'Zoom in to see the footprint.');
     if ((this.spec.dp || this.spec.delta) && !f.canDelta) this.badge(F, 'Delta needs a file of trades: this file has bars.', 1);
     if (this.mouse && this.mouse.x < F.plotW && this.mouse.y > F.top && this.mouse.y < this.H - F.timeH) this.crosshair(F, V, C, Y);
+    this.wasInView = this.latestInView();
   }
 
   note(text) {
@@ -432,15 +439,17 @@ export class ReplayChart {
     if (!this.rowNote) this.rowNote = 'ROW ' + rowTicks + (rowTicks === 1 ? ' TICK' : ' TICKS');
     const vpMode = s.vpMode || 'visible', dpMode = s.dpMode || 'visible';
     const vp = s.vp, dp = s.dp && f.canDelta;
+    const pw = s.profileWidth || 120, dw = s.dpWidth || 60;
     if (F.profW) {
       this.ctx.fillStyle = C.axis;
       this.ctx.fillRect(F.barsW, F.top, 1, F.priceH);
       const L = f.profile(V.first, V.last, rowTicks);
       if (L) {
-        const x0 = F.barsW + 8, x1 = F.plotW - 4, w = x1 - x0;
+        const x0 = F.barsW + 8, x1 = F.plotW - 4;
         const showVp = vp && vpMode === 'visible', showDp = dp && dpMode === 'visible' && L.split;
-        if (showVp) this.vpBars(L, rowTicks, showDp ? x1 - w * 0.58 : x0, x1, 'right', C, Y, x0, x1, true);
-        if (showDp) this.dpBars(L, rowTicks, x0, showVp ? x0 + w * 0.42 - 6 : x1, C, Y);
+        const vw = showVp ? Math.min(pw, x1 - x0) : 0;
+        if (showVp) this.vpBars(L, rowTicks, x1 - vw, x1, 'right', C, Y, x0, x1, true);
+        if (showDp) { const right = showVp ? x1 - vw - 10 : x1; this.dpBars(L, rowTicks, Math.max(x0, right - dw), right, C, Y); }
       }
     }
     if (!f.sessions) return;
@@ -452,9 +461,15 @@ export class ReplayChart {
         if (x1 < 0 || x0 > F.barsW) continue;
         const L = f.levelsBase(S.b0, S.b1, rowTicks);
         if (!L) continue;
-        const ax = Math.max(x0, 0);
-        if (kind === 'vp') this.vpBars(L, rowTicks, ax, ax + Math.max(24, (x1 - ax) * 0.4), 'left', C, Y, ax, Math.max(x1, ax + 24), false);
-        else if (L.split) { const w = Math.max(20, (x1 - x0) * 0.25); this.dpBars(L, rowTicks, x1 - w, x1, C, Y); }
+        /* against the right end of the day, or of the chart while the day's
+           end is beyond it, at a fixed width (never wider than the day) */
+        const right = Math.min(x1, F.barsW);
+        const room = Math.max(8, Math.min(x1 - x0, right - x0)), vw = Math.min(pw, room);
+        if (kind === 'vp') this.vpBars(L, rowTicks, right - vw, right, 'right', C, Y, x0, right, false);
+        else if (L.split) {
+          const end = vp && vpMode === mode ? right - vw - 4 : right;
+          this.dpBars(L, rowTicks, end - Math.min(dw, room), end, C, Y);
+        }
       }
     }
   }
@@ -715,7 +730,7 @@ export class ReplayChart {
       let most = 1;
       for (const m of S.marks) if (m.length > most) most = m.length;
       const w = (most + 2) * L + 10;
-      cols.push({ S, x0: xr - w, w, most });
+      cols.push({ k, S, x0: xr - w, w, most });
       xr -= w + Math.max(10, L);
     }
     let lo = Infinity, hi = -Infinity;
@@ -729,6 +744,7 @@ export class ReplayChart {
     this.priceGrid(F, C, Y);
     const shades = s.tpoShade === false ? [1, 1, 1, 1] : [0.5, 0.66, 0.83, 1];
     const blocks = s.tpoShow === 'blocks';
+    if (s.tpoSingles !== false && s.tpoExtend !== false && T.zones) this.singleZones(T.zones(), cols, F, C, Y, L, s.tpoRow || 20);
     for (const { S, x0, w, most } of cols) {
       if (x0 > F.plotW || x0 + w < 0) continue;
       const rt = S.rowTicks, rowPx = (F.priceH / (this.yHi - this.yLo)) * rt;
@@ -796,6 +812,30 @@ export class ReplayChart {
       ctx.beginPath(); ctx.moveTo(0, Math.round(this.mouse.y) + 0.5); ctx.lineTo(F.plotW, Math.round(this.mouse.y) + 0.5); ctx.stroke(); ctx.setLineDash([]);
       this.tag(F, this.mouse.y, this.fmt(Math.round(this.P(this.mouse.y))), C.dim, INK);
     }
+  }
+
+  /* single prints from earlier sessions, as bands running right until a
+     later period trades into them (the part traded into stops there; the
+     rest runs on) */
+  singleZones(Z, cols, F, C, Y, L, rt) {
+    const ctx = this.ctx, byK = new Map(cols.map((c) => [c.k, c]));
+    const oldest = cols.length ? cols[cols.length - 1].k : Infinity;
+    const band = (z, x0, x1) => {
+      if (x1 <= x0 || x1 < 0 || x0 > F.plotW) return;
+      const yTop = Y((z.hi + 1) * rt), yBot = Y(z.lo * rt);
+      ctx.fillStyle = rgba(C.tSingle, 0.09) || C.tSingle;
+      ctx.fillRect(x0, yTop, x1 - x0, yBot - yTop);
+      ctx.fillStyle = rgba(C.tSingle, 0.4) || C.tSingle;
+      ctx.fillRect(x0, Math.round(yTop), x1 - x0, 1);
+      ctx.fillRect(x0, Math.round(yBot) - 1, x1 - x0, 1);
+    };
+    const startOf = (z) => { const c = byK.get(z.from); return c ? c.x0 + 10 + L + 2 : z.from < oldest ? -10 : null; };
+    for (const z of Z.ended) {
+      const c = byK.get(z.to), x0 = startOf(z);
+      if (!c || x0 === null) continue;
+      band(z, x0, c.x0 + 8);
+    }
+    for (const z of Z.live) { const x0 = startOf(z); if (x0 !== null) band(z, x0, F.plotW); }
   }
 
   crosshair(F, V, C, Y) {

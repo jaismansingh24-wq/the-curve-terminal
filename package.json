@@ -1,6 +1,6 @@
 {
   "name": "the-curve-terminal",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "description": "The Curve Terminal, a trading journal from The Curve, by s7ven.",
   "type": "module",

@@ -25,7 +25,7 @@ const S = () => settings.get();
 
 const st = {
   root: null, meta: null, data: null, base: null, ins: null, engine: null,
-  charts: [], aggs: new Map(), cache: new Map(), sessions: new Map(), vw: null,
+  charts: [], aggs: new Map(), cache: new Map(), sessions: new Map(), zones: new Map(), vw: null,
   playing: false, raf: 0, simT: 0, lastT: 0,
   session: null, menu: null, log: { sessions: [] }, logLoaded: false,
   tool: 'cursor', colour: '', draw: { files: {} }, drawLoaded: false, selected: null,
@@ -195,7 +195,7 @@ async function openFile(id, message = '') {
   st.meta = meta;
   st.ins = instrument(meta.instrument) || { code: meta.instrument, tick: meta.tick, tickValue: 1, decimals: 2, name: meta.instrument };
   st.base = trades() ? R.barsFromTrades(st.data) : st.data;
-  st.aggs.clear(); st.cache.clear(); st.sessions.clear(); st.vw = null;
+  st.aggs.clear(); st.cache.clear(); st.sessions.clear(); st.zones.clear(); st.vw = null;
   settings.update({ replayFile: id });
   st.engine = createEngine({
     data: st.data, tickValue: st.ins.tickValue, commission: Number(S().costPerContract) || 0,
@@ -470,7 +470,9 @@ function openStyle(c) {
     dlg.append(pHead('Profiles'),
       pRow(group('Volume profile of', seg('Volume profile of', PROFILE_OF, s.vpMode || 'visible', (v) => set({ vpMode: v })))),
       pRow(group('Delta profile of', seg('Delta profile of', PROFILE_OF, s.dpMode || 'visible', (v) => set({ dpMode: v })))),
+      pRow(field('Volume profile width, px', pNum(s.profileWidth || 120, 30, 400, (v) => set({ profileWidth: v }))), field('Delta profile width, px', pNum(s.dpWidth || 60, 20, 300, (v) => set({ dpWidth: v })))),
       pRow(field('Value area, %', pNum(s.vaPct, 50, 95, (v) => set({ vaPct: v }))), field('Rows, ticks (0 fits the zoom)', pNum(s.profileRow, 0, 400, (v) => set({ profileRow: v }))), onOff('Lines at POC, VAH and VAL', 'vpLines')),
+      el('p', 'rp-p rp-note', 'A profile of the visible range sits in a strip at the chart\'s right edge; a profile of each day or regular session sits against the right end of that day. Widths are in pixels, so moving or zooming the chart does not change them; a day narrower than its profile on screen narrows the profile to fit.'),
       pCols(col('prof', 'Profile'), col('va', 'Value area'), col('poc', 'Point of control'), col('vol', 'Volume')));
     if (s.type !== 'footprint') dlg.appendChild(pCols(col('buy', 'Buys (delta)'), col('sell', 'Sells (delta)')));
   }
@@ -480,9 +482,9 @@ function openStyle(c) {
       pRow(group('A period every', seg('TPO period', [[15, '15 min'], [30, '30 min'], [60, '60 min']], s.tpoPeriod, (v) => set({ tpoPeriod: +v }))),
         group('Show as', seg('Show TPOs as', [['letters', 'Letters'], ['blocks', 'Blocks']], s.tpoShow || 'letters', (v) => set({ tpoShow: v })))),
       pRow(field('Rows, ticks', pNum(s.tpoRow, 1, 400, (v) => set({ tpoRow: v }))), field('Value area, %', pNum(s.tpoVa || 70, 50, 95, (v) => set({ tpoVa: v })))),
-      pRow(onOff('Shade by period', 'tpoShade'), onOff('Single prints', 'tpoSingles'), onOff('Value area', 'tpoVaOn'), onOff('Initial balance', 'tpoIb'), onOff('Open', 'tpoOpen')),
+      pRow(onOff('Shade by period', 'tpoShade'), onOff('Single prints', 'tpoSingles'), onOff('Carry single prints forward', 'tpoExtend'), onOff('Value area', 'tpoVaOn'), onOff('Initial balance', 'tpoIb'), onOff('Open', 'tpoOpen')),
       pCols(col('tpoLetter', 'Letters'), col('tpoPoc', 'Point of control'), col('tpoVa', 'Value area'), col('tpoSingle', 'Single prints'), col('tpoIb', 'Initial balance')),
-      el('p', 'rp-p rp-note', 'The overnight session runs from the 4:00 pm ET close to the next 9:30 am open, across the daily break (and a weekend), in lower-case letters. Single prints are runs of two or more rows where only one period traded; the initial balance is the range of the regular session\'s first hour. Both are read as signs of how the auction went; neither says what comes next.'));
+      el('p', 'rp-p rp-note', 'The overnight session runs from the 4:00 pm ET close to the next 9:30 am open, across the daily break (and a weekend), in lower-case letters. Single prints are runs of two or more rows where only one period traded; carried forward, a finished session\'s single prints run to the right until a later period trades into them, and the part traded into stops there. The initial balance is the range of the regular session\'s first hour. Both are read as signs of how the auction went; neither says what comes next.'));
   }
   dlg.append(pHead('Chart'), pCols(col('bg', 'Background'), group('Grid', seg('Grid', [[true, 'On'], [false, 'Off']], L.grid !== false, (v) => setLook({ grid: v === true || v === 'true' })))));
   const acts = el('div', 'rp-style__acts');
@@ -999,9 +1001,54 @@ function tpoFor(sp, N) {
     at(k) {
       const s = all[k], open = s.to >= N.curBase;
       const make = () => R.tpoOf(B, s, opts(open));
-      return open ? make() : cached('tpo' + mode + ':' + sp.tpoPeriod + ':' + sp.tpoRow + ':' + sp.tpoVa + ':' + s.key, make);
+      return open ? make() : cached(tpoKey(sp, mode, s), make);
     },
+    zones: () => tpoZones(sp, N, lo),
   };
+}
+const tpoKey = (sp, mode, s) => 'tpo' + mode + ':' + sp.tpoPeriod + ':' + sp.tpoRow + ':' + sp.tpoVa + ':' + s.key;
+
+/* Single prints carried forward. Each finished session's single prints
+   (in rows of the chart's row size) stay live until a later session trades
+   into them; the part traded into ends at that session, the rest runs on.
+   Finished sessions are worked through once and kept; the session forming
+   now is checked each time without being kept. Only the 240 sessions
+   before now are looked at. */
+function tpoZones(sp, N, n) {
+  const mode = sp.tpoSession || 'split', rt = sp.tpoRow || 20, B = st.base;
+  const all = sessionList(mode);
+  const open = n > 0 && all[n - 1].to >= N.curBase ? n - 1 : n;
+  const key = mode + ':' + sp.tpoPeriod + ':' + rt + ':' + sp.tpoVa;
+  let Z = st.zones.get(key);
+  if (!Z || Z.done > open || open - Z.done > 240) { Z = { done: Math.max(0, open - 240), live: [], ended: [] }; st.zones.set(key, Z); }
+  const hit = (live, j, L, H, ended) => {
+    const out = [];
+    for (const z of live) {
+      const a = Math.max(z.lo, L), b = Math.min(z.hi, H);
+      if (a > b) { out.push(z); continue; }
+      ended.push({ from: z.from, lo: a, hi: b, to: j });
+      if (z.lo < a) out.push({ from: z.from, lo: z.lo, hi: a - 1 });
+      if (b < z.hi) out.push({ from: z.from, lo: b + 1, hi: z.hi });
+    }
+    return out;
+  };
+  const range = (from, to) => { let lo = Infinity, hi = -Infinity; for (let i = from; i <= to; i++) { if (B.l[i] < lo) lo = B.l[i]; if (B.h[i] > hi) hi = B.h[i]; } return [lo, hi]; };
+  for (let j = Z.done; j < open; j++) {
+    const s = all[j];
+    const [lo, hi] = range(s.from, s.to);
+    Z.live = hit(Z.live, j, Math.floor(lo / rt), Math.floor(hi / rt), Z.ended);
+    const t = st.cache.get(tpoKey(sp, mode, s)) || R.tpoOf(B, s, { period: sp.tpoPeriod || 30, rowTicks: rt, vaPct: sp.tpoVa || 70 });
+    for (const [a, b] of t.singles) Z.live.push({ from: j, lo: t.lo + a, hi: t.lo + b });
+  }
+  Z.done = open;
+  if (open >= n) return { live: Z.live, ended: Z.ended };
+  /* the session forming now, so far */
+  const s = all[open];
+  let [lo, hi] = s.from < N.curBase ? range(s.from, N.curBase - 1) : [Infinity, -Infinity];
+  const cur = N.part || { h: B.h[N.curBase], l: B.l[N.curBase] };
+  lo = Math.min(lo, cur.l); hi = Math.max(hi, cur.h);
+  const ended = Z.ended.slice();
+  return { live: hit(Z.live, open, Math.floor(lo / rt), Math.floor(hi / rt), ended), ended };
 }
 
 /* ------------------------------------------------------------ showing the state */
