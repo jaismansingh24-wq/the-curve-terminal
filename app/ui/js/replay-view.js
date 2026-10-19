@@ -247,7 +247,14 @@ function chartSpecs() {
     /* from 0.7.0: one setting for both profiles, and regular hours or the full day for TPO */
     if (s.profileMode && !s.vpMode) s.vpMode = s.dpMode = s.profileMode === 'session' ? 'day' : 'visible';
     if (s.tpoRth !== undefined && !s.tpoSession) s.tpoSession = s.tpoRth === false ? 'day' : 'split';
-    delete s.profileMode; delete s.tpoRth;
+    /* from 0.9.3: TPOs by length instead of by session; a chart left at
+       the old defaults (30-minute letters, rows of 20 ticks) takes the
+       day's new ones */
+    if (s.tpoSession !== undefined && s.tpoLen === undefined) {
+      s.tpoLen = 1440;
+      if (s.tpoRow === 20 && s.tpoPeriod === 30) s.tpoRow = 4;
+    }
+    delete s.profileMode; delete s.tpoRth; delete s.tpoSession;
     return { ...def, ...s, look: { ...def.look, ...(s.look || {}) }, indicators: Array.isArray(s.indicators) ? s.indicators : [] };
   });
 }
@@ -443,6 +450,8 @@ function lookDefault(key) {
   return LOOK_DEFAULTS[key] || '#888888';
 }
 const PROFILE_OF = [['visible', 'Visible range'], ['day', 'Each day'], ['rth', 'Regular hours']];
+/* TPO lengths in minutes, each with its usual rows (ticks) and letter time (minutes) */
+const TPO_LENGTHS = [[30, '30 min', { row: 1, per: 1 }], [240, '4 hours', { row: 4, per: 1 }], [1440, '1 day', { row: 4, per: 30 }]];
 
 /* the style of one chart: its colours, and its footprint, profile and TPO settings */
 function openStyle(c) {
@@ -477,14 +486,30 @@ function openStyle(c) {
     if (s.type !== 'footprint') dlg.appendChild(pCols(col('buy', 'Buys (delta)'), col('sell', 'Sells (delta)')));
   }
   if (s.type === 'tpo') {
+    /* a length sets its usual rows and letter time; both can be changed after */
+    const lenSeg = seg('Each TPO covers', TPO_LENGTHS.map(([v, text]) => [v, text]), s.tpoLen, (v) => {
+      const p = TPO_LENGTHS.find((x) => x[0] === +v)[2];
+      set({ tpoLen: +v, tpoRow: p.row, tpoPeriod: p.per });
+      lenIn.value = s.tpoLen; rowIn.value = s.tpoRow; perIn.value = s.tpoPeriod;
+    });
+    const markLen = () => {
+      const opts = [...lenSeg.querySelectorAll('.seg__opt')];
+      opts.forEach((b) => { const on = +b.dataset.value === s.tpoLen; b.setAttribute('aria-checked', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+      if (!opts.some((b) => b.tabIndex === 0)) opts[0].tabIndex = 0;
+    };
+    const lenIn = pNum(s.tpoLen, 5, 1440, (v) => { set({ tpoLen: v, tpoPeriod: Math.min(s.tpoPeriod, v) }); perIn.value = s.tpoPeriod; markLen(); });
+    const rowIn = pNum(s.tpoRow, 1, 400, (v) => set({ tpoRow: v }));
+    const perIn = pNum(s.tpoPeriod, 1, 240, (v) => { set({ tpoPeriod: Math.min(v, s.tpoLen) }); perIn.value = s.tpoPeriod; });
+    markLen();
     dlg.append(
-      pRow(group('Sessions', seg('TPO sessions', [['split', 'Overnight and regular hours'], ['rth', 'Regular hours'], ['day', 'Full trading day']], s.tpoSession || 'split', (v) => set({ tpoSession: v })))),
-      pRow(group('A period every', seg('TPO period', [[15, '15 min'], [30, '30 min'], [60, '60 min']], s.tpoPeriod, (v) => set({ tpoPeriod: +v }))),
-        group('Show as', seg('Show TPOs as', [['letters', 'Letters'], ['blocks', 'Blocks']], s.tpoShow || 'letters', (v) => set({ tpoShow: v })))),
-      pRow(field('Rows, ticks', pNum(s.tpoRow, 1, 400, (v) => set({ tpoRow: v }))), field('Value area, %', pNum(s.tpoVa || 70, 50, 95, (v) => set({ tpoVa: v })))),
+      pRow(group('Each TPO covers', lenSeg), field('Or minutes', lenIn)),
+      pRow(field('Rows, ticks', rowIn), onOff('Auto rows', 'tpoAutoRows'), field('A letter every, minutes', perIn)),
+      pRow(group('Show as', seg('Show TPOs as', [['letters', 'Letters'], ['blocks', 'Blocks']], s.tpoShow || 'letters', (v) => set({ tpoShow: v }))),
+        field('Value area, %', pNum(s.tpoVa || 70, 50, 95, (v) => set({ tpoVa: v })))),
       pRow(onOff('Shade by period', 'tpoShade'), onOff('Single prints', 'tpoSingles'), onOff('Carry single prints forward', 'tpoExtend'), onOff('Value area', 'tpoVaOn'), onOff('Initial balance', 'tpoIb'), onOff('Open', 'tpoOpen')),
       pCols(col('tpoLetter', 'Letters'), col('tpoPoc', 'Point of control'), col('tpoVa', 'Value area'), col('tpoSingle', 'Single prints'), col('tpoIb', 'Initial balance')),
-      el('p', 'rp-p rp-note', 'The overnight session runs from the 4:00 pm ET close to the next 9:30 am open, across the daily break (and a weekend), in lower-case letters. Single prints are runs of two or more rows where only one period traded; carried forward, a finished session\'s single prints run to the right until a later period trades into them, and the part traded into stops there. The initial balance is the range of the regular session\'s first hour. Both are read as signs of how the auction went; neither says what comes next.'));
+      el('p', 'rp-p rp-note', 'Each TPO is labelled with the time it started, New York time, on the time axis. TPOs are counted from the start of the trading day at 6:00 pm ET: 30-minute TPOs start at 6:00 pm, 6:30 pm and so on, 4-hour TPOs at 6:00 pm, 10:00 pm, 2:00 am, 6:00 am, 10:00 am and 2:00 pm, and a day\'s TPO covers the whole trading day. Choosing a length sets its usual rows and letter time (30 minutes: rows of 1 tick, a letter each minute; 4 hours: 4 ticks, each minute; a day: 4 ticks, each 30 minutes), and both can be changed after. Letters run A to Z, then a to z, then start again at A. With auto rows on, rows join as you zoom out or squeeze the price scale, so the letters stay readable, and go back to the size set here as you zoom in; off, they stay at that size.'),
+      el('p', 'rp-p rp-note', 'Single prints are runs of two or more rows where only one period traded; carried forward, a finished TPO\'s single prints run to the right until a later TPO trades into them, and the part traded into stops there. The initial balance is the range of the hour from 9:30 am ET, shown on a TPO that holds that whole hour. Both are read as signs of how the auction went; neither says what comes next. Rows of a few ticks from one-minute bars are an approximation: each bar counts at every row of its range.'));
   }
   dlg.append(pHead('Chart'), pCols(col('bg', 'Background'), group('Grid', seg('Grid', [[true, 'On'], [false, 'Off']], L.grid !== false, (v) => setLook({ grid: v === true || v === 'true' })))));
   const acts = el('div', 'rp-style__acts');
@@ -877,7 +902,7 @@ function frameFor(c, N) {
     profile: (i0, i1, rowTicks) => levelsBase(A.from[i0], Math.min(A.to[i1], N.curBase), rowTicks, N),
     sessions: (mode, i0, i1) => sessionsIn(mode, A, i0, i1, N),
     levelsBase: (b0, b1, rowTicks) => levelsBase(b0, b1, rowTicks, N),
-    tpo: (sp) => tpoFor(sp, N),
+    tpo: (sp, rt) => tpoFor(sp, N, rt),
     vwap: (ind, i0, i1) => vwapOf(ind, A, i0, i1, N),
   };
 }
@@ -987,38 +1012,44 @@ function vwapOf(ind, A, i0, i1, N) {
   return { v, sd, brk };
 }
 
-/* TPO: the sessions found once for the whole file, each worked out only
-   when the chart asks; finished sessions are kept */
-function tpoFor(sp, N) {
-  const B = st.base, mode = sp.tpoSession || 'split';
-  const all = sessionList(mode);
+/* TPO: the blocks found once for the whole file, each worked out only
+   when the chart asks, in rows of rt ticks (the chart's own row size, or
+   the one auto rows picked for the zoom); finished blocks are kept */
+const tpoLen = (sp) => Math.max(5, Math.min(1440, Math.floor(sp.tpoLen) || 1440));
+const tpoPer = (sp) => Math.max(1, Math.min(tpoLen(sp), Math.floor(sp.tpoPeriod) || 30));
+function blockList(len) {
+  const key = 'tpo' + len;
+  if (!st.sessions.has(key)) st.sessions.set(key, R.tpoBlocksOf(st.base, st.base.n, len));
+  return st.sessions.get(key);
+}
+function tpoFor(sp, N, rt) {
+  const B = st.base, all = blockList(tpoLen(sp));
+  rt = Math.max(1, rt || sp.tpoRow || 4);
   let lo = 0, hi = all.length;
   while (lo < hi) { const mid = (lo + hi) >> 1; if (all[mid].from <= N.curBase) lo = mid + 1; else hi = mid; }
   const lastBar = N.part ? { o: N.part.o, h: N.part.h, l: N.part.l, c: N.part.c } : null;
-  const opts = (open) => ({ period: sp.tpoPeriod || 30, rowTicks: sp.tpoRow || 20, vaPct: sp.tpoVa || 70, last: open ? lastBar : null, lastIndex: open ? N.curBase : -1 });
+  const opts = (open) => ({ period: tpoPer(sp), rowTicks: rt, vaPct: sp.tpoVa || 70, last: open ? lastBar : null, lastIndex: open ? N.curBase : -1 });
   return {
     n: lo,
     at(k) {
       const s = all[k], open = s.to >= N.curBase;
       const make = () => R.tpoOf(B, s, opts(open));
-      return open ? make() : cached(tpoKey(sp, mode, s), make);
+      return open ? make() : cached(tpoKey(sp, rt, s), make);
     },
-    zones: () => tpoZones(sp, N, lo),
+    zones: () => tpoZones(sp, N, lo, rt),
   };
 }
-const tpoKey = (sp, mode, s) => 'tpo' + mode + ':' + sp.tpoPeriod + ':' + sp.tpoRow + ':' + sp.tpoVa + ':' + s.key;
+const tpoKey = (sp, rt, s) => 'tpo' + tpoLen(sp) + ':' + tpoPer(sp) + ':' + rt + ':' + sp.tpoVa + ':' + s.key;
 
-/* Single prints carried forward. Each finished session's single prints
-   (in rows of the chart's row size) stay live until a later session trades
-   into them; the part traded into ends at that session, the rest runs on.
-   Finished sessions are worked through once and kept; the session forming
-   now is checked each time without being kept. Only the 240 sessions
-   before now are looked at. */
-function tpoZones(sp, N, n) {
-  const mode = sp.tpoSession || 'split', rt = sp.tpoRow || 20, B = st.base;
-  const all = sessionList(mode);
+/* Single prints carried forward. Each finished block's single prints (in
+   rows of rt ticks) stay live until a later block trades into them; the
+   part traded into ends at that block, the rest runs on. Finished blocks
+   are worked through once and kept; the block forming now is checked each
+   time without being kept. Only the 240 blocks before now are looked at. */
+function tpoZones(sp, N, n, rt) {
+  const B = st.base, all = blockList(tpoLen(sp));
   const open = n > 0 && all[n - 1].to >= N.curBase ? n - 1 : n;
-  const key = mode + ':' + sp.tpoPeriod + ':' + rt + ':' + sp.tpoVa;
+  const key = tpoLen(sp) + ':' + tpoPer(sp) + ':' + rt + ':' + sp.tpoVa;
   let Z = st.zones.get(key);
   if (!Z || Z.done > open || open - Z.done > 240) { Z = { done: Math.max(0, open - 240), live: [], ended: [] }; st.zones.set(key, Z); }
   const hit = (live, j, L, H, ended) => {
@@ -1037,12 +1068,12 @@ function tpoZones(sp, N, n) {
     const s = all[j];
     const [lo, hi] = range(s.from, s.to);
     Z.live = hit(Z.live, j, Math.floor(lo / rt), Math.floor(hi / rt), Z.ended);
-    const t = st.cache.get(tpoKey(sp, mode, s)) || R.tpoOf(B, s, { period: sp.tpoPeriod || 30, rowTicks: rt, vaPct: sp.tpoVa || 70 });
+    const t = st.cache.get(tpoKey(sp, rt, s)) || R.tpoOf(B, s, { period: tpoPer(sp), rowTicks: rt, vaPct: sp.tpoVa || 70 });
     for (const [a, b] of t.singles) Z.live.push({ from: j, lo: t.lo + a, hi: t.lo + b });
   }
   Z.done = open;
   if (open >= n) return { live: Z.live, ended: Z.ended };
-  /* the session forming now, so far */
+  /* the block forming now, so far */
   const s = all[open];
   let [lo, hi] = s.from < N.curBase ? range(s.from, N.curBase - 1) : [Infinity, -Infinity];
   const cur = N.part || { h: B.h[N.curBase], l: B.l[N.curBase] };

@@ -972,7 +972,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.2</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.3</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1054,6 +1054,13 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.9.3</h3><span class="kicker">19 October 2026</span></div>
+        <ul>
+          <li>A TPO chart is now set by length: a TPO every 30 minutes, every 4 hours, each trading day, or any number of minutes, counted from the start of the trading day at 6:00 pm ET. Choosing a length sets its usual rows and letter time (30 minutes: rows of 1 tick, a letter each minute; 4 hours: 4 ticks, a letter each minute; a day: 4 ticks, a letter each 30 minutes), and each can then be changed in Style.</li>
+          <li>Every TPO is drawn, each labelled on the time axis with the time it started, New York time. The overnight and regular-hours labels are gone.</li>
+          <li>Auto rows, on at first: as you zoom out or squeeze the price scale, rows join (8, 20, 40 ticks and so on) so the letters stay readable, and they go back to the size you set as you zoom in. Turned off in Style, rows stay at your size.</li>
+          <li>The initial balance is the range of the hour from 9:30 am ET, shown on a TPO that holds that whole hour. A TPO chart left at the old settings becomes a day's TPO with rows of 4 ticks; one with your own rows and letter time keeps them.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.9.2</h3><span class="kicker">12 October 2026</span></div>
         <ul>
           <li>The mark on Home now sits at the centre of a turning sphere, drawn like a Dyson sphere: a tilted wireframe that turns once every five seconds, with small collector panels riding its equator and a second, steeper orbit. The mark itself is unchanged, and the sphere stays still when movement is reduced.</li>

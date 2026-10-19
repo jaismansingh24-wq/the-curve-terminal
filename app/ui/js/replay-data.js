@@ -427,20 +427,12 @@ export function valueArea(L, pct = 70) {
 
 /* ------------------------------------------------------------ sessions and TPO */
 
-const weekday = (day) => new Date(day * 864e5).getUTCDay();
-function nextWeekday(day) { let d = day + 1; while (weekday(d) === 0 || weekday(d) === 6) d++; return d; }
-function prevWeekday(day) { let d = day - 1; while (weekday(d) === 0 || weekday(d) === 6) d--; return d; }
-
 /* Sessions of base bars, in time order, as { key, kind, from, to, startET,
    dayET }. Modes:
      'rth'   the regular session, 9:30 am to 4:00 pm ET;
-     'day'   the CME trading day, from 6:00 pm ET the evening before;
-     'split' overnight and regular hours: the overnight session runs from
-             the 4:00 pm close to the next 9:30 am open (across the daily
-             break, and over a weekend from Friday's close), then the
-             regular session.
+     'day'   the CME trading day, from 6:00 pm ET the evening before.
    dayET is the New York date the session is labelled with (the regular
-   session it belongs to, or the trading day). */
+   session's day, or the trading day). */
 export function sessionsOf(B, n, opts = {}) {
   const mode = opts.mode || (opts.rth === false ? 'day' : 'rth');
   const out = [];
@@ -449,12 +441,9 @@ export function sessionsOf(B, n, opts = {}) {
     const et = toET(B.t[i]), day = Math.floor(et / 1440), mod = et - day * 1440;
     const inRth = mod >= 570 && mod < 960;
     let key, kind, startET, dayET;
-    if (mode === 'rth' || (mode === 'split' && inRth)) {
+    if (mode === 'rth') {
       if (!inRth) { if (cur) { out.push(cur); cur = null; } continue; }
       key = 'R' + day; kind = 'rth'; startET = day * 1440 + 570; dayET = day * 1440;
-    } else if (mode === 'split') {
-      const d = mod >= 960 ? nextWeekday(day) : day;
-      key = 'O' + d; kind = 'on'; startET = prevWeekday(d) * 1440 + 960; dayET = d * 1440;
     } else {
       const td = tradingDayNo(B.t[i]);
       key = 'D' + td; kind = 'day'; startET = (td - 1) * 1440 + 18 * 60; dayET = td * 1440;
@@ -466,28 +455,48 @@ export function sessionsOf(B, n, opts = {}) {
   return out;
 }
 
-/* A session as time-price opportunities: each period (30 minutes by
-   default) a letter, set at every price row the market traded in that
-   period. Periods are counted only where there was trading, so the daily
-   break and a weekend do not use up letters. Built from one-minute bars,
-   so a period's rows are the bars' ranges.
+/* TPO blocks of base bars, in time order, as { key, from, to, startET,
+   len, dayET }. Each trading day (from 6:00 pm ET) is cut into blocks of
+   len minutes counted from its start: 30 minutes gives 6:00 pm, 6:30 pm
+   and so on; 4 hours gives 6:00 pm, 10:00 pm, 2:00 am, 6:00 am, 10:00 am
+   and 2:00 pm; a day (1,440) gives the whole trading day. A block holds
+   the bars that traded in it, and one with none is left out. */
+export function tpoBlocksOf(B, n, len) {
+  const out = [];
+  let cur = null;
+  for (let i = 0; i < n; i++) {
+    const td = tradingDayNo(B.t[i]), start = (td - 1) * 1440 + 18 * 60;
+    const k = len >= 1440 ? 0 : Math.floor(Math.max(0, toET(B.t[i]) - start) / len);
+    const key = td + ':' + k;
+    if (!cur || cur.key !== key) { if (cur) out.push(cur); cur = { key, from: i, to: i, startET: start + k * len, len: Math.min(len, 1440), dayET: td * 1440 }; }
+    cur.to = i;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+/* A TPO block as time-price opportunities: each period (a set number of
+   minutes from the block's start) a letter, set at every price row the
+   market traded in that period. Letters follow the clock, so a period with
+   no trading leaves its letter out. Built from one-minute bars, so a
+   period's rows are the bars' ranges.
    Also: single prints (runs of two or more rows where only one period
-   traded) and, for a regular session, the initial balance (the range of
-   its first hour). */
+   traded) and the initial balance (the range of the hour from 9:30 am ET),
+   when the block holds that whole hour. */
 export const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-export function tpoOf(B, sess, { period = 30, rowTicks = 20, vaPct = 70, last = null, lastIndex = -1 } = {}) {
+export function tpoOf(B, sess, { period = 30, rowTicks = 4, vaPct = 70, last = null, lastIndex = -1 } = {}) {
   const get = (k, i) => (last && i === lastIndex ? last[k] : B[k][i]);
   let lo = Infinity, hi = -Infinity;
   const to = lastIndex >= 0 ? Math.min(sess.to, lastIndex) : sess.to;
   for (let i = sess.from; i <= to; i++) { const a = Math.floor(get('l', i) / rowTicks), b = Math.floor(get('h', i) / rowTicks); if (a < lo) lo = a; if (b > hi) hi = b; }
   const rows = hi - lo + 1;
   const marks = Array.from({ length: rows }, () => []);
-  const ordinal = new Map();
-  let periods = 0;
+  /* the block's whole run of periods (to the 5:00 pm ET halt at most), so
+     shading by period holds still while it builds */
+  let periods = Math.max(1, Math.ceil((Math.min(sess.startET + sess.len, sess.dayET + 17 * 60) - sess.startET) / period));
   for (let i = sess.from; i <= to; i++) {
-    const bucket = Math.floor((toET(B.t[i]) - sess.startET) / period);
-    let pIdx = ordinal.get(bucket);
-    if (pIdx === undefined) { pIdx = periods++; ordinal.set(bucket, pIdx); }
+    const pIdx = Math.floor((toET(B.t[i]) - sess.startET) / period);
+    if (pIdx >= periods) periods = pIdx + 1;
     const a = Math.floor(get('l', i) / rowTicks) - lo, b = Math.floor(get('h', i) / rowTicks) - lo;
     for (let r = a; r <= b; r++) { const m = marks[r]; if (m[m.length - 1] !== pIdx) m.push(pIdx); }
   }
@@ -499,10 +508,13 @@ export function tpoOf(B, sess, { period = 30, rowTicks = 20, vaPct = 70, last = 
     if (!one && run >= 0) { if (r - run >= 2) singles.push([run, r - 1]); run = -1; }
   }
   let ib = null;
-  if (sess.kind === 'rth') {
+  const ibAt = sess.dayET + 570;
+  if (ibAt >= sess.startET && ibAt + 60 <= sess.startET + sess.len) {
     let a = Infinity, b = -Infinity;
     for (let i = sess.from; i <= to; i++) {
-      if (toET(B.t[i]) - sess.startET >= 60) break;
+      const et = toET(B.t[i]);
+      if (et < ibAt) continue;
+      if (et >= ibAt + 60) break;
       a = Math.min(a, Math.floor(get('l', i) / rowTicks) - lo);
       b = Math.max(b, Math.floor(get('h', i) / rowTicks) - lo);
     }
@@ -512,6 +524,6 @@ export function tpoOf(B, sess, { period = 30, rowTicks = 20, vaPct = 70, last = 
   const va = valueArea({ rows, vol }, vaPct);
   return {
     lo, rows, rowTicks, marks, periods, poc: va ? va.poc : 0, vaLo: va ? va.vaLo : 0, vaHi: va ? va.vaHi : 0,
-    open: get('o', sess.from), close: get('c', to), from: sess.from, to, singles, ib, kind: sess.kind, dayET: sess.dayET,
+    open: get('o', sess.from), close: get('c', to), from: sess.from, to, singles, ib, startET: sess.startET, len: sess.len, dayET: sess.dayET,
   };
 }

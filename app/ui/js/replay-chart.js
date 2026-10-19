@@ -5,9 +5,10 @@
    colours of each chart.
 
    Types: candles; footprint (buys and sells at each price inside each bar,
-   from a file of trades, as a full fill or a histogram); TPO (a session's
-   prices by period, as letters or blocks, overnight and regular hours
-   apart or together). Panes: volume, and delta (each bar's buys less
+   from a file of trades, as a full fill or a histogram); TPO (prices by
+   period, as letters or blocks, in TPOs of a set length from the start of
+   the trading day, each labelled with its start; rows of a set size, or
+   joined as the reader zooms out with auto rows). Panes: volume, and delta (each bar's buys less
    sells, with a running total that starts again each session). Profiles:
    volume and delta at price, over the visible bars (in a strip at the
    right), or each day or regular session (against the right end of that
@@ -40,6 +41,15 @@ const hm = (et) => { const m = ((et % 1440) + 1440) % 1440; return String(Math.f
 const dateOf = (et) => { const d = new Date(Math.floor(et / 1440) * 864e5); return { wd: DAY[d.getUTCDay()], d: d.getUTCDate(), m: MON[d.getUTCMonth()], y: d.getUTCFullYear() }; };
 const NICE = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 400, 1000];
 const nice = (x) => NICE.find((k) => k >= x) || NICE[NICE.length - 1];
+/* TPO auto rows: the smallest row of `base` ticks or a whole multiple of
+   it (a round number of points where one fits) at least ROW_PX tall */
+const ROW_PX = 11;
+const ROW_STEPS = [1, 2, 4, 8, 20, 40, 100, 200, 400, 1000, 2000, 4000];
+function autoRow(base, pxPerTick) {
+  const need = ROW_PX / Math.max(1e-9, pxPerTick);
+  if (base >= need) return base;
+  return ROW_STEPS.find((k) => k % base === 0 && k >= need) || base * Math.ceil(need / base);
+}
 const short = (v) => { const a = Math.abs(v); return (v < 0 ? MINUS : '') + (a >= 10000 ? (a / 1000).toFixed(0) + 'k' : a >= 1000 ? (a / 1000).toFixed(1) + 'k' : String(Math.round(a))); };
 function rgba(hex, a) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
@@ -52,7 +62,7 @@ export const DEFAULT_SPEC = {
   tf: 1, type: 'candles', volume: true, delta: false,
   vp: false, dp: false, vpMode: 'visible', dpMode: 'visible', vaPct: 70, profileRow: 0, vpLines: true, profileWidth: 120, dpWidth: 60,
   fpStyle: 'fill',
-  tpoSession: 'split', tpoPeriod: 30, tpoRow: 20, tpoVa: 70, tpoShow: 'letters', tpoShade: true, tpoSingles: true, tpoExtend: true, tpoVaOn: true, tpoIb: true, tpoOpen: true,
+  tpoLen: 1440, tpoPeriod: 30, tpoRow: 4, tpoAutoRows: true, tpoVa: 70, tpoShow: 'letters', tpoShade: true, tpoSingles: true, tpoExtend: true, tpoVaOn: true, tpoIb: true, tpoOpen: true,
   indicators: [],
   look: { up: '', down: '', border: '', wick: '', bg: '', grid: true, vol: '', prof: '', va: '', poc: '', buy: '', sell: '', tpoLetter: '', tpoPoc: '', tpoVa: '', tpoSingle: '', tpoIb: '' },
 };
@@ -718,25 +728,37 @@ export class ReplayChart {
 
   drawTPO(F, C) {
     const ctx = this.ctx, f = this.frame, s = this.spec;
-    const T = f.tpo ? f.tpo(s) : { n: 0 };
-    const mode = s.tpoSession || 'split';
-    if (!T.n) { this.note(mode === 'rth' ? 'No regular-hours session yet in this replay.' : 'No session yet.'); return; }
     const L = this.barPx;
-    /* columns from the right: the latest session at the present */
-    const cols = [];
-    let xr = F.plotW - 12 + this.tpoOffset;
-    for (let k = T.n - 1; k >= 0 && xr > -400; k--) {
-      const S = T.at(k);
-      let most = 1;
-      for (const m of S.marks) if (m.length > most) most = m.length;
-      const w = (most + 2) * L + 10;
-      cols.push({ k, S, x0: xr - w, w, most });
-      xr -= w + Math.max(10, L);
+    const base = Math.max(1, Math.floor(s.tpoRow) || 4), auto = s.tpoAutoRows !== false;
+    /* auto rows: start from the rows the last frame used, then take the
+       smallest row (whole multiples of the set size) that is tall enough
+       for a letter at this price scale; at most two more passes */
+    let rt = auto && this.tpoRt && this.tpoRt % base === 0 ? this.tpoRt : base;
+    let T, cols;
+    for (let pass = 0; ; pass++) {
+      T = f.tpo ? f.tpo(s, rt) : { n: 0 };
+      if (!T.n) { this.note('No TPO yet in this replay.'); return; }
+      /* columns from the right: the latest TPO at the present */
+      cols = [];
+      let xr = F.plotW - 12 + this.tpoOffset;
+      for (let k = T.n - 1; k >= 0 && xr > -400; k--) {
+        const S = T.at(k);
+        let most = 1;
+        for (const m of S.marks) if (m.length > most) most = m.length;
+        const w = (most + 2) * L + 10;
+        cols.push({ k, S, x0: xr - w, w, most });
+        xr -= w + Math.max(10, L);
+      }
+      let lo = Infinity, hi = -Infinity;
+      for (const c of cols) { if (c.x0 + c.w < 0 || c.x0 > F.plotW) continue; lo = Math.min(lo, c.S.lo * c.S.rowTicks); hi = Math.max(hi, (c.S.lo + c.S.rows) * c.S.rowTicks); }
+      if (!Number.isFinite(lo)) { lo = cols[0].S.lo * cols[0].S.rowTicks; hi = (cols[0].S.lo + cols[0].S.rows) * cols[0].S.rowTicks; }
+      if (this.yAuto) { const pad = (hi - lo) * 0.05; this.yLo = lo - pad; this.yHi = hi + pad; }
+      if (!auto || pass >= 2) break;
+      const want = autoRow(base, F.priceH / (this.yHi - this.yLo));
+      if (want === rt) break;
+      rt = want;
     }
-    let lo = Infinity, hi = -Infinity;
-    for (const c of cols) { if (c.x0 + c.w < 0 || c.x0 > F.plotW) continue; lo = Math.min(lo, c.S.lo * c.S.rowTicks); hi = Math.max(hi, (c.S.lo + c.S.rows) * c.S.rowTicks); }
-    if (!Number.isFinite(lo)) { lo = cols[0].S.lo * cols[0].S.rowTicks; hi = (cols[0].S.lo + cols[0].S.rows) * cols[0].S.rowTicks; }
-    if (this.yAuto) { const pad = (hi - lo) * 0.05; this.yLo = lo - pad; this.yHi = hi + pad; }
+    this.tpoRt = rt;
     const Y = (p) => F.top + (1 - (p - this.yLo) / (this.yHi - this.yLo)) * F.priceH;
     this.Y = Y; this.P = (y) => this.yLo + (1 - (y - F.top) / F.priceH) * (this.yHi - this.yLo);
     ctx.save();
@@ -744,7 +766,7 @@ export class ReplayChart {
     this.priceGrid(F, C, Y);
     const shades = s.tpoShade === false ? [1, 1, 1, 1] : [0.5, 0.66, 0.83, 1];
     const blocks = s.tpoShow === 'blocks';
-    if (s.tpoSingles !== false && s.tpoExtend !== false && T.zones) this.singleZones(T.zones(), cols, F, C, Y, L, s.tpoRow || 20);
+    if (s.tpoSingles !== false && s.tpoExtend !== false && T.zones) this.singleZones(T.zones(), cols, F, C, Y, L, rt);
     for (const { S, x0, w, most } of cols) {
       if (x0 > F.plotW || x0 + w < 0) continue;
       const rt = S.rowTicks, rowPx = (F.priceH / (this.yHi - this.yLo)) * rt;
@@ -768,7 +790,6 @@ export class ReplayChart {
       /* the point of control as a band */
       ctx.fillStyle = 'rgba(255,255,255,0.08)';
       ctx.fillRect(lx - 2, rowTop(S.poc), (S.marks[S.poc].length + 0.5) * L + 4, rowBot(S.poc) - rowTop(S.poc));
-      const base = S.kind === 'on' ? 26 : 0;
       for (let r = 0; r < S.rows; r++) {
         const y = Y((S.lo + r) * rt + rt / 2);
         if (y < F.top - 10 || y > F.priceB + 10) continue;
@@ -777,7 +798,7 @@ export class ReplayChart {
           ctx.globalAlpha = r === S.poc || single[r] ? 1 : shades[Math.min(3, Math.floor((p * 4) / Math.max(1, S.periods)))];
           ctx.fillStyle = colour;
           const x = lx + k * L;
-          if (letters) ctx.fillText(LETTERS[(base + p) % LETTERS.length], x, y);
+          if (letters) ctx.fillText(LETTERS[p % LETTERS.length], x, y);
           else ctx.fillRect(x, y - Math.max(1, rowPx / 2 - 0.5), Math.max(1, L - 1), Math.max(1, rowPx - 1));
         });
       }
@@ -794,19 +815,35 @@ export class ReplayChart {
     this.priceLabels(F, C, Y);
     ctx.fillStyle = C.bg; ctx.fillRect(0, this.H - F.timeH, F.plotW, F.timeH);
     ctx.font = '11px "JetBrains Mono", monospace'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = C.faint;
-    cols.forEach(({ S, x0, w }, k) => {
-      if (x0 > F.plotW || x0 + w < 0) return;
-      const dd = dateOf(S.dayET), tail = mode === 'split' ? (S.kind === 'on' ? ' · ON' : ' · RTH') : '';
-      const room = (k > 0 ? cols[k - 1].x0 : F.plotW) - Math.max(2, x0) - 8;
-      const label = [dd.wd + ' ' + dd.d + ' ' + dd.m + tail, dd.d + ' ' + dd.m + tail, tail ? tail.slice(3) : dd.d + ' ' + dd.m].find((t) => ctx.measureText(t).width <= room);
-      if (label) ctx.fillText(label, Math.max(2, x0), this.H - 7);
-    });
+    /* each TPO's start, New York time, under it, left to right: with the
+       date on the first label, the first TPO of a day and a day's TPO, where
+       it fits. A
+       label with no room at its TPO's left edge moves left into the gap
+       before it (never under the TPO before, or over its label), and is
+       left out if it still does not fit. */
+    let prevEnd = -Infinity;
+    for (let k = cols.length - 1; k >= 0; k--) {
+      const { S, x0, w } = cols[k];
+      if (x0 > F.plotW || x0 + w < 0) continue;
+      const dd = dateOf(S.startET), t = hm(S.startET);
+      const left = cols[k + 1], newDay = !left || Math.floor(left.S.startET / 1440) !== Math.floor(S.startET / 1440);
+      const from = Math.max(2, prevEnd + 10, left ? left.x0 + left.w + 2 : -Infinity);
+      const limit = Math.min(k > 0 ? cols[k - 1].x0 : F.plotW, F.plotW) - 6;
+      const tries = newDay || S.len >= 1440 || prevEnd === -Infinity ? [dd.wd + ' ' + dd.d + ' ' + dd.m + ' ' + t, dd.d + ' ' + dd.m + ' ' + t, t] : [t];
+      for (const label of tries) {
+        const lw = ctx.measureText(label).width, x = Math.max(from, Math.min(Math.max(2, x0), limit - lw));
+        if (x + lw <= limit) { ctx.fillText(label, x, this.H - 7); prevEnd = x + lw; break; }
+      }
+    }
     const f2 = this.frame.bars;
     this.tag(F, Y(f2.c[f2.n - 1]), this.fmt(f2.c[f2.n - 1]), C.text, INK);
     if (this.position && this.position.qty) this.line(F, Y, this.position.avg, this.position.qty > 0 ? C.buy : C.sell, this.position.label, true, null);
     for (const o of this.orders) this.line(F, Y, this.drag && this.drag.kind === 'order' && this.drag.id === o.id ? this.drag.price : o.price, o.side === 'buy' ? C.buy : C.sell, o.label, false, o);
-    const what = mode === 'split' ? 'Overnight (from the 4:00 pm ET close) and regular hours' : mode === 'rth' ? 'Regular hours' : 'Full trading day';
-    this.badge(F, what + ', ' + (s.tpoPeriod || 30) + '-minute periods, rows of ' + (s.tpoRow || 20) + ' ticks');
+    const len = cols[0].S.len, per = Math.max(1, Math.min(len, Math.floor(s.tpoPeriod) || 30));
+    const span = (m) => (m % 60 === 0 ? (m === 60 ? 'hour' : m / 60 + ' hours') : m === 1 ? 'minute' : m + ' minutes');
+    const rows = 'rows of ' + rt + (rt === 1 ? ' tick' : ' ticks') + (auto ? (rt === base ? ', auto' : ', auto from ' + base) : '');
+    this.badge(F, (len >= 1440 ? 'A TPO each trading day from 6:00 pm ET' : 'A TPO every ' + span(len) + ' from 6:00 pm ET') +
+      ', a letter ' + (per === 1 ? 'each minute' : 'every ' + span(per)) + ', ' + rows);
     if (this.mouse && this.mouse.x < F.plotW && this.mouse.y > F.top && this.mouse.y < F.priceB) {
       ctx.strokeStyle = 'rgba(237,239,242,0.35)'; ctx.setLineDash([3, 3]);
       ctx.beginPath(); ctx.moveTo(0, Math.round(this.mouse.y) + 0.5); ctx.lineTo(F.plotW, Math.round(this.mouse.y) + 0.5); ctx.stroke(); ctx.setLineDash([]);

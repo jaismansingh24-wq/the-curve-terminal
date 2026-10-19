@@ -4,6 +4,25 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.3 · 19 October 2026
+
+- A TPO chart is now set by length: a TPO every 30 minutes, every 4
+  hours, each trading day, or any number of minutes, counted from the
+  start of the trading day at 6:00 pm ET. Choosing a length sets its usual
+  rows and letter time (30 minutes: rows of 1 tick, a letter each minute;
+  4 hours: 4 ticks, a letter each minute; a day: 4 ticks, a letter each 30
+  minutes), and each can then be changed in Style.
+- Every TPO is drawn, each labelled on the time axis with the time it
+  started, New York time. The overnight and regular-hours labels are gone.
+- Auto rows, on at first: as you zoom out or squeeze the price scale, rows
+  join (8, 20, 40 ticks and so on) so the letters stay readable, and they
+  go back to the size you set as you zoom in. Turned off in Style, rows
+  stay at your size.
+- The initial balance is the range of the hour from 9:30 am ET, shown on a
+  TPO that holds that whole hour. A TPO chart left at the old settings
+  becomes a day's TPO with rows of 4 ticks; one with your own rows and
+  letter time keeps them.
+
 ## 0.9.2 · 12 October 2026
 
 - The mark on Home now sits at the centre of a turning sphere, drawn like
