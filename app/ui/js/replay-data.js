@@ -480,9 +480,9 @@ export function tpoBlocksOf(B, n, len) {
    market traded in that period. Letters follow the clock, so a period with
    no trading leaves its letter out. Built from one-minute bars, so a
    period's rows are the bars' ranges.
-   Also: single prints (runs of two or more rows where only one period
-   traded) and the initial balance (the range of the hour from 9:30 am ET),
-   when the block holds that whole hour. */
+   Also: single prints (rows where only one period traded, between rows of
+   two or more letters above and below) and the initial balance (the range
+   of the hour from 9:30 am ET), when the block holds that whole hour. */
 export const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 export function tpoOf(B, sess, { period = 30, rowTicks = 4, vaPct = 70, last = null, lastIndex = -1 } = {}) {
   const get = (k, i) => (last && i === lastIndex ? last[k] : B[k][i]);
@@ -500,12 +500,18 @@ export function tpoOf(B, sess, { period = 30, rowTicks = 4, vaPct = 70, last = n
     const a = Math.floor(get('l', i) / rowTicks) - lo, b = Math.floor(get('h', i) / rowTicks) - lo;
     for (let r = a; r <= b; r++) { const m = marks[r]; if (m[m.length - 1] !== pIdx) m.push(pIdx); }
   }
+  /* single prints: a run of rows with one letter each, with a row of two
+     or more letters directly below it and directly above it (a run at the
+     top or bottom of the block is a tail, not a single print) */
   const singles = [];
   let run = -1;
   for (let r = 0; r <= rows; r++) {
     const one = r < rows && marks[r].length === 1;
     if (one && run < 0) run = r;
-    if (!one && run >= 0) { if (r - run >= 2) singles.push([run, r - 1]); run = -1; }
+    if (!one && run >= 0) {
+      if (run > 0 && r < rows && marks[run - 1].length >= 2 && marks[r].length >= 2) singles.push([run, r - 1]);
+      run = -1;
+    }
   }
   let ib = null;
   const ibAt = sess.dayET + 570;

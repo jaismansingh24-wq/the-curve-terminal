@@ -4,6 +4,13 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.4 · 20 October 2026
+
+- TPO single prints are now the rows where only one letter printed with
+  rows of two or more letters directly above and below them, so a single
+  row counts too. One letter at the top or bottom of a TPO is a tail, and
+  is no longer marked or carried forward as a single print.
+
 ## 0.9.3 · 19 October 2026
 
 - A TPO chart is now set by length: a TPO every 30 minutes, every 4
