@@ -33,6 +33,10 @@
 }
 .bd-bar__status { flex: 1 1 420px; min-width: 0; }
 .bd-bar__act { display: flex; align-items: center; gap: 4px 16px; flex-wrap: wrap; }
+/* the time since Fetch again was pressed, and what to expect */
+.bd-timer { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.02em; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bd-timer[hidden] { display: none; }
+.btn[aria-disabled="true"] { cursor: progress; }
 .bd-status { display: grid; gap: 4px; }
 .bd-status__line { font-size: 0.82rem; line-height: 1.5; color: var(--text-dim); }
 .bd-status__src { font-family: var(--display); font-weight: 600; color: var(--text); }

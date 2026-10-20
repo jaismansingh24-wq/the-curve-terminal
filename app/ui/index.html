@@ -972,7 +972,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.4</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.5</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1054,6 +1054,10 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.9.5</h3><span class="kicker">20 October 2026</span></div>
+        <ul>
+          <li>Fetch again on each Atlas page now counts the seconds from when you press it until the page has drawn what came back, with how long to expect in brackets. What to expect is the middle of that page's last five fetches on this computer (only those where every source answered), so the first time there is no estimate yet. When it ends, it shows how long it took. If nothing was fetched (fetching is off, or Fetch again ran less than ten minutes ago), it says so.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.9.4</h3><span class="kicker">20 October 2026</span></div>
         <ul>
           <li>TPO single prints are now the rows where only one letter printed with rows of two or more letters directly above and below them, so a single row counts too. One letter at the top or bottom of a TPO is a tail, and is no longer marked or carried forward as a single print.</li>
@@ -1310,6 +1314,7 @@
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
           <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. Home shows the latest Commitments of Traders figures for NQ from that copy and fetches nothing itself. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
+          <li><code>thecurve.terminal.atlas-fetches</code>: for each Atlas page, how many seconds its last five fetches took (only those where every source answered), so Fetch again can say how long to expect. Nothing about what was fetched.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
         </ul>
         <h3>In Windows</h3>

@@ -34,6 +34,11 @@ export const PUBLISHER = {
 
 const memo = new Map();
 const lastForced = new Map();
+/* how many times a source has been asked of its publisher (fetched, or
+   tried and failed), so a page can tell whether it reached the network */
+let tries = 0, fails = 0;
+export const attempts = () => tries;
+export const failures = () => fails;
 
 /* one source's text: { text, fetchedAt, fresh, error }. Throws with a plain
    reason when there is nothing to show at all. */
@@ -52,10 +57,13 @@ export async function get(id, arg = '', { maxAge = DAILY, force = false } = {}) 
   const network = settings.get().backdrop !== false;
   try {
     const got = await invoke('backdrop_get', { id, arg: arg || null, maxAgeHours: maxAge, network, force });
+    if (got.fresh || got.error) tries++;
+    if (got.error) fails++;
     const out = { text: got.text, fetchedAt: got.fetched_at, fresh: got.fresh, error: got.error || null, id };
     memo.set(key, out);
     return out;
   } catch (e) {
+    if (network) { tries++; fails++; }
     throw new Error(String(e && e.message ? e.message : e));
   }
 }

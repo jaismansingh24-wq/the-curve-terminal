@@ -4,6 +4,16 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.9.5 · 20 October 2026
+
+- Fetch again on each Atlas page now counts the seconds from when you
+  press it until the page has drawn what came back, with how long to
+  expect in brackets. What to expect is the middle of that page's last
+  five fetches on this computer (only those where every source answered),
+  so the first time there is no estimate yet. When it ends, it shows how
+  long it took. If nothing was fetched (fetching is off, or Fetch again
+  ran less than ten minutes ago), it says so.
+
 ## 0.9.4 · 20 October 2026
 
 - TPO single prints are now the rows where only one letter printed with

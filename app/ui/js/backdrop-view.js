@@ -19,6 +19,7 @@ import * as settings from './settings.js';
 import { el, int } from './format.js';
 import { timeBoth, shortDateET, longDateET, wallToUtc, ET } from './time.js';
 import { invoke, isNative } from '../shared/js/native.js';
+import { expectedTime, rememberTime } from './atlas-times.js';
 import { INDICES, GUIDE } from './atlas-guide.js';
 
 const MINUS = '−';
@@ -999,28 +1000,34 @@ const WAIT = {
 };
 export const VIEWS = Object.keys(BUILD);
 
+/* Draws a page. Resolves when everything on it is shown (for How it
+   connects, once its figures have filled in) with { secs, reached }: how
+   long that took and whether a publisher was asked; null when another
+   render took the page over first. */
 export async function renderBackdrop(view, force = false) {
   const sec = document.querySelector('.view[data-view="' + view + '"]');
-  if (!sec || !BUILD[view]) return;
+  if (!sec || !BUILD[view]) return null;
   const body = sec.querySelector('[data-bd-body]'), status = sec.querySelector('[data-bd-status]');
   const my = ++state.token;
+  const t0 = performance.now(), tried = D.attempts(), failed = D.failures();
   charts.hideTip();
   const keep = body.childElementCount && !force;
   if (!keep) body.replaceChildren(el('p', 'note bd-wait', WAIT[view]));
   sec.setAttribute('aria-busy', 'true');
   try {
     const built = await BUILD[view](force);
-    if (my !== state.token) return;
+    if (my !== state.token) return null;
     body.replaceChildren(...built.nodes);
     status.replaceChildren(statusLines(built.status || []));
     charts.observe(body);
     /* a page that fills in as its sources arrive (How it connects) */
     if (built.after) {
-      built.after((items) => { if (my === state.token) status.replaceChildren(statusLines(items)); }, () => my === state.token, body, force)
+      await built.after((items) => { if (my === state.token) status.replaceChildren(statusLines(items)); }, () => my === state.token, body, force)
         .catch(() => {});
+      if (my !== state.token) return null;
     }
   } catch (e) {
-    if (my !== state.token) return;
+    if (my !== state.token) return null;
     const box = el('div', 'bd-error glass glass--quiet');
     box.append(el('p', 'bd-error__h', 'Nothing to show yet'), el('p', '', String(e && e.message ? e.message : e)));
     if (settings.get().backdrop === false) box.appendChild(el('p', '', 'Fetching is switched off. Settings, under Atlas, switches it on.'));
@@ -1029,12 +1036,62 @@ export async function renderBackdrop(view, force = false) {
   } finally {
     if (my === state.token) sec.removeAttribute('aria-busy');
   }
+  const secs = (performance.now() - t0) / 1000, reached = D.attempts() > tried;
+  /* only a clean fetch is kept for the estimate: a failed one is mostly
+     time spent waiting for a publisher that did not answer */
+  if (reached && D.failures() === failed) rememberTime(view, secs);
+  return { secs, reached };
+}
+
+/* ------------------------------------------------------------ Fetch again, timed */
+
+/* "7 s", "1 min 5 s"; with tenths under ten seconds when asked */
+function secsText(s, tenths = false) {
+  if (tenths && s < 10) return s.toFixed(1) + ' s';
+  const w = Math.round(s);
+  return w < 60 ? w + ' s' : Math.floor(w / 60) + ' min' + (w % 60 ? ' ' + (w % 60) + ' s' : '');
+}
+
+async function fetchAgain(b, timer, say) {
+  if (b.getAttribute('aria-disabled') === 'true') return;
+  const view = b.closest('.view').dataset.view;
+  const exp = expectedTime(view);
+  const hint = exp ? 'expect about ' + secsText(exp) : 'no estimate yet';
+  const t0 = performance.now();
+  const tick = () => { timer.textContent = secsText(Math.floor((performance.now() - t0) / 1000)) + ' (' + hint + ')'; };
+  b.setAttribute('aria-disabled', 'true');
+  b.textContent = 'Fetching';
+  timer.hidden = false;
+  tick();
+  const every = setInterval(tick, 250);
+  say.textContent = 'Fetching. ' + (exp ? 'Expect about ' + secsText(exp) + '.' : 'No estimate yet.');
+  let res = null;
+  try {
+    res = await renderBackdrop(view, true);
+  } finally {
+    clearInterval(every);
+    b.removeAttribute('aria-disabled');
+    b.textContent = 'Fetch again';
+  }
+  /* another render took the page over: its own state shows instead */
+  if (!res) { timer.hidden = true; say.textContent = ''; return; }
+  timer.textContent = res.reached ? 'Took ' + secsText(res.secs, true) + (exp ? ' (expected about ' + secsText(exp) + ')' : '')
+    : 'Nothing fetched: ' + (settings.get().backdrop === false ? 'fetching is switched off in Settings' : 'Fetch again ran less than ten minutes ago') + ', so the kept copies are shown';
+  say.textContent = timer.textContent + '.';
 }
 
 export function initBackdrop() {
-  document.querySelectorAll('[data-bd-fetch]').forEach((b) => b.addEventListener('click', () => {
-    const view = b.closest('.view').dataset.view;
-    renderBackdrop(view, true);
-  }));
+  document.querySelectorAll('[data-bd-fetch]').forEach((b) => {
+    /* the time since Fetch again was pressed, and what to expect: a timer,
+       so it is not read out every second; the start and end are read out */
+    const timer = el('span', 'bd-timer');
+    timer.setAttribute('role', 'timer');
+    timer.dataset.tip = 'What to expect is the middle of the last five times this page fetched on this computer.';
+    timer.hidden = true;
+    const say = el('span', 'sr');
+    say.setAttribute('aria-live', 'polite');
+    b.after(timer, say);
+    b.addEventListener('click', () => fetchAgain(b, timer, say));
+  });
   document.querySelectorAll('[data-source]').forEach((b) => b.addEventListener('click', () => openSource(b.dataset.source)));
 }
