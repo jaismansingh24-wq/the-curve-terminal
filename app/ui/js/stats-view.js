@@ -16,10 +16,20 @@ import * as C from './stats-calc.js';
 import { DEFS } from './stats-defs.js';
 import * as charts from './charts.js';
 import { money, unit as fmtUnit, tone, el, trades, UNIT_LABEL, int, simTag } from './format.js';
-import { tradingDay, weekOf, monthOf, boundaryText, shortDateET, longDateET, duration } from './time.js';
+import { boundaryText, shortDateET, longDateET, duration } from './time.js';
+import { blank, matcher, describe, fold } from './entry-filter.js';
 import { SOURCE as NEWS_SOURCE, CHECKED as NEWS_CHECKED } from './news.js';
 
-const state = { period: '', instrument: '', account: '', window: 20, cal: null };
+/* the entries shown (the same filter as Overview's: Stats sets the period,
+   dates, instrument and account itself; the rest come from Overview's
+   "Stats for these trades"), the rolling window and the calendar's month */
+const state = { ...blank(), window: 20, cal: null };
+const FROM_OVERVIEW = ['q', 'side', 'setup', 'mistake'];
+
+/* Overview's "Stats for these trades": the same filter, here */
+export function statsFor(f) {
+  Object.assign(state, blank(), f);
+}
 const pctf = (x) => (x === null || x === undefined ? '' : Math.round(x * 100) + '%');
 const ticksText = (v) => { const t = v.toFixed(1); return t + (t === '1.0' ? ' tick' : ' ticks'); };
 const range = (r, f) => (r ? 'likely between ' + f(r[0]) + ' and ' + f(r[1]) : '');
@@ -127,19 +137,8 @@ function rows(list) {
 /* ------------------------------------------------------------ filters */
 
 function filtered(s) {
-  const today = tradingDay(Date.now(), s.dayStart);
-  const since = (days) => Date.now() - days * 864e5;
-  return J.all().filter((e) => {
-    const r = J.result(e, s);
-    if (!r) return false;
-    if (state.instrument && e.instrument !== state.instrument) return false;
-    if (state.account && (e.account || '').trim().toLowerCase() !== state.account) return false;
-    if (state.period === 'month' && monthOf(r.day) !== monthOf(today)) return false;
-    if (state.period === 'week' && weekOf(r.day) !== weekOf(today)) return false;
-    if (state.period === '30' && r.at < since(30)) return false;
-    if (state.period === '90' && r.at < since(90)) return false;
-    return true;
-  });
+  const match = matcher(state, s);
+  return J.all().filter((e) => match(e, J.result(e, s)));
 }
 
 function fillFilters() {
@@ -148,9 +147,28 @@ function fillFilters() {
   const used = [...new Set(J.all().map((e) => e.instrument))].sort();
   ins.replaceChildren(new Option('All', ''), ...used.map((c) => new Option(c, c)));
   ins.value = used.includes(state.instrument) ? state.instrument : '';
-  const names = [...new Set([...J.allAccounts().map((a) => a.name), ...J.all().map((e) => e.account).filter(Boolean)].map((n) => n.trim()))].sort();
-  acc.replaceChildren(new Option('All', ''), ...names.map((n) => new Option(n, n.toLowerCase())));
-  acc.value = names.some((n) => n.toLowerCase() === state.account) ? state.account : '';
+  state.instrument = ins.value;
+  const seen = new Map();
+  for (const n of [...J.allAccounts().map((a) => a.name), ...J.all().map((e) => e.account)]) { const t = String(n || '').trim(); if (t && !seen.has(fold(t))) seen.set(fold(t), t); }
+  const names = [...seen.values()].sort((a, b) => a.localeCompare(b));
+  acc.replaceChildren(new Option('All', ''), ...names.map((n) => new Option(n, n)));
+  acc.value = names.find((n) => fold(n) === fold(state.account)) || '';
+  state.account = acc.value;
+  document.querySelector('[data-sfilter="period"]').value = state.period;
+  document.querySelector('[data-sfilter="from"]').value = state.from;
+  document.querySelector('[data-sfilter="to"]').value = state.to;
+  document.querySelectorAll('[data-sfilter-range]').forEach((r) => { r.hidden = state.period !== 'range'; });
+  /* what came from Overview and has no control here, with a way to drop it */
+  const from = document.querySelector('[data-stats-from]');
+  const extra = describe(state, FROM_OVERVIEW);
+  from.hidden = !extra.length;
+  from.replaceChildren();
+  if (extra.length) {
+    const clear = el('button', 'link', 'Show all of them again');
+    clear.type = 'button';
+    clear.addEventListener('click', () => { FROM_OVERVIEW.forEach((k) => { state[k] = ''; }); renderStats(); });
+    from.append(el('span', '', 'Only trades ' + extra.join(', ') + ', as chosen on Overview.'), clear);
+  }
 }
 
 const SHORT = { 'First 30 minutes': 'First 30 min', Morning: 'Morning', Afternoon: 'Afternoon', Overnight: 'Overnight' };
@@ -178,7 +196,8 @@ export function renderStats() {
   const sims = T.filter((t) => J.isSim(t.e)).length;
   if (sims) {
     const n = el('p', 'simnote simnote--banner');
-    n.append(simTag(), document.createTextNode(' ' + (sims === st.n ? 'All ' + st.n : sims + ' of these ' + st.n) + ' trades are simulated: generated, not real. Every figure below is worked out from them. Settings, under Journal, can remove them.'));
+    const which = sims === st.n ? (sims === 1 ? 'This trade is' : 'All ' + st.n + ' trades are') : sims + ' of these ' + st.n + ' trades ' + (sims === 1 ? 'is' : 'are');
+    n.append(simTag(), document.createTextNode(' ' + which + ' simulated: generated, not real. Every figure below is worked out from ' + (sims === 1 ? 'it' : 'them') + '. Settings, under Journal, can remove ' + (sims === 1 ? 'it' : 'them') + '.'));
     box.appendChild(n);
   }
 

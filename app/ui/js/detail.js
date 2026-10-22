@@ -1,6 +1,8 @@
-/* One entry's own page: everything recorded, the result in every unit, and
-   Edit and Delete. Slippage is labelled as estimated: it compares the price
-   you meant to get with the one you typed, not an order record. */
+/* One entry's own page: the trade drawn on the reader's own Replay file
+   when one covers it (with MAE and MFE worked out from it), everything
+   recorded, the result in every unit, and Edit and Delete. Slippage is
+   labelled as estimated: it compares the price you meant to get with the
+   one you typed, not an order record. */
 
 import * as J from './journal.js';
 import * as settings from './settings.js';
@@ -9,6 +11,7 @@ import { formatPrice, CHECKED } from './instruments.js';
 import { money, unit, tone, el, simTag } from './format.js';
 import { resultNode, dots } from './home.js';
 import { go } from './router.js';
+import { section as chartSection } from './trade-chart.js';
 
 let shown = null;
 const BIAS = { up: 'Up', down: 'Down', balanced: 'Balanced' };
@@ -115,6 +118,11 @@ export function renderEntry(id) {
       ['Mistakes', tags(e.mistakes)],
     ]),
   ];
+  /* the trade on the reader's own Replay file, when one covers it */
+  box.appendChild(chartSection(e, {
+    alive: () => shown === e,
+    keep: async (mae, mfe) => { await J.save({ ...e, mae, mfe }); renderEntry(e.id); },
+  }));
   groups.filter(Boolean).forEach((g) => box.appendChild(g));
   if (e.notes) {
     const n = el('section', 'dgroup dnotes glass glass--quiet');

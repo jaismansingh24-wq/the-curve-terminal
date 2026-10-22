@@ -430,3 +430,24 @@ html.intro-armed .intro,
 
 .news__ver { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
 .news__ver .title { font-size: 1.08rem; }
+
+/* --- the first-run tour ------------------------------------------------------ */
+
+.tour { position: fixed; inset: 0; z-index: 600; background-color: rgb(0 0 0 / 0.55); }
+.tour--ringed { background-color: transparent; }
+/* the thing a card points at: ringed in TEXT, the rest dimmed by a wide
+   shadow around the ring (flat, no blur) */
+.tour__ring { position: fixed; display: none; border-radius: 12px; outline: 2px solid var(--text); box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.55); pointer-events: none; }
+.tour--ringed .tour__ring { display: block; }
+.tour__card { position: fixed; display: grid; gap: 10px; padding: 20px 22px 18px; border-radius: 22px; }
+.tour__card.is-in { animation: tour-in 600ms cubic-bezier(.2, .7, .3, 1) both; }
+.tour--still .tour__card.is-in, html.rm .tour__card.is-in { animation: none; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.tour__k { color: var(--text-faint); }
+.tour__title { font-size: 1.4rem; letter-spacing: -0.02em; }
+.tour__text { font-family: var(--body); font-size: 0.98rem; line-height: 1.55; color: var(--text-dim); }
+.tour__acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
+.tour__skip { margin-right: auto; }
+.tour__dots { display: flex; gap: 5px; margin-right: 4px; }
+.tour__dot { width: 6px; height: 6px; border-radius: 50%; background-color: rgb(255 255 255 / 0.16); }
+.tour__dot.is-on { background-color: var(--text); }

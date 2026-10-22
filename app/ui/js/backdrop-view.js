@@ -1,6 +1,6 @@
 /* Atlas: the market's background, from official public data only.
-   Eight pages: How it connects (a guide to the rest, for an index future),
-   Rates, Auctions, Positioning, Energy, Currencies, Releases and the Fed's
+   Nine pages: How it connects (a guide to the rest, for an index future),
+   This week (what changed in the figures since Monday), Rates, Auctions, Positioning, Energy, Currencies, Releases and the Fed's
    press releases.
 
    Every figure names its publisher and the date it is for, and every page
@@ -182,7 +182,7 @@ function statusLines(list) {
   const items = [];
   for (const it of list.filter((x) => x && x.got)) {
     const same = items.find((x) => D.PUBLISHER[x.got.id] === D.PUBLISHER[it.got.id] && x.asOf === it.asOf && !x.got.error && !it.got.error && Math.abs(x.got.fetchedAt - it.got.fetchedAt) < 10 * 60e3);
-    if (same) same.what += ', ' + (/\s[A-Z]/.test(it.what) ? it.what : it.what.charAt(0).toLowerCase() + it.what.slice(1));
+    if (same) same.what += ', ' + (/\s[A-Z]/.test(it.what) || /^[A-Z]{2}/.test(it.what) ? it.what : it.what.charAt(0).toLowerCase() + it.what.slice(1));
     else items.push({ ...it });
   }
   for (const { got, what, asOf } of items) {
@@ -940,6 +940,131 @@ async function buildConnects() {
   };
 }
 
+/* ------------------------------------------------------------ This week */
+
+/* What changed in the published figures this week (Monday to today, New
+   York time), source by source. A daily figure is compared with the last
+   one before Monday; a weekly report with the one before it. Every line
+   names both dates. Events (auctions, the Fed's releases) are the ones
+   dated this week. Facts only: nothing here says what they mean for prices. */
+const weekday0 = (iso) => (new Date(iso + 'T12:00:00Z').getUTCDay() + 6) % 7;
+const shortD = (iso) => D.weekday(iso).slice(0, 3) + ' ' + D.shortDay(iso);
+/* net positions in words: "net short 4,100 more contracts" */
+function netMove(now, prev) {
+  if (!fin(now) || !fin(prev)) return '';
+  const d = now - prev, a = int(Math.abs(d));
+  if (d === 0) return 'unchanged';
+  if (now < 0 && prev < 0) return 'net short ' + a + (d < 0 ? ' more' : ' fewer') + ' contracts';
+  if (now > 0 && prev > 0) return 'net long ' + a + (d > 0 ? ' more' : ' fewer') + ' contracts';
+  return 'from net ' + (prev >= 0 ? 'long ' : 'short ') + int(Math.abs(prev)) + ' to net ' + (now >= 0 ? 'long ' : 'short ') + int(Math.abs(now));
+}
+
+async function buildWeek(force) {
+  const today = todayET(), monday = D.addDays(today, -weekday0(today)), before = D.addDays(monday, -1);
+  const status = [];
+  const seen = (got, what, asOf) => { if (got) status.push({ got, what, asOf }); };
+  const fail = (title, e) => textPanel(title, [factList([['Not available', '', String(e && e.message ? e.message : e)]])]);
+  /* a daily series this week: [value now, change, note] from rows of { date, v } */
+  const daily = (rows, label, fmt, diff) => {
+    const last = rows[rows.length - 1], base = onOrBefore(rows, before);
+    if (!last) return [label, '', 'no figures in the copy'];
+    if (last.date < monday) return [label, 'no new figure yet', fmt(last.v) + ' on ' + shortD(last.date) + ', the latest'];
+    if (!base) return [label, fmt(last.v), 'on ' + shortD(last.date) + '; nothing from before Monday in the copy'];
+    return [label, diff(last.v, base.v), fmt(last.v) + ' on ' + shortD(last.date) + ', from ' + fmt(base.v) + ' on ' + shortD(base.date)];
+  };
+  const bpDiff = (a, b) => bp(a - b);
+  const jobs = {
+    yields: (async () => {
+      const c = await recentCurve('tsy-nominal', force);
+      const pick = (k) => c.rows.filter((r) => fin(r.v[k])).map((r) => ({ date: r.date, v: r.v[k] }));
+      const s210 = c.rows.filter((r) => fin(r.v['10Y']) && fin(r.v['2Y'])).map((r) => ({ date: r.date, v: r.v['10Y'] - r.v['2Y'] }));
+      seen(c.got, 'Daily par yield curve', 'figures for ' + D.longDay(c.rows[c.rows.length - 1].date));
+      return textPanel('Treasury yields', [factList([
+        daily(pick('2Y'), '2-year yield', pct, bpDiff),
+        daily(pick('10Y'), '10-year yield', pct, bpDiff),
+        daily(pick('30Y'), '30-year yield', pct, bpDiff),
+        daily(s210, '2s10s', pp, bpDiff),
+      ]), 'US Treasury, daily par yield curve. Changes in basis points; 2s10s is worked out here.']);
+    })(),
+    real: (async () => {
+      const c = await recentCurve('tsy-real', force);
+      const pick = (k) => c.rows.filter((r) => fin(r.v[k])).map((r) => ({ date: r.date, v: r.v[k] }));
+      seen(c.got, 'Daily par real yield curve', 'figures for ' + D.longDay(c.rows[c.rows.length - 1].date));
+      return textPanel('Real yields', [factList([daily(pick('5Y'), '5-year real yield', pct, bpDiff), daily(pick('10Y'), '10-year real yield', pct, bpDiff)]), 'US Treasury, daily par real yield curve (TIPS).']);
+    })(),
+    fed: (async () => {
+      const [ge, gs] = await Promise.all([D.get('nyfed-effr', '1y', { maxAge: D.DAILY, force }), D.get('nyfed-sofr', '1y', { maxAge: D.DAILY, force })]);
+      const ser = (got) => D.nyfedSeries(got.text).map((r) => ({ date: r.date, v: r.rate }));
+      const e = ser(ge), s = ser(gs);
+      seen(ge, 'EFFR', e.length ? 'rate for ' + D.longDay(e[e.length - 1].date) : '');
+      seen(gs, 'SOFR', s.length ? 'rate for ' + D.longDay(s[s.length - 1].date) : '');
+      return textPanel('Overnight rates', [factList([daily(e, 'EFFR', pct, bpDiff), daily(s, 'SOFR', pct, bpDiff)]), 'New York Fed. Each rate is for the business day before it is published.']);
+    })(),
+    dollar: (async () => {
+      const got = await D.get('ecb-90d', '', { maxAge: D.DAILY, force });
+      const days = D.ecb(got.text);
+      const usd = days.filter((d) => fin(d.r.USD)).map((d) => ({ date: d.date, v: d.r.USD }));
+      const jpy = days.filter((d) => fin(d.r.USD) && fin(d.r.JPY)).map((d) => ({ date: d.date, v: d.r.JPY / d.r.USD }));
+      const pctDiff = (a, b) => signed(((a - b) / b) * 100, 2) + '%';
+      seen(got, 'Euro reference rates', days.length ? 'rates for ' + D.longDay(days[days.length - 1].date) : '');
+      return textPanel('The dollar', [factList([daily(usd, 'US dollars per euro', fx, pctDiff), daily(jpy, 'Yen per US dollar', fx, pctDiff)]), 'ECB reference rates; yen per dollar is worked out here from them. A fall in dollars per euro is a stronger dollar against the euro.']);
+    })(),
+    positioning: (async () => {
+      const got = await D.get('cftc-tff', '209742', { maxAge: D.WEEKLY, force });
+      const rows = D.cftc(got.text, 'tff');
+      if (rows.length < 2) throw new Error('The report has too few weeks.');
+      const last = rows[rows.length - 1], prev = rows[rows.length - 2];
+      seen(got, 'Traders in Financial Futures, NQ', 'positions on ' + D.longDay(last.date));
+      const row = (k, label) => [label, netMove(last.g[k].net, prev.g[k].net), 'net ' + sint(last.g[k].net) + ' on ' + shortD(last.date) + ', from ' + sint(prev.g[k].net) + ' on ' + shortD(prev.date)];
+      return textPanel('NQ positioning', [factList([row('lev', 'Leveraged funds'), row('asset', 'Asset managers'), row('dealer', 'Dealers')]), 'CFTC, Traders in Financial Futures, NASDAQ MINI, futures only: the latest report in the copy against the one before. Positions are as of a Tuesday. Much of a group\'s position can be one side of a hedge.']);
+    })(),
+    energy: (async () => {
+      const list = [];
+      for (const [series, title] of EIA) {
+        const got = await D.get('eia', series, { maxAge: D.WEEKLY, force });
+        const e = D.eia(got.text), r = e.rows, last = r[r.length - 1], prev = r[r.length - 2];
+        seen(got, title, 'week ending ' + D.longDay(last.date));
+        list.push([title, mbs(last.v - prev.v) + ' million barrels', mb(last.v) + ' million in the week ending ' + shortD(last.date) + ', from ' + mb(prev.v) + (e.released ? '; released ' + shortD(e.released) + (e.released >= monday ? ', this week' : '') : '')]);
+      }
+      return textPanel('US stocks', [factList(list), 'EIA, weekly stocks: the latest week against the one before. Weekly figures are estimates, revised later.']);
+    })(),
+    auctions: (async () => {
+      const got = await D.get('auctions', '', { maxAge: D.DAILY, force });
+      const week = D.auctions(got.text).filter((a) => a.date >= monday && a.date <= D.addDays(monday, 6)).sort((a, b) => (a.date < b.date ? -1 : 1));
+      seen(got, 'Auction results', '');
+      const coupons = week.filter((a) => a.kind !== 'Bill');
+      const bills = week.filter((a) => a.kind === 'Bill');
+      const rows = coupons.map((a) => [family(a) + ', ' + shortD(a.date), a.done ? (a.highIs ? a.highIs.toLowerCase() + ' ' + pct(a.high, 3) : 'held') : a.date < today ? 'no result in the list yet' : 'to be held',
+        a.done ? 'bid-to-cover ' + (fin(a.btc) ? a.btc.toFixed(2) : 'not given') + (fin(a.indirect) ? ', indirect ' + share(a.indirect) : '') : (fin(a.offering) ? bn(a.offering) + ' offered' : 'announced')]);
+      if (bills.length) rows.push(['Bills', bills.length + (bills.length === 1 ? ' auction' : ' auctions'), 'results in the list for ' + bills.filter((a) => a.done).length]);
+      if (!rows.length) rows.push(['None this week', '', 'in Treasury\'s list so far']);
+      return textPanel('Treasury auctions this week', [factList(rows), 'US Treasury, Fiscal Data: auctions dated this week, held and announced.']);
+    })(),
+    wire: (async () => {
+      const got = await D.get('fed-press', '', { maxAge: D.DAILY, force });
+      const from = wallToUtc(monday + 'T00:00', ET);
+      const items = D.rss(got.text).filter((i) => fin(i.at) && i.at >= from).sort((a, b) => a.at - b.at);
+      seen(got, 'Press releases feed', items.length ? 'latest ' + shortDateET(items[items.length - 1].at) : '');
+      const rows = items.map((i) => [shortDateET(i.at), i.title, i.category || '']);
+      if (!rows.length) rows.push(['None this week', '', 'in the Fed\'s press feed so far']);
+      return textPanel('The Fed\'s press releases', [factList(rows), 'Federal Reserve Board, press releases feed: those published this week.']);
+    })(),
+  };
+  const titles = { yields: 'Treasury yields', real: 'Real yields', fed: 'Overnight rates', dollar: 'The dollar', positioning: 'NQ positioning', energy: 'US stocks', auctions: 'Treasury auctions this week', wire: 'The Fed\'s press releases' };
+  const keys = Object.keys(jobs);
+  const done = await Promise.allSettled(keys.map((k) => jobs[k]));
+  const panels = done.map((r, i) => (r.status === 'fulfilled' ? r.value : fail(titles[keys[i]], r.reason)));
+  if (done.every((r) => r.status === 'rejected')) throw done[0].reason;
+  return {
+    nodes: [
+      el('p', 'note bd-asof', 'This week runs from Monday ' + D.longDay(monday) + ' to today, New York time. Each daily figure is compared with the last one before Monday, and each weekly report with the one before it; both dates are on every line. The figures are as published, with the changes worked out here. None of it says what comes next.'),
+      section('Figures', '', panels.slice(0, 6), 'bgrid'),
+      section('Events', '', panels.slice(6), 'bgrid'),
+    ],
+    status,
+  };
+}
+
 /* ------------------------------------------------------------ a background card for the Folio */
 
 /* The figures Atlas holds now, as a small card a Folio page can keep: each
@@ -987,9 +1112,10 @@ export async function backgroundCard() {
 
 /* ------------------------------------------------------------ rendering */
 
-const BUILD = { connects: buildConnects, rates: buildRates, auctions: buildAuctions, positioning: buildPositioning, energy: buildEnergy, currencies: buildCurrencies, releases: buildReleases, wire: buildWire };
+const BUILD = { connects: buildConnects, week: buildWeek, rates: buildRates, auctions: buildAuctions, positioning: buildPositioning, energy: buildEnergy, currencies: buildCurrencies, releases: buildReleases, wire: buildWire };
 const WAIT = {
   connects: 'Reading Atlas.',
+  week: 'Reading every source Atlas keeps, to see what changed this week.',
   rates: 'Reading Treasury\'s yield files and the New York Fed\'s rates. Treasury\'s site can take half a minute to answer; after that, a copy is kept for 12 hours.',
   auctions: 'Reading Treasury\'s auction results.',
   positioning: 'Reading the CFTC\'s Commitments of Traders.',

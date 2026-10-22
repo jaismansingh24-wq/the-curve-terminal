@@ -1,40 +1,52 @@
-/* Overview: every entry, newest first, filtered by instrument, side and
-   period. A row opens its entry (click it, or Enter when it has focus). */
+/* Overview: every entry, newest first, found by words and filtered by
+   instrument, side, account, setup, mistake and period (or dates). A row
+   opens its entry (click it, or Enter when it has focus). "Stats for these
+   trades" opens Stats on exactly the entries shown. */
 
 import * as J from './journal.js';
 import * as settings from './settings.js';
-import { tradingDay, weekOf, monthOf, shortDateET, timeET } from './time.js';
+import { shortDateET, timeET } from './time.js';
 import { formatPrice } from './instruments.js';
 import { el, trades, UNIT_LABEL, simTag } from './format.js';
 import { resultNode, dots } from './home.js';
 import { go } from './router.js';
 import { isNative } from '../shared/js/native.js';
+import { blank, matcher, isBlank, fold } from './entry-filter.js';
+import { statsFor } from './stats-view.js';
 
-const filters = { instrument: '', side: '', period: '' };
+const filters = blank();
 
-function fillInstrumentFilter() {
-  const sel = document.querySelector('[data-filter="instrument"]');
-  const used = [...new Set(J.all().map((e) => e.instrument))].sort();
-  const keep = sel.value;
-  sel.replaceChildren(new Option('All', ''), ...used.map((c) => new Option(c, c)));
-  sel.value = used.includes(keep) ? keep : '';
-  filters.instrument = sel.value;
+/* a select's choices from what the entries use, keeping the choice made
+   when it is still there */
+function fillSelect(key, values, label = (v) => v) {
+  const sel = document.querySelector('[data-filter="' + key + '"]');
+  const first = sel.options[0] ? sel.options[0].text : 'All';
+  sel.replaceChildren(new Option(first, ''), ...values.map((v) => new Option(label(v), v)));
+  const keep = values.find((v) => fold(v) === fold(filters[key]));
+  sel.value = keep || '';
+  filters[key] = sel.value;
+}
+
+function fillFilters() {
+  const all = J.all();
+  const uniq = (list) => {
+    const seen = new Map();
+    for (const v of list) { const t = String(v || '').trim(); if (t && !seen.has(fold(t))) seen.set(fold(t), t); }
+    return [...seen.values()].sort((a, b) => a.localeCompare(b));
+  };
+  fillSelect('instrument', uniq(all.map((e) => e.instrument)));
+  fillSelect('account', uniq([...J.allAccounts().map((a) => a.name), ...all.map((e) => e.account)]));
+  fillSelect('setup', uniq(all.map((e) => e.setup)));
+  fillSelect('mistake', uniq(all.flatMap((e) => e.mistakes || [])));
+  document.querySelectorAll('[data-filter-range]').forEach((r) => { r.hidden = filters.period !== 'range'; });
 }
 
 export function renderOverview() {
   const s = settings.get();
-  fillInstrumentFilter();
-  const today = tradingDay(Date.now(), s.dayStart);
-  const inPeriod = (day) => !filters.period
-    || (filters.period === 'day' && day === today)
-    || (filters.period === 'week' && weekOf(day) === weekOf(today))
-    || (filters.period === 'month' && monthOf(day) === monthOf(today));
-
+  fillFilters();
   const all = J.all();
-  const rows = all
-    .map((e) => ({ e, r: J.result(e, s) }))
-    .filter(({ e, r }) => r && (!filters.instrument || e.instrument === filters.instrument)
-      && (!filters.side || e.direction === filters.side) && inPeriod(r.day));
+  const match = matcher(filters, s);
+  const rows = all.map((e) => ({ e, r: J.result(e, s) })).filter(({ e, r }) => match(e, r));
 
   const body = document.querySelector('[data-rows]');
   body.replaceChildren();
@@ -70,14 +82,30 @@ export function renderOverview() {
   document.querySelector('[data-over-count]').textContent = all.length
     ? (rows.length === all.length ? trades(all.length) + ', newest first.' : rows.length + ' of ' + trades(all.length) + ' match these filters.')
     : 'Every entry, newest first.';
+  const toStats = document.querySelector('[data-over-stats]');
+  const filtered = !isBlank(filters);
+  toStats.textContent = filtered ? 'Stats for these ' + trades(rows.length) : 'Stats for every trade';
+  toStats.disabled = rows.length === 0;
+  document.querySelector('[data-over-clear]').hidden = !filtered;
   document.querySelectorAll('[data-reveal]').forEach((b) => { b.hidden = !isNative; });
 }
 
 export function initOverview() {
-  document.querySelectorAll('[data-filter]').forEach((sel) => sel.addEventListener('change', () => {
-    filters[sel.dataset.filter] = sel.value;
+  let typing = null;
+  document.querySelectorAll('[data-filter]').forEach((inp) => {
+    const take = () => { filters[inp.dataset.filter] = inp.value; renderOverview(); };
+    if (inp.type === 'search') {
+      /* words are looked for as they are typed, a moment after the last key */
+      inp.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(take, 160); });
+    } else inp.addEventListener('change', take);
+  });
+  document.querySelector('[data-over-clear]').addEventListener('click', () => {
+    Object.assign(filters, blank());
+    document.querySelectorAll('[data-filter]').forEach((inp) => { inp.value = ''; });
     renderOverview();
-  }));
+    document.querySelector('[data-filter="q"]').focus();
+  });
+  document.querySelector('[data-over-stats]').addEventListener('click', () => { statsFor(filters); go('/stats'); });
   const body = document.querySelector('[data-rows]');
   const open = (tr) => { if (tr && tr.dataset.id) go('/entry/' + tr.dataset.id); };
   body.addEventListener('click', (e) => open(e.target.closest('tr')));

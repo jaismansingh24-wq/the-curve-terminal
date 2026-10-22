@@ -2,16 +2,18 @@ THE CURVE TERMINAL
 by s7ven
 
 A trading journal from The Curve (https://thecurve.in).
-Version 0.9.5, 20 October 2026.
+Version 0.10.0, 22 October 2026.
 
 
 WHAT IT IS
 
 A quiet place to write down what you saw in the market, and read it back
-later. New entry records a trade; Overview lists them all; Stats works
-out forty figures from them, each with its sample size and where it
-misleads; the Calendar shows each day; Accounts keeps your prop rules,
-fees and payouts. Charts of your trades come in a later update.
+later. New entry records a trade; Overview lists them all and finds
+them by words and filters; Stats works out forty figures from them (or
+from just the trades Overview found), each with its sample size and
+where it misleads; the Calendar shows each day; Accounts keeps your prop
+rules, fees and payouts. When one of your Replay files covers a trade's
+time, its entry draws the trade on it and works out its MAE and MFE.
 
 Replay plays your own exported bars or trades forward on one, two or
 four charts (candles, footprint or TPO, with volume and delta profiles
@@ -29,8 +31,9 @@ CFTC's Commitments of Traders, EIA's weekly petroleum stocks, the ECB's
 euro reference rates, a calendar of scheduled releases, and the Federal
 Reserve Board's press releases. Each figure names its publisher and date.
 Its first page, How it connects, explains how each part is linked to NQ,
-how that link is usually read and where the read goes wrong. It does not
-say what NQ will do.
+how that link is usually read and where the read goes wrong; This week
+lists what changed in the figures since Monday. It does not say what NQ
+will do.
 
 It is an instrument for looking, not a machine for deciding. It offers no
 strategies, no signals and no one telling you what to buy.

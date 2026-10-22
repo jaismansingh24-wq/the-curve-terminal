@@ -155,6 +155,14 @@ input[type="number"].inp::-webkit-inner-spin-button { opacity: 0.4; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-bottom: 16px; }
 .tf { display: grid; gap: 6px; min-width: 150px; }
 .toolbar__units { margin-left: auto; }
+.toolbar--filters .tf { min-width: 128px; }
+.toolbar--filters .tf--search { flex: 1 1 220px; max-width: 340px; }
+.toolbar--filters .inp[type="date"] { min-width: 9.5em; }
+.btn--sm { min-height: 34px; padding: 0 14px; font-size: 0.84rem; border-radius: 10px; }
+/* under the filters: Stats for the same set, and clearing them */
+.over-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: -4px 0 16px; }
+/* Stats, when it shows a set chosen on Overview */
+.stats-from { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 
 .tablewrap { overflow-x: auto; padding: 4px 6px; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
@@ -200,6 +208,14 @@ input[type="number"].inp::-webkit-inner-spin-button { opacity: 0.4; }
 .dgroup dd.num { font-family: var(--mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
 .dgroup dd .sub { display: block; color: var(--text-faint); font-size: 0.8rem; font-family: var(--body); }
 .dnotes { grid-column: 1 / -1; }
+/* the trade on the reader's own Replay file */
+.dchart { grid-column: 1 / -1; }
+.dchart .tchart { width: 100%; height: 300px; margin-top: 12px; }
+.dchart dl { max-width: 760px; margin-top: 10px; }
+.dchart__src, .dchart__how { margin-top: 10px; max-width: 72em; font-size: 0.82rem; line-height: 1.55; }
+.dchart .btn { margin-top: 14px; }
+.dchart--empty { padding: 14px 20px; }
+.dchart--empty .note { margin-top: 6px; max-width: 72em; }
 .dnotes p { white-space: pre-wrap; color: var(--text-dim); max-width: 60em; margin-top: 8px; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hairline); font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); }

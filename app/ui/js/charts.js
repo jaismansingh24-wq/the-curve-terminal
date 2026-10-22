@@ -359,6 +359,8 @@ export function month(year, mon, totals, counts, unit, { colour = false } = {}) 
         cell.classList.add(v >= 0 ? 'heat--up-' + step : 'heat--down-' + step);
       } else {
         cell.style.backgroundColor = 'rgb(255 255 255 / ' + (0.04 + 0.22 * size).toFixed(3) + ')';
+        /* on the lighter cells the faint labels lose their contrast */
+        if (size >= 0.45) cell.classList.add('is-strong');
       }
       cell.classList.add('is-traded');
       cell.appendChild(el('span', 'heat__v', fmt(v, unit)));

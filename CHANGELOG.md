@@ -4,6 +4,31 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 0.10.0 · 22 October 2026
+
+- Overview finds entries by words (in the setup, notes, mistakes, order
+  flow, main confluence and account) and filters them by instrument,
+  side, account, setup, mistake and period, or between two dates. Stats
+  for these trades opens Stats on exactly that set; Stats says which
+  parts came from Overview and can drop them. Stats's period also takes
+  Today and Between dates.
+- An entry now draws its trade when one of your Replay files covers its
+  time: the prices around it, the entry, partial exits and exit, the
+  initial stop and planned exit, with MAE and MFE worked out from the
+  file (to the second when the entry's times have seconds, otherwise
+  across whole minutes). A micro trade is drawn on its mini's prices. If
+  the file's prices around the trade do not include the ones on the
+  entry, it says so and draws nothing. A button keeps the worked-out MAE
+  and MFE on the entry.
+- Atlas has a new page, This week: what changed in each source's figures
+  since Monday (Treasury and real yields, overnight rates, the dollar, NQ
+  positioning, US stocks), with both dates on every line, and the
+  Treasury auctions and Fed press releases dated this week.
+- A short tour opens once, the first time: what each part of the app
+  does and where things are. Settings, under Help, opens it again.
+- The Calendar and Stats say "is" for a single simulated trade, and on
+  the Calendar a day's date stays readable on the lighter cells.
+
 ## 0.9.5 · 20 October 2026
 
 - Fetch again on each Atlas page now counts the seconds from when you

@@ -8,7 +8,7 @@
    heading takes focus (so screen readers announce where you are), and the
    page scrolls back to the top. */
 
-const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'digest', 'pages', 'page', 'replay', 'settings', 'connects', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
+const VIEWS = ['home', 'new', 'overview', 'entry', 'stats', 'calendar', 'accounts', 'digest', 'pages', 'page', 'replay', 'settings', 'connects', 'week', 'rates', 'auctions', 'positioning', 'energy', 'currencies', 'releases', 'wire'];
 const handlers = {};
 let current = null;
 

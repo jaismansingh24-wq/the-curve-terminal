@@ -208,6 +208,10 @@ rect.seg--flat { fill: var(--text-faint); }
 .heat__d { font-family: var(--mono); font-size: 0.66rem; color: var(--text-faint); }
 .heat__v { font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
 .heat__n { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); }
+/* a day with trades has a lighter fill: its date in DIM, and in TEXT with
+   its count on the lightest, so both stay readable */
+.heat__cell.is-traded .heat__d { color: var(--text-dim); }
+.heat__cell.is-strong .heat__d, .heat__cell.is-strong .heat__n { color: var(--text); }
 .calwrap { padding: 14px 16px 18px; max-width: 1100px; }
 .calwrap .heat__cell { min-height: 92px; }
 .calwrap .heat__v { font-size: 0.9rem; }

@@ -28,12 +28,13 @@ import { forget as forgetBackdrop } from './backdrop-data.js';
 import * as Folio from './folio.js';
 import { initFolio, renderDigest, renderPages, openPage, leavePage } from './folio-view.js';
 import { initReplay, renderReplay, leaveReplay } from './replay-view.js';
+import { startTour } from './tour.js';
 
 const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.9.5';
+let version = '0.10.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
@@ -130,6 +131,8 @@ initStats();
 initCalendar();
 initAccounts({ confirm: dialogs.confirm });
 initBackdrop();
+/* the tour: once by itself after the opening, and from Settings, under Help */
+document.querySelector('[data-tour]').addEventListener('click', () => startTour({ force: true, reduced: settings.reducedMotion() }));
 initFolio({ confirm: dialogs.confirm });
 initReplay({ confirm: dialogs.confirm });
 onBeforeClose(() => leavePage());
@@ -354,6 +357,7 @@ async function start() {
   await runIntro({ animate: S.intro !== false, reduced: settings.reducedMotion(), loader });
   ready = true;
   markNew();
+  startTour({ reduced: settings.reducedMotion() });
   syncJournalRow();
   if (journalError) {
     const box = document.querySelector('[data-recent-empty]');

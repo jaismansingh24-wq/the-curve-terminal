@@ -36,7 +36,8 @@ export function renderCalendar() {
     sum.append(document.createTextNode(trades(monthTrades.length) + ', '), el('span', tone(total), fmtUnit(total, s.units)), document.createTextNode(' for the month.'));
   } else sum.textContent = 'No trades this month.' + (J.emptyNote() ? ' ' + J.emptyNote() : '');
   const sims = monthTrades.filter((t) => J.isSim(t.e)).length;
-  document.querySelector('[data-cal-note]').textContent = boundaryText(s.dayStart) + (sims ? ' ' + sims + ' of the trades this month are simulated: generated, not real.' : '');
+  const simText = sims === monthTrades.length ? (sims === 1 ? 'The one trade this month is' : 'All ' + sims + ' trades this month are') : sims + ' of the ' + monthTrades.length + ' trades this month ' + (sims === 1 ? 'is' : 'are');
+  document.querySelector('[data-cal-note]').textContent = boundaryText(s.dayStart) + (sims ? ' ' + simText + ' simulated: generated, not real.' : '');
 }
 
 export function initCalendar() {

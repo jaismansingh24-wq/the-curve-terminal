@@ -115,6 +115,10 @@
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4.5" r="1.75"/><circle cx="12" cy="4.5" r="1.75"/><circle cx="8" cy="11.5" r="1.75"/><path d="M5.6 5.6 7 9.9M10.4 5.6 9 9.9M5.75 4.5h4.5"/></svg>
         <span class="menu__label">How it connects</span>
       </a>
+      <a class="menu__item" href="#/week" data-route="week">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10v8.5H3ZM3 7h10M6 3v3M10 3v3M5.5 10h2"/></svg>
+        <span class="menu__label">This week</span>
+      </a>
       <a class="menu__item" href="#/rates" data-route="rates">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 11.5c3.5-.3 5.5-5.8 11-7"/></svg>
         <span class="menu__label">Rates</span>
@@ -494,11 +498,21 @@
           <h1 class="title vhead__title" id="over-h" tabindex="-1">Overview</h1>
           <p class="lede vhead__lede" data-over-count>Every entry, newest first.</p>
         </header>
-        <div class="toolbar" role="group" aria-label="Filters">
+        <div class="toolbar toolbar--filters" role="group" aria-label="Filters">
+          <label class="tf tf--search"><span class="kicker">Search</span><input class="inp inp--sm" type="search" data-filter="q" placeholder="Setup, notes, mistakes, order flow" autocomplete="off" spellcheck="false"></label>
           <label class="tf"><span class="kicker">Instrument</span><select class="inp inp--sm" data-filter="instrument"><option value="">All</option></select></label>
           <label class="tf"><span class="kicker">Side</span><select class="inp inp--sm" data-filter="side"><option value="">Both</option><option value="long">Long</option><option value="short">Short</option></select></label>
-          <label class="tf"><span class="kicker">Period</span><select class="inp inp--sm" data-filter="period"><option value="">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option></select></label>
+          <label class="tf"><span class="kicker">Account</span><select class="inp inp--sm" data-filter="account"><option value="">All</option></select></label>
+          <label class="tf"><span class="kicker">Setup</span><select class="inp inp--sm" data-filter="setup"><option value="">All</option></select></label>
+          <label class="tf"><span class="kicker">Mistake</span><select class="inp inp--sm" data-filter="mistake"><option value="">Any</option></select></label>
+          <label class="tf"><span class="kicker">Period</span><select class="inp inp--sm" data-filter="period"><option value="">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="range">Between dates</option></select></label>
+          <label class="tf" data-filter-range hidden><span class="kicker">From</span><input class="inp inp--sm" type="date" data-filter="from"></label>
+          <label class="tf" data-filter-range hidden><span class="kicker">To</span><input class="inp inp--sm" type="date" data-filter="to"></label>
           <div class="units toolbar__units" data-units></div>
+        </div>
+        <div class="over-acts">
+          <button class="btn btn--sm" type="button" data-over-stats>Stats for these trades</button>
+          <button class="link" type="button" data-over-clear hidden>Clear the filters</button>
         </div>
         <div class="tablewrap glass glass--quiet">
           <table class="tbl">
@@ -549,12 +563,15 @@
         </header>
         <div class="toolbar" role="group" aria-label="Filters">
           <label class="tf"><span class="kicker">Period</span><select class="inp inp--sm" data-sfilter="period">
-            <option value="">All time</option><option value="month">This month</option><option value="week">This week</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option>
+            <option value="">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="range">Between dates</option>
           </select></label>
+          <label class="tf" data-sfilter-range hidden><span class="kicker">From</span><input class="inp inp--sm" type="date" data-sfilter="from"></label>
+          <label class="tf" data-sfilter-range hidden><span class="kicker">To</span><input class="inp inp--sm" type="date" data-sfilter="to"></label>
           <label class="tf"><span class="kicker">Instrument</span><select class="inp inp--sm" data-sfilter="instrument"><option value="">All</option></select></label>
           <label class="tf"><span class="kicker">Account</span><select class="inp inp--sm" data-sfilter="account"><option value="">All</option></select></label>
           <div class="units toolbar__units" data-units></div>
         </div>
+        <p class="note stats-note stats-from" data-stats-from hidden></p>
         <p class="note stats-note" data-stats-boundary></p>
         <p class="note stats-note">Press a stat's name for what it measures, how it is worked out and where it misleads.</p>
         <div class="stats" data-stats></div>
@@ -680,6 +697,20 @@
           <p class="kicker">Atlas &middot; How it connects</p>
           <h1 class="title vhead__title" id="connects-h" tabindex="-1">How it connects</h1>
           <p class="lede vhead__lede">How each part of Atlas is linked to an index future, how those links are usually read, and where the reads go wrong, with the figures Atlas holds now beside each one. Nothing here says what the market will do.</p>
+        </header>
+        <div class="bd-bar">
+          <div class="bd-bar__status" data-bd-status aria-live="polite"></div>
+          <div class="bd-bar__act"><button class="btn btn--quiet" type="button" data-bd-fetch>Fetch again</button><button class="link" type="button" data-open="sources">Sources</button></div>
+        </div>
+        <div class="stats bd-body" data-bd-body></div>
+      </section>
+
+      <!-- Atlas: This week ------------------------------------------------- -->
+      <section class="view bd" data-view="week" aria-labelledby="week-h" hidden>
+        <header class="vhead">
+          <p class="kicker">Atlas &middot; This week</p>
+          <h1 class="title vhead__title" id="week-h" tabindex="-1">This week</h1>
+          <p class="lede vhead__lede">What changed in the published figures since Monday, source by source, each with the dates it compares. What moved, not what it means.</p>
         </header>
         <div class="bd-bar">
           <div class="bd-bar__status" data-bd-status aria-live="polite"></div>
@@ -953,6 +984,16 @@
               <button class="switch" type="button" role="switch" aria-labelledby="lbl-startup" data-startup><span class="switch__knob"></span></button>
             </div>
           </section>
+          <section class="st__group glass glass--quiet" role="group" aria-labelledby="st-help">
+            <h2 class="kicker st__h" id="st-help">Help</h2>
+            <div class="st__row">
+              <div class="st__txt">
+                <span class="st__label" id="lbl-tour">The tour</span>
+                <span class="st__desc">A few short cards on what each part of the app does and where things are. It opens by itself the first time.</span>
+              </div>
+              <button class="btn btn--quiet" type="button" data-tour aria-describedby="lbl-tour">Show the tour</button>
+            </div>
+          </section>
         </div>
         <div class="st__foot">
           <p class="st__note">Settings are kept on this computer. Reset puts every setting back as it was when the app was installed; your journal, Folio and Replay files are not touched.</p>
@@ -972,7 +1013,7 @@
         <button class="link" type="button" data-link="site">thecurve.in</button>
         <button class="link" type="button" data-link="discord">Community</button>
       </nav>
-      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.9.5</span> &middot; by s7ven</p>
+      <p class="foot__ver kicker">The Curve Terminal <span data-version>0.10.0</span> &middot; by s7ven</p>
     </footer>
   </div>
 
@@ -1054,6 +1095,14 @@
         <button class="ibtn" type="button" data-close aria-label="Close"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
       </div>
       <div class="dlg__body prose" data-changelog>
+        <div class="news__ver"><h3 class="title">0.10.0</h3><span class="kicker">22 October 2026</span></div>
+        <ul>
+          <li>Overview finds entries by words (in the setup, notes, mistakes, order flow, main confluence and account) and filters them by instrument, side, account, setup, mistake and period, or between two dates. Stats for these trades opens Stats on exactly that set; Stats says which parts came from Overview and can drop them. Stats's period also takes Today and Between dates.</li>
+          <li>An entry now draws its trade when one of your Replay files covers its time: the prices around it, the entry, partial exits and exit, the initial stop and planned exit, with MAE and MFE worked out from the file (to the second when the entry's times have seconds, otherwise across whole minutes). A micro trade is drawn on its mini's prices. If the file's prices around the trade do not include the ones on the entry, it says so and draws nothing. A button keeps the worked-out MAE and MFE on the entry.</li>
+          <li>Atlas has a new page, This week: what changed in each source's figures since Monday (Treasury and real yields, overnight rates, the dollar, NQ positioning, US stocks), with both dates on every line, and the Treasury auctions and Fed press releases dated this week.</li>
+          <li>A short tour opens once, the first time: what each part of the app does and where things are. Settings, under Help, opens it again.</li>
+          <li>The Calendar and Stats say "is" for a single simulated trade, and on the Calendar a day's date stays readable on the lighter cells.</li>
+        </ul>
         <div class="news__ver"><h3 class="title">0.9.5</h3><span class="kicker">20 October 2026</span></div>
         <ul>
           <li>Fetch again on each Atlas page now counts the seconds from when you press it until the page has drawn what came back, with how long to expect in brackets. What to expect is the middle of that page's last five fetches on this computer (only those where every source answered), so the first time there is no estimate yet. When it ends, it shows how long it took. If nothing was fetched (fetching is off, or Fetch again ran less than ten minutes ago), it says so.</li>
@@ -1234,49 +1283,49 @@
 
         <h3>US Treasury: daily yield curves</h3>
         <ul>
-          <li>Daily par yield curve rates and daily par real yield curve rates, one file per year. Used on Rates.</li>
+          <li>Daily par yield curve rates and daily par real yield curve rates, one file per year. Used on Rates, This week and How it connects.</li>
           <li><code>home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/&lt;year&gt;/all?type=daily_treasury_yield_curve</code>, and the same with <code>type=daily_treasury_real_yield_curve</code>.</li>
           <li>A work of the US government, in the public domain. <button class="link" type="button" data-source="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve">Open the source</button></li>
         </ul>
 
         <h3>US Treasury, Fiscal Data: auction results</h3>
         <ul>
-          <li>Each auction's offering, bids, clearing rate and bidder groups, and auctions announced but not yet held. Used on Auctions and Releases.</li>
+          <li>Each auction's offering, bids, clearing rate and bidder groups, and auctions announced but not yet held. Used on Auctions, Releases, This week and How it connects.</li>
           <li><code>api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query</code></li>
           <li>A work of the US government, in the public domain. <button class="link" type="button" data-source="https://fiscaldata.treasury.gov/datasets/treasury-securities-auctions-data/treasury-securities-auctions-data">Open the source</button></li>
         </ul>
 
         <h3>Federal Reserve Bank of New York: reference rates</h3>
         <ul>
-          <li>SOFR, EFFR (with the fed funds target range), OBFR, TGCR and BGCR: the latest day, and the last year of EFFR and SOFR. Used on Rates.</li>
+          <li>SOFR, EFFR (with the fed funds target range), OBFR, TGCR and BGCR: the latest day, and the last year of EFFR and SOFR. Used on Rates, This week and How it connects.</li>
           <li><code>markets.newyorkfed.org/api/rates/all/latest.json</code>, <code>markets.newyorkfed.org/api/rates/unsecured/effr/search.json</code> and <code>markets.newyorkfed.org/api/rates/secured/sofr/search.json</code></li>
           <li>The EFFR, OBFR, SOFR, TGCR and BGCR data are subject to the Terms of Use posted at newyorkfed.org. The New York Fed is not responsible for publication of these rates by The Curve Terminal, does not sanction or endorse any particular republication, and has no liability for your use. The Curve Terminal is not affiliated with the New York Fed. <button class="link" type="button" data-source="https://www.newyorkfed.org/privacy/termsofuse">Terms of Use</button> &middot; <button class="link" type="button" data-source="https://www.newyorkfed.org/markets/reference-rates">Open the source</button></li>
         </ul>
 
         <h3>CFTC: Commitments of Traders</h3>
         <ul>
-          <li>Weekly futures positions by trader group, from the Traders in Financial Futures report and the Disaggregated report, futures only. Used on Positioning.</li>
+          <li>Weekly futures positions by trader group, from the Traders in Financial Futures report and the Disaggregated report, futures only. Used on Positioning, This week and How it connects; Home reads the copy kept.</li>
           <li><code>publicreporting.cftc.gov/resource/gpe5-46if.json</code> and <code>publicreporting.cftc.gov/resource/72hh-3qpy.json</code>, asking for one market at a time.</li>
           <li>A work of the US government, in the public domain. <button class="link" type="button" data-source="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm">Open the source</button></li>
         </ul>
 
         <h3>European Central Bank: euro reference rates</h3>
         <ul>
-          <li>The euro against each currency the ECB quotes, for the last 90 days. Used on Currencies.</li>
+          <li>The euro against each currency the ECB quotes, for the last 90 days. Used on Currencies, This week and How it connects.</li>
           <li><code>www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml</code></li>
           <li>Source: European Central Bank. The rates are free of charge on the ECB's website and are published for information only. The daily changes, the 90-day low and high, and the rates per US dollar are worked out here from the ECB's figures. <button class="link" type="button" data-source="https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html">The ECB's terms</button> &middot; <button class="link" type="button" data-source="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html">Open the source</button></li>
         </ul>
 
         <h3>US Energy Information Administration: weekly stocks</h3>
         <ul>
-          <li>Weekly US stocks of commercial crude oil, the Strategic Petroleum Reserve, total gasoline and distillate fuel oil, with EIA's release dates. Used on Energy.</li>
+          <li>Weekly US stocks of commercial crude oil, the Strategic Petroleum Reserve, total gasoline and distillate fuel oil, with EIA's release dates. Used on Energy, This week and How it connects.</li>
           <li><code>www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&amp;s=&lt;series&gt;&amp;f=W</code> for the series WCESTUS1, WCSSTUS1, WGTSTUS1 and WDISTUS1.</li>
           <li>Source: U.S. Energy Information Administration, Weekly Petroleum Status Report. A work of the US government, in the public domain. <button class="link" type="button" data-source="https://www.eia.gov/about/copyrights_reuse.php">EIA's terms</button> &middot; <button class="link" type="button" data-source="https://www.eia.gov/petroleum/supply/weekly/">Open the source</button></li>
         </ul>
 
         <h3>Federal Reserve Board: press releases</h3>
         <ul>
-          <li>The title, time, category and link of each recent press release. Used on Fed wire.</li>
+          <li>The title, time, category and link of each recent press release. Used on Fed wire and This week.</li>
           <li><code>www.federalreserve.gov/feeds/press_all.xml</code></li>
           <li>A work of the US government. Opening a release takes you to it on federalreserve.gov. <button class="link" type="button" data-source="https://www.federalreserve.gov/newsevents/pressreleases.htm">Open the source</button></li>
         </ul>
@@ -1314,6 +1363,7 @@
           <li><strong>Your Folio</strong>, in <code>folio.json</code> in the same folder: every page, with its title, text, formatting, tags and marks. The version before your last change is kept as <code>folio.bak.json</code>. Screenshots you add are kept as image files in <code>folio-images</code> beside it, made smaller where they are very large; a screenshot no page uses any more is deleted. Settings, under Folio, can show you the file.</li>
           <li><strong>Atlas's copies</strong>, in the <code>backdrop</code> folder inside the app's folder: the last copy of each public source the app has fetched (Treasury yield files, auction results, reference rates, Commitments of Traders, euro rates, EIA stocks and the Fed's press feed), so its pages open without waiting and work offline. Home shows the latest Commitments of Traders figures for NQ from that copy and fetches nothing itself. They hold public figures only. Settings, under Atlas, deletes them.</li>
           <li><code>thecurve.terminal.seen</code>: the last version whose What's new you opened, so the app can mark the link when there is something new.</li>
+          <li><code>thecurve.terminal.toured</code>: the date you finished or skipped the tour, so it opens by itself only once.</li>
           <li><code>thecurve.terminal.atlas-fetches</code>: for each Atlas page, how many seconds its last five fetches took (only those where every source answered), so Fetch again can say how long to expect. Nothing about what was fetched.</li>
           <li>Microsoft Edge WebView2, which draws the window, keeps its own cache in the same folder.</li>
         </ul>
