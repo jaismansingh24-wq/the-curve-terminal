@@ -4,6 +4,10 @@ What changed for someone using The Curve Terminal, newest first. Not
 commit detail: the in-app What's new panel says the same, in the same
 words.
 
+## 1.0.0 · 31 October 2026
+
+- Version 1.0. The same app as 0.10.0, now numbered 1.0.
+
 ## 0.10.0 · 22 October 2026
 
 - Overview finds entries by words (in the setup, notes, mistakes, order

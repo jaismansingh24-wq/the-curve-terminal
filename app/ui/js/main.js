@@ -34,7 +34,7 @@ const S = settings.load();
 settings.apply();
 J.setShowSimulated(S.showSimulated !== false);
 
-let version = '0.10.0';
+let version = '1.0.0';
 let ready = false;
 
 /* --------------------------------------------------------------- wiring */
